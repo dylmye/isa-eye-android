@@ -16,6 +16,7 @@ data class ProviderEntity(
   @PrimaryKey @ColumnInfo(name = "_id") val id: String,
   val name: String,
   val iconRelativeUrl: String?,
+  @ColumnInfo(defaultValue = "'#ffffff'")
   val colour: String = "#ffffff",
 )
 
@@ -94,6 +95,7 @@ data class ProductEntity(
   val providerId: String,
   val friendlyName: String,
   val productTypeCode: String,
+  @ColumnInfo(defaultValue = "0")
   val flexible: Boolean,
 )
 
@@ -147,5 +149,6 @@ data class RulesetExceptionEntity(
   val rulesetId: String,
   val allowancePence: Long,
   val notes: String?,
+  @ColumnInfo(defaultValue = "1")
   val includedInShared: Boolean = true,
 )

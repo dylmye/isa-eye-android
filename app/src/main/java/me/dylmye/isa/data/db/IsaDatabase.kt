@@ -29,7 +29,7 @@ import me.dylmye.isa.data.db.entity.RulesetExceptionEntity
     AnnualBalanceEntity::class,
     RulesetExceptionEntity::class,
   ],
-  version = 1,
+  version = 2,
   exportSchema = true,
 )
 abstract class IsaDatabase : RoomDatabase() {
@@ -53,6 +53,7 @@ abstract class IsaDatabase : RoomDatabase() {
     fun build(context: Context): IsaDatabase =
       Room.databaseBuilder(context.applicationContext, IsaDatabase::class.java, NAME)
         .addCallback(SeedData.callback)
+        .addMigrations(MIGRATION_1_2)
         .build()
   }
 }
