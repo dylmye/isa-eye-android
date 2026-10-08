@@ -8,54 +8,68 @@ ktlint:
   code_style: 'ktlint_official'
   indentStyle: 'space'
 
-  # The project (.editorconfig) uses 2-space indentation. Each ktlint rule carries its
-  # own `indentSize` (defaulting to 4), so they all have to be aligned explicitly.
+  # detekt's bundled ktlint wrapper does not read .editorconfig (detekt#8815), so every value the
+  # project relies on has to be mirrored here explicitly to keep the two tools aligned:
+  #   * indentSize  - .editorconfig uses 2-space indentation; each rule defaults to 4.
+  #   * maxLineLength - .editorconfig uses 100; each wrapping rule defaults to 120.
   MultilineRawStringIndentation:
     indentSize: 2
   AnnotationOnSeparateLine:
     indentSize: 2
   ArgumentListWrapping:
     indentSize: 2
+    maxLineLength: 100
   BinaryExpressionWrapping:
     indentSize: 2
+    maxLineLength: 100
   ChainMethodContinuation:
     indentSize: 2
+    maxLineLength: 100
   ChainWrapping:
     indentSize: 2
   ClassSignature:
     indentSize: 2
+    maxLineLength: 100
   CommentWrapping:
     indentSize: 2
   ConditionWrapping:
     indentSize: 2
+    maxLineLength: 100
   ContextReceiverListWrapping:
     indentSize: 2
+    maxLineLength: 100
   ContextReceiverMapping:
     indentSize: 2
   EnumWrapping:
     indentSize: 2
   ExpressionOperandWrapping:
     indentSize: 2
+    maxLineLength: 100
   FunctionExpressionBody:
     indentSize: 2
   FunctionLiteral:
     indentSize: 2
+    maxLineLength: 100
   FunctionSignature:
     indentSize: 2
+    maxLineLength: 100
   IfElseBracing:
     indentSize: 2
   IfElseWrapping:
     indentSize: 2
+    maxLineLength: 100
   Indentation:
     indentSize: 2
   KdocWrapping:
     indentSize: 2
+    maxLineLength: 100
   ModifierListSpacing:
     indentSize: 2
   MultiLineIfElse:
     indentSize: 2
   MultilineExpressionWrapping:
     indentSize: 2
+    maxLineLength: 100
   MultilineLoop:
     indentSize: 2
   NoEmptyFirstLineInClassBody:
@@ -64,14 +78,18 @@ ktlint:
     indentSize: 2
   ParameterListWrapping:
     indentSize: 2
+    maxLineLength: 100
   ParameterWrapping:
     indentSize: 2
+    maxLineLength: 100
   PropertyWrapping:
     indentSize: 2
+    maxLineLength: 100
   SpacingAroundCurly:
     indentSize: 2
   StatementWrapping:
     indentSize: 2
+    maxLineLength: 100
   StringTemplateIndent:
     indentSize: 2
   TryCatchFinallySpacing:
@@ -84,6 +102,7 @@ ktlint:
     indentSize: 2
   Wrapping:
     indentSize: 2
+    maxLineLength: 100
 
   # Align with the project's 100-column limit (detekt's bundled ktlint defaults to 120).
   MaxLineLength:
