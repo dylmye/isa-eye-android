@@ -23,7 +23,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import me.dylmye.isa.ui.accounts.AccountDetailPlaceholder
 import me.dylmye.isa.ui.accounts.AccountDetailScreen
-import me.dylmye.isa.ui.accounts.AccountsRoute
+import me.dylmye.isa.ui.accounts.AccountsScreen
 import me.dylmye.isa.ui.accounts.AddAccountScreen
 import me.dylmye.isa.ui.help.HelpScreen
 import me.dylmye.isa.ui.insights.InsightsScreen
@@ -84,7 +84,7 @@ fun MainNavigation() {
             metadata =
               ListDetailSceneStrategy.listPane(detailPlaceholder = { AccountDetailPlaceholder() }),
           ) {
-            AccountsRoute(onAccountClick = { name -> backStack.add(AccountDetail(name)) })
+            AccountsScreen(onAccountClick = { name -> backStack.add(AccountDetail(name)) })
           }
           entry<AccountDetail>(metadata = ListDetailSceneStrategy.detailPane()) { detail ->
             AccountDetailScreen(name = detail.name)

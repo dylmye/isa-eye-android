@@ -7,16 +7,21 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import me.dylmye.isa.IsaEyeApplication
 import me.dylmye.isa.data.AccountRepository
-import me.dylmye.isa.data.db.dao.AccountSummary
 
 class AccountsViewModel(repository: AccountRepository) : ViewModel() {
-  val accounts: StateFlow<List<AccountSummary>> =
+  val uiState: StateFlow<AccountsUiState> =
     repository
       .observeAccounts()
-      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), emptyList())
+      .map { summaries -> AccountsUiState(accounts = summaries.map { it.toListItemUiState() }) }
+      .stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
+        AccountsUiState(isLoading = true),
+      )
 
   companion object {
     private const val STOP_TIMEOUT_MILLIS = 5_000L
