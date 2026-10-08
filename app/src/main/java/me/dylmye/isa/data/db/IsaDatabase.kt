@@ -29,7 +29,7 @@ import me.dylmye.isa.data.db.entity.RulesetExceptionEntity
     AnnualBalanceEntity::class,
     RulesetExceptionEntity::class,
   ],
-  version = 2,
+  version = 3,
   exportSchema = true,
 )
 abstract class IsaDatabase : RoomDatabase() {
@@ -50,10 +50,12 @@ abstract class IsaDatabase : RoomDatabase() {
   companion object {
     const val NAME = "isa-eye.db"
 
-    fun build(context: Context): IsaDatabase =
-      Room.databaseBuilder(context.applicationContext, IsaDatabase::class.java, NAME)
-        .addCallback(SeedData.callback)
-        .addMigrations(MIGRATION_1_2)
+    fun build(context: Context): IsaDatabase {
+      val applicationContext = context.applicationContext
+      return Room.databaseBuilder(applicationContext, IsaDatabase::class.java, NAME)
+        .addCallback(SeedData(applicationContext).callback)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
         .build()
+    }
   }
 }

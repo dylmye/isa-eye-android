@@ -17,6 +17,40 @@ internal val MIGRATION_1_2 =
     }
   }
 
+/**
+ * v2 -> v3: drops the (unenforceable) foreign keys from `productTypes.introducedWithRuleset` and
+ * `productTypes.removedWithRuleset`, which reference historical rulesets that predate the seeded
+ * range. They remain plain string columns.
+ */
+internal val MIGRATION_2_3 =
+  object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+      db.execSQL(
+        "CREATE TABLE IF NOT EXISTS `productTypes_new` (" +
+          "`_id` TEXT NOT NULL, `name` TEXT NOT NULL, " +
+          "`introducedWithRuleset` TEXT NOT NULL, `removedWithRuleset` TEXT, " +
+          "`shortDescription` TEXT NOT NULL, `longDescription` TEXT NOT NULL, " +
+          "PRIMARY KEY(`_id`))",
+      )
+      db.execSQL(
+        "INSERT INTO `productTypes_new` (`_id`, `name`, `introducedWithRuleset`, " +
+          "`removedWithRuleset`, `shortDescription`, `longDescription`) " +
+          "SELECT `_id`, `name`, `introducedWithRuleset`, `removedWithRuleset`, " +
+          "`shortDescription`, `longDescription` FROM `productTypes`",
+      )
+      db.execSQL("DROP TABLE `productTypes`")
+      db.execSQL("ALTER TABLE `productTypes_new` RENAME TO `productTypes`")
+      db.execSQL(
+        "CREATE INDEX IF NOT EXISTS `index_productTypes_introducedWithRuleset` " +
+          "ON `productTypes` (`introducedWithRuleset`)",
+      )
+      db.execSQL(
+        "CREATE INDEX IF NOT EXISTS `index_productTypes_removedWithRuleset` " +
+          "ON `productTypes` (`removedWithRuleset`)",
+      )
+    }
+  }
+
 private fun recreateProviders(db: SupportSQLiteDatabase) {
   db.execSQL(
     "CREATE TABLE IF NOT EXISTS `providers_new` (`_id` TEXT NOT NULL, `name` TEXT NOT NULL, " +

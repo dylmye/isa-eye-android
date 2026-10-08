@@ -49,18 +49,8 @@ data class RulesetEntity(
 
 @Entity(
   tableName = "productTypes",
-  foreignKeys = [
-    ForeignKey(
-      entity = RulesetEntity::class,
-      parentColumns = ["_id"],
-      childColumns = ["introducedWithRuleset"],
-    ),
-    ForeignKey(
-      entity = RulesetEntity::class,
-      parentColumns = ["_id"],
-      childColumns = ["removedWithRuleset"],
-    ),
-  ],
+  // `introducedWithRuleset`/`removedWithRuleset` are soft references to historical rulesets that can
+  // predate the seeded range, so they are intentionally not enforced as foreign keys.
   indices = [Index("introducedWithRuleset"), Index("removedWithRuleset")],
 )
 data class ProductTypeEntity(
