@@ -19,29 +19,35 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.toColorInt
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import me.dylmye.isa.data.db.dao.AccountSummary
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
 import me.dylmye.isa.ui.components.ProviderAvatar
 import me.dylmye.isa.ui.components.containerTint
 
-private data class SampleAccount(val name: String, val provider: String, val tint: Color)
-
-private val SampleAccounts =
-  listOf(
-    SampleAccount("Cash ISA 2025/26", "Lloyds Bank", Color(0xFF006A4D)),
-    SampleAccount("Stocks & Shares ISA", "Vanguard", Color(0xFF8A1E2D)),
-    SampleAccount("Help to Buy ISA", "Nationwide", Color(0xFF004B87)),
-    SampleAccount("Junior ISA", "Hargreaves Lansdown", Color(0xFF003A70)),
-  )
+@Composable
+fun AccountsRoute(onAccountClick: (String) -> Unit, modifier: Modifier = Modifier) {
+  val viewModel: AccountsViewModel = viewModel(factory = AccountsViewModel.Factory)
+  val accounts by viewModel.accounts.collectAsStateWithLifecycle()
+  AccountsListScreen(accounts = accounts, onAccountClick = onAccountClick, modifier = modifier)
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AccountsListScreen(onAccountClick: (String) -> Unit, modifier: Modifier = Modifier) {
+fun AccountsListScreen(
+  accounts: List<AccountSummary>,
+  onAccountClick: (String) -> Unit,
+  modifier: Modifier = Modifier,
+) {
   val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
   Scaffold(
     modifier = modifier,
@@ -63,18 +69,19 @@ fun AccountsListScreen(onAccountClick: (String) -> Unit, modifier: Modifier = Mo
         ),
       verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-      items(SampleAccounts) { account ->
+      items(accounts, key = { it.productId }) { account ->
+        val tint = account.providerColour.toTint()
         Surface(
-          onClick = { onAccountClick(account.name) },
+          onClick = { onAccountClick(account.friendlyName) },
           shape = MaterialTheme.shapes.large,
-          color = account.tint.containerTint(),
+          color = tint.containerTint(),
           contentColor = MaterialTheme.colorScheme.onSurface,
           modifier = Modifier.fillMaxWidth(),
         ) {
           ListItem(
-            headlineContent = { Text(account.name) },
-            supportingContent = { Text(account.provider) },
-            leadingContent = { ProviderAvatar(provider = account.provider, tint = account.tint) },
+            headlineContent = { Text(account.friendlyName) },
+            supportingContent = { Text(account.providerName) },
+            leadingContent = { ProviderAvatar(provider = account.providerName, tint = tint) },
             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
           )
         }
@@ -83,8 +90,22 @@ fun AccountsListScreen(onAccountClick: (String) -> Unit, modifier: Modifier = Mo
   }
 }
 
+private val FallbackTint = Color(0xFF9E9E9E)
+
+private fun String.toTint(): Color = runCatching { Color(toColorInt()) }.getOrDefault(FallbackTint)
+
 @FormFactorPreviews
 @Composable
 private fun AccountsListScreenPreview() {
-  ISAEyeTheme { AccountsListScreen(onAccountClick = {}) }
+  ISAEyeTheme {
+    AccountsListScreen(accounts = PreviewAccounts, onAccountClick = {})
+  }
 }
+
+private val PreviewAccounts =
+  listOf(
+    AccountSummary("1", "Cash ISA 2025/26", "cash", "lloyds", "Lloyds Bank", "#006A4D"),
+    AccountSummary("2", "Stocks & Shares ISA", "stocks", "vanguard", "Vanguard", "#8A1E2D"),
+    AccountSummary("3", "Help to Buy ISA", "htb", "nationwide", "Nationwide", "#004B87"),
+    AccountSummary("4", "Junior ISA", "junior", "hl", "Hargreaves Lansdown", "#003A70"),
+  )

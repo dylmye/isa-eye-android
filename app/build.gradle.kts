@@ -2,6 +2,7 @@ plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.compose.compiler)
   alias(libs.plugins.kotlin.serialization)
+  alias(libs.plugins.ksp)
   alias(libs.plugins.detekt)
   alias(libs.plugins.ktlint)
 }
@@ -65,6 +66,11 @@ ktlint {
   }
 }
 
+ksp {
+  // Export Room schemas so migrations can be diffed/tested.
+  arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
   val composeBom = platform(libs.androidx.compose.bom)
   implementation(composeBom)
@@ -102,11 +108,17 @@ dependencies {
   androidTestImplementation(libs.androidx.test.ext.junit)
   androidTestImplementation(libs.androidx.test.runner)
   androidTestImplementation(libs.androidx.test.espresso.core)
+  androidTestImplementation(libs.kotlinx.coroutines.test)
 
   // Navigation
   implementation(libs.androidx.navigation3.ui)
   implementation(libs.androidx.navigation3.runtime)
   implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+
+  // Room (SQLite persistence)
+  implementation(libs.androidx.room.runtime)
+  implementation(libs.androidx.room.ktx)
+  ksp(libs.androidx.room.compiler)
 
   // Static analysis
   detektPlugins(libs.detekt.rules.ktlint.wrapper)

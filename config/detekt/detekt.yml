@@ -85,6 +85,10 @@ ktlint:
   Wrapping:
     indentSize: 2
 
+  # Align with the project's 100-column limit (detekt's bundled ktlint defaults to 120).
+  MaxLineLength:
+    maxLineLength: 100
+
   # The generated Material Symbols vectors use a `_name` backing-property idiom.
   BackingPropertyNaming:
     active: false
