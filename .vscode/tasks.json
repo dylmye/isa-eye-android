@@ -1,0 +1,68 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "assembleDebug",
+      "type": "shell",
+      "command": "./gradlew :app:assembleDebug --console=plain",
+      "problemMatcher": {
+        "owner": "kotlin",
+        "fileLocation": "absolute",
+        "pattern": {
+          "regexp": "^e: file://(.*):(\\d+):(\\d+)\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4
+        }
+      },
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "installDebug",
+      "type": "shell",
+      "command": "./gradlew :app:installDebug --console=plain",
+      "problemMatcher": {
+        "owner": "kotlin",
+        "fileLocation": "absolute",
+        "pattern": {
+          "regexp": "^e: file://(.*):(\\d+):(\\d+)\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4
+        }
+      },
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "launch app",
+      "type": "shell",
+      "command": "ADB=$(command -v adb || echo \"$(sed -n 's/^sdk.dir=//p' local.properties)/platform-tools/adb\"); \"$ADB\" shell am start -n me.dylmye.isa/.MainActivity",
+      "problemMatcher": []
+    },
+    {
+      "label": "run app",
+      "dependsOrder": "sequence",
+      "dependsOn": ["installDebug", "launch app"],
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "unit tests",
+      "type": "shell",
+      "command": "./gradlew :app:testDebugUnitTest --console=plain",
+      "group": "test",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "verify (detekt + ktlint)",
+      "type": "shell",
+      "command": "./gradlew :app:detekt :app:ktlintCheck --console=plain",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    }
+  ]
+}

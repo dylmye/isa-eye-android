@@ -1,0 +1,100 @@
+# detekt configuration for ISA Eye.
+#
+# Applied on top of detekt's default configuration (see `buildUponDefaultConfig`
+# in app/build.gradle.kts), so only deviations from the defaults need to live here.
+
+ktlint:
+  active: true
+  code_style: 'ktlint_official'
+  indentStyle: 'space'
+
+  # The project (.editorconfig) uses 2-space indentation. Each ktlint rule carries its
+  # own `indentSize` (defaulting to 4), so they all have to be aligned explicitly.
+  MultilineRawStringIndentation:
+    indentSize: 2
+  AnnotationOnSeparateLine:
+    indentSize: 2
+  ArgumentListWrapping:
+    indentSize: 2
+  BinaryExpressionWrapping:
+    indentSize: 2
+  ChainMethodContinuation:
+    indentSize: 2
+  ChainWrapping:
+    indentSize: 2
+  ClassSignature:
+    indentSize: 2
+  CommentWrapping:
+    indentSize: 2
+  ConditionWrapping:
+    indentSize: 2
+  ContextReceiverListWrapping:
+    indentSize: 2
+  ContextReceiverMapping:
+    indentSize: 2
+  EnumWrapping:
+    indentSize: 2
+  ExpressionOperandWrapping:
+    indentSize: 2
+  FunctionExpressionBody:
+    indentSize: 2
+  FunctionLiteral:
+    indentSize: 2
+  FunctionSignature:
+    indentSize: 2
+  IfElseBracing:
+    indentSize: 2
+  IfElseWrapping:
+    indentSize: 2
+  Indentation:
+    indentSize: 2
+  KdocWrapping:
+    indentSize: 2
+  ModifierListSpacing:
+    indentSize: 2
+  MultiLineIfElse:
+    indentSize: 2
+  MultilineExpressionWrapping:
+    indentSize: 2
+  MultilineLoop:
+    indentSize: 2
+  NoEmptyFirstLineInClassBody:
+    indentSize: 2
+  NoSingleLineBlockComment:
+    indentSize: 2
+  ParameterListWrapping:
+    indentSize: 2
+  ParameterWrapping:
+    indentSize: 2
+  PropertyWrapping:
+    indentSize: 2
+  SpacingAroundCurly:
+    indentSize: 2
+  StatementWrapping:
+    indentSize: 2
+  StringTemplateIndent:
+    indentSize: 2
+  TryCatchFinallySpacing:
+    indentSize: 2
+  TypeArgumentListSpacing:
+    indentSize: 2
+  TypeParameterListSpacing:
+    indentSize: 2
+  WhenEntryBracing:
+    indentSize: 2
+  Wrapping:
+    indentSize: 2
+
+  # The generated Material Symbols vectors use a `_name` backing-property idiom.
+  BackingPropertyNaming:
+    active: false
+
+naming:
+  FunctionNaming:
+    # Compose composables are PascalCase by convention.
+    functionPattern: '[A-Za-z][a-zA-Z0-9]*'
+
+style:
+  # Compose layouts are full of literal dimensions/alpha values; noise outweighs value.
+  MagicNumber:
+    active: false

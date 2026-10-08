@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+#
+# Pre-commit gate: runs the project's static analysis (detekt + ktlint) before a
+# commit is created. Installed via `git config core.hooksPath .githooks`.
+#
+# Skip it for a single commit with `git commit --no-verify` when necessary.
+
+set -e
+
+# Only bother when Kotlin sources are part of the commit.
+if ! git diff --cached --name-only --diff-filter=ACMR | grep -qE '\.kts?$'; then
+  exit 0
+fi
+
+echo "Running detekt + ktlint on the staged Kotlin changes..."
+./gradlew --quiet :app:ktlintCheck :app:detekt

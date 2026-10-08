@@ -1,0 +1,28 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.kt]
+indent_style = space
+indent_size = 2
+max_line_length = 100
+ktlint_code_style = ktlint_official
+# Compose composables are PascalCase by convention.
+ktlint_function_naming_ignore_when_annotated_with = Composable
+# Match detekt's bundled ktlint defaults (see config/detekt/detekt.yml): signatures are
+# only wrapped when they would otherwise exceed max_line_length.
+ktlint_class_signature_rule_force_multiline_when_parameter_count_greater_or_equal_than = unset
+ktlint_function_signature_rule_force_multiline_when_parameter_count_greater_or_equal_than = unset
+ktlint_function_signature_body_expression_wrapping = default
+# Rules that detekt ships inactive; keep the two tools aligned.
+ktlint_standard_chain-method-continuation = disabled
+ktlint_standard_multiline-expression-wrapping = disabled
+
+# Gradle Kotlin scripts keep the Android Studio template's 4-space style and are not
+# linted by detekt either, so ktlint's standard rules are disabled for them.
+[*.kts]
+ktlint_standard = disabled
