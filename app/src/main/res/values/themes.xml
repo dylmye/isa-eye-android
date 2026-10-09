@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.ISAEye" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Post-splash theme. Material 3 and DayNight, so the window background follows the system. -->
+    <style name="Theme.ISAEye" parent="Theme.Material3.DayNight.NoActionBar" />
+
+    <!-- Launch theme. Shows the branded splash, then hands off to Theme.ISAEye. -->
+    <style name="Theme.ISAEye.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <item name="windowSplashScreenAnimationDuration">200</item>
+        <item name="postSplashScreenTheme">@style/Theme.ISAEye</item>
+    </style>
 </resources>
