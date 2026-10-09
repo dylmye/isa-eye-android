@@ -120,6 +120,11 @@ dependencies {
   implementation(libs.androidx.room.ktx)
   ksp(libs.androidx.room.compiler)
 
+  // Images
+  implementation(libs.coil.compose)
+  implementation(libs.coil.network.okhttp)
+  implementation(libs.coil.svg)
+
   // Static analysis
   detektPlugins(libs.detekt.rules.ktlint.wrapper)
 }

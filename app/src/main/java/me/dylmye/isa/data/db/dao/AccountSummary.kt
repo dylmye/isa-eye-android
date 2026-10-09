@@ -8,4 +8,5 @@ data class AccountSummary(
   val providerId: String,
   val providerName: String,
   val providerColour: String,
+  val providerIconUrl: String?,
 )

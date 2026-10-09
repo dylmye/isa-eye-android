@@ -14,6 +14,7 @@ interface ProductDao {
       "p.productTypeId AS productTypeId, " +
       "pr._id AS providerId, " +
       "pr.name AS providerName, " +
+      "pr.iconRelativeUrl AS providerIconUrl, " +
       "pr.colour AS providerColour " +
       "FROM products p " +
       "JOIN providers pr ON pr._id = p.providerId " +

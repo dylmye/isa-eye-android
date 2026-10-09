@@ -15,6 +15,7 @@ class AccountsUiStateTest {
         providerId = "lloyds",
         providerName = "Lloyds Bank",
         providerColour = "#006A4D",
+        providerIconUrl = "https://example.com/lloyds.svg",
       )
 
     val item = summary.toListItemUiState()
@@ -23,6 +24,7 @@ class AccountsUiStateTest {
     assertEquals("Cash ISA", item.name)
     assertEquals("Lloyds Bank", item.providerName)
     assertEquals("#006A4D", item.providerColour)
+    assertEquals("https://example.com/lloyds.svg", item.providerIconUrl)
     assertEquals(0L, item.balancePence)
   }
 }

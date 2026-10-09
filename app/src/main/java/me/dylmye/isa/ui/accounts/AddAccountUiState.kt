@@ -7,7 +7,7 @@ enum class AddAccountStep {
 }
 
 /** A selectable option shown in a picker. */
-data class PickerOption(val id: String, val label: String)
+data class PickerOption(val id: String, val label: String, val description: String? = null)
 
 /** Immutable snapshot of everything the add-account flow needs to render. */
 data class AddAccountUiState(

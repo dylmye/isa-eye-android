@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
@@ -131,8 +132,20 @@ private fun AccountRow(
     ListItem(
       headlineContent = { Text(account.name) },
       supportingContent = { Text(account.providerName) },
-      leadingContent = { ProviderAvatar(provider = account.providerName, tint = tint) },
-      trailingContent = { Text(formatGbp(account.balancePence)) },
+      leadingContent = {
+        ProviderAvatar(
+          provider = account.providerName,
+          tint = tint,
+          iconUrl = account.providerIconUrl,
+        )
+      },
+      trailingContent = {
+        Text(
+          text = formatGbp(account.balancePence),
+          style = MaterialTheme.typography.titleLarge,
+          fontWeight = FontWeight.SemiBold,
+        )
+      },
       colors = ListItemDefaults.colors(containerColor = Color.Transparent),
     )
   }

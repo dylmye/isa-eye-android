@@ -2,6 +2,7 @@ package me.dylmye.isa.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -12,19 +13,44 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import coil3.compose.SubcomposeAsyncImage
 
 /**
- * Circular avatar showing the initial of an account provider, tinted with its brand colour.
- *
- * The letter colour is chosen automatically to stay legible against the tint.
+ * Circular avatar for an account provider: the provider's icon when a URL is available, otherwise
+ * its initial on a tinted circle.
  */
 @Composable
-fun ProviderAvatar(provider: String, tint: Color, modifier: Modifier = Modifier, size: Dp = 40.dp) {
+fun ProviderAvatar(
+  provider: String,
+  tint: Color,
+  modifier: Modifier = Modifier,
+  size: Dp = 40.dp,
+  iconUrl: String? = null,
+) {
+  val avatarModifier = modifier.size(size).clip(CircleShape)
+  if (iconUrl.isNullOrBlank()) {
+    LetterAvatar(provider = provider, tint = tint, modifier = avatarModifier)
+  } else {
+    SubcomposeAsyncImage(
+      model = iconUrl,
+      contentDescription = provider,
+      modifier = avatarModifier,
+      contentScale = ContentScale.Crop,
+      loading = { LetterAvatar(provider = provider, tint = tint) },
+      error = { LetterAvatar(provider = provider, tint = tint) },
+    )
+  }
+}
+
+/** Fallback avatar: the provider's initial on a circle filled with its brand colour. */
+@Composable
+private fun LetterAvatar(provider: String, tint: Color, modifier: Modifier = Modifier) {
   val initial = provider.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "?"
   Box(
-    modifier = modifier.size(size).clip(CircleShape).background(tint),
+    modifier = modifier.fillMaxSize().clip(CircleShape).background(tint),
     contentAlignment = Alignment.Center,
   ) {
     Text(

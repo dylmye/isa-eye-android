@@ -20,6 +20,7 @@ data class AccountListItemUiState(
   val providerName: String,
   val providerColour: String,
   val balancePence: Long = 0L,
+  val providerIconUrl: String? = null,
 )
 
 /** Maps a flattened data-layer row into its UI representation. */
@@ -30,4 +31,5 @@ internal fun AccountSummary.toListItemUiState(): AccountListItemUiState = Accoun
   providerColour = providerColour,
   // Placeholder until the current tax year's allowance is modelled.
   balancePence = 0L,
+  providerIconUrl = providerIconUrl,
 )

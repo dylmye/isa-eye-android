@@ -333,7 +333,18 @@ private fun OptionDropdownField(
     ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
       options.forEach { option ->
         DropdownMenuItem(
-          text = { Text(option.label) },
+          text = {
+            Column {
+              Text(option.label)
+              option.description?.let { description ->
+                Text(
+                  text = description,
+                  style = MaterialTheme.typography.bodySmall,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+              }
+            }
+          },
           onClick = {
             onSelected(option.id)
             expanded = false

@@ -46,7 +46,7 @@ class AddAccountViewModel(private val repository: AccountRepository) : ViewModel
         rulesetOptions = rulesets.map { PickerOption(it.id, it.id) },
         // Default to the most recent tax year, matching the web app.
         selectedRulesetId = draft.rulesetId ?: rulesets.lastOrNull()?.id,
-        productTypeOptions = productTypes.map { PickerOption(it.id, it.name) },
+        productTypeOptions = productTypes.map { PickerOption(it.id, it.name, it.shortDescription) },
         selectedProductTypeId = draft.productTypeId,
         flexible = draft.flexible,
         isSaving = draft.isSaving,
