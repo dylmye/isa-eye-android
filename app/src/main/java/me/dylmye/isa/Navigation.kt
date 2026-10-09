@@ -45,10 +45,13 @@ private val AppTabs =
     AppTab(Help, "Help", HelpIcon),
   )
 
+/** Chooses the tab shown on launch: Insights once an account exists, Accounts until then. */
+internal fun launchTab(hasAccount: Boolean): NavKey = if (hasAccount) Insights else Accounts
+
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
-fun MainNavigation() {
-  val backStack = remember { TopLevelBackStack<NavKey>(Accounts) }
+fun MainNavigation(startTab: NavKey = Accounts) {
+  val backStack = remember { TopLevelBackStack<NavKey>(startTab) }
 
   val windowAdaptiveInfo = currentWindowAdaptiveInfoV2()
   val directive = remember(windowAdaptiveInfo) {

@@ -19,13 +19,15 @@ class MainActivity : ComponentActivity() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
       window.isNavigationBarContrastEnforced = false
     }
+    // Read synchronously so the right tab shows on the first frame, with no database round trip.
+    val hasAccount = (application as IsaEyeApplication).userPreferences.hasAccount
     setContent {
       ISAEyeTheme {
         Surface(
           modifier = Modifier.fillMaxSize(),
           color = MaterialTheme.colorScheme.background,
         ) {
-          MainNavigation()
+          MainNavigation(startTab = launchTab(hasAccount))
         }
       }
     }
