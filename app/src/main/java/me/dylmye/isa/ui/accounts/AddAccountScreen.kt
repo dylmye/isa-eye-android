@@ -27,7 +27,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
@@ -277,30 +276,21 @@ private fun ProviderField(
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  OutlinedCard(onClick = onClick, modifier = modifier.fillMaxWidth()) {
-    Row(
-      modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-      verticalAlignment = Alignment.CenterVertically,
-    ) {
-      Column(Modifier.weight(1f)) {
-        Text(
-          text = "Bank",
-          style = MaterialTheme.typography.labelMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-          text = selected?.label ?: "Select a bank",
-          style = MaterialTheme.typography.bodyLarge,
-          color =
-            if (selected == null) {
-              MaterialTheme.colorScheme.onSurfaceVariant
-            } else {
-              MaterialTheme.colorScheme.onSurface
-            },
-        )
-      }
-      ExposedDropdownMenuDefaults.TrailingIcon(expanded = false)
-    }
+  // A read-only text field (styled like the other inputs) whose anchor opens the picker sheet.
+  ExposedDropdownMenuBox(
+    expanded = false,
+    onExpandedChange = { onClick() },
+    modifier = modifier.fillMaxWidth(),
+  ) {
+    OutlinedTextField(
+      value = selected?.label ?: "",
+      onValueChange = {},
+      readOnly = true,
+      label = { Text("Bank") },
+      trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = false) },
+      modifier =
+        Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
+    )
   }
 }
 
