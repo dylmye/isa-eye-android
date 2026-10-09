@@ -3,8 +3,20 @@ package me.dylmye.isa.data
 import kotlinx.coroutines.flow.Flow
 import me.dylmye.isa.data.db.IsaDatabase
 import me.dylmye.isa.data.db.dao.AccountSummary
+import me.dylmye.isa.data.db.entity.ProductEntity
+import me.dylmye.isa.data.db.entity.ProductTypeEntity
+import me.dylmye.isa.data.db.entity.ProviderEntity
+import me.dylmye.isa.data.db.entity.RulesetEntity
 
 /** Read/write access to ISA accounts and the reference data that supports them. */
 class AccountRepository(private val database: IsaDatabase) {
   fun observeAccounts(): Flow<List<AccountSummary>> = database.productDao().observeSummaries()
+
+  fun observeProviders(): Flow<List<ProviderEntity>> = database.providerDao().observeAll()
+
+  fun observeRulesets(): Flow<List<RulesetEntity>> = database.rulesetDao().observeAll()
+
+  fun observeProductTypes(): Flow<List<ProductTypeEntity>> = database.productTypeDao().observeAll()
+
+  suspend fun addProduct(product: ProductEntity) = database.productDao().upsert(product)
 }

@@ -18,8 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.dropUnlessResumed
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import me.dylmye.isa.ui.accounts.AccountDetailPlaceholder
 import me.dylmye.isa.ui.accounts.AccountDetailScreen
@@ -78,6 +80,12 @@ fun MainNavigation() {
         backStack = backStack.backStack,
         onBack = { backStack.removeLast() },
         sceneStrategies = listOf(listDetailStrategy),
+        // Scope ViewModels to their NavEntry so the add-account draft resets each time the flow opens.
+        entryDecorators =
+          listOf(
+            rememberSaveableStateHolderNavEntryDecorator(),
+            rememberViewModelStoreNavEntryDecorator(),
+          ),
         modifier = Modifier.padding(innerPadding),
         entryProvider = entryProvider {
           entry<Accounts>(
@@ -91,7 +99,7 @@ fun MainNavigation() {
           }
           entry<Insights> { InsightsScreen() }
           entry<Help> { HelpScreen() }
-          entry<AddAccount> { AddAccountScreen() }
+          entry<AddAccount> { AddAccountScreen(onClose = { backStack.removeLast() }) }
         },
       )
     }

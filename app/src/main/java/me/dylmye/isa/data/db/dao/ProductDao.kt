@@ -22,5 +22,8 @@ interface ProductDao {
   fun observeSummaries(): Flow<List<AccountSummary>>
 
   @Upsert
+  suspend fun upsert(product: ProductEntity)
+
+  @Upsert
   suspend fun upsertAll(products: List<ProductEntity>)
 }
