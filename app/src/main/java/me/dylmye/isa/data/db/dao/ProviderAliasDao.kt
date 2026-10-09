@@ -11,6 +11,9 @@ interface ProviderAliasDao {
   @Query("SELECT * FROM providerAliases WHERE providerId = :providerId ORDER BY alias")
   fun observeForProvider(providerId: String): Flow<List<ProviderAliasEntity>>
 
+  @Query("SELECT * FROM providerAliases ORDER BY alias")
+  fun observeAll(): Flow<List<ProviderAliasEntity>>
+
   @Upsert
   suspend fun upsertAll(aliases: List<ProviderAliasEntity>)
 }

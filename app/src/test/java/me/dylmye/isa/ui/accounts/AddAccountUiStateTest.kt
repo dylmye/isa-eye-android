@@ -30,4 +30,13 @@ class AddAccountUiStateTest {
     assertFalse(AddAccountUiState().canSave)
     assertTrue(AddAccountUiState(selectedProductTypeId = "CASH").canSave)
   }
+
+  @Test
+  fun matches_checksLabelAndSearchTerms() {
+    val option = PickerOption("lloyds", "Lloyds Bank", searchTerms = listOf("lloyds tsb", "tsb"))
+
+    assertTrue(option.matches("lloyd"))
+    assertTrue(option.matches("TSB"))
+    assertFalse(option.matches("barclays"))
+  }
 }

@@ -34,14 +34,23 @@ class AddAccountViewModel(private val repository: AccountRepository) : ViewModel
   val uiState: StateFlow<AddAccountUiState> =
     combine(
       repository.observeProviders(),
+      repository.observeProviderAliases(),
       repository.observeRulesets(),
       repository.observeProductTypes(),
       draft,
-    ) { providers, rulesets, productTypes, draft ->
+    ) { providers, aliases, rulesets, productTypes, draft ->
+      val aliasesByProvider = aliases.groupBy { it.providerId }
       AddAccountUiState(
         step = draft.step,
         nickname = draft.nickname,
-        providerOptions = providers.map { PickerOption(it.id, it.name) },
+        providerOptions =
+          providers.map { provider ->
+            PickerOption(
+              id = provider.id,
+              label = provider.name,
+              searchTerms = aliasesByProvider[provider.id].orEmpty().map { it.alias },
+            )
+          },
         selectedProviderId = draft.providerId,
         rulesetOptions = rulesets.map { PickerOption(it.id, it.id) },
         // Default to the most recent tax year, matching the web app.

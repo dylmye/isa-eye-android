@@ -5,6 +5,7 @@ import me.dylmye.isa.data.db.IsaDatabase
 import me.dylmye.isa.data.db.dao.AccountSummary
 import me.dylmye.isa.data.db.entity.ProductEntity
 import me.dylmye.isa.data.db.entity.ProductTypeEntity
+import me.dylmye.isa.data.db.entity.ProviderAliasEntity
 import me.dylmye.isa.data.db.entity.ProviderEntity
 import me.dylmye.isa.data.db.entity.RulesetEntity
 
@@ -13,6 +14,9 @@ class AccountRepository(private val database: IsaDatabase) {
   fun observeAccounts(): Flow<List<AccountSummary>> = database.productDao().observeSummaries()
 
   fun observeProviders(): Flow<List<ProviderEntity>> = database.providerDao().observeAll()
+
+  fun observeProviderAliases(): Flow<List<ProviderAliasEntity>> =
+    database.providerAliasDao().observeAll()
 
   fun observeRulesets(): Flow<List<RulesetEntity>> = database.rulesetDao().observeAll()
 

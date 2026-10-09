@@ -357,7 +357,7 @@ private fun ProviderPickerSheet(
     if (query.isBlank()) {
       options
     } else {
-      options.filter { it.label.contains(query, ignoreCase = true) }
+      options.filter { it.matches(query) }
     }
   }
 

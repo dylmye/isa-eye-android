@@ -6,8 +6,20 @@ enum class AddAccountStep {
   FollowUp,
 }
 
-/** A selectable option shown in a picker. */
-data class PickerOption(val id: String, val label: String, val description: String? = null)
+/** A selectable option shown in a picker. [searchTerms] holds extra text (e.g. aliases) to match. */
+data class PickerOption(
+  val id: String,
+  val label: String,
+  val description: String? = null,
+  val searchTerms: List<String> = emptyList(),
+)
+
+/** Whether this option matches a search [query] against its label or any of its search terms. */
+fun PickerOption.matches(query: String): Boolean {
+  val matchesLabel = label.contains(query, ignoreCase = true)
+  val matchesTerm = searchTerms.any { it.contains(query, ignoreCase = true) }
+  return matchesLabel || matchesTerm
+}
 
 /** Immutable snapshot of everything the add-account flow needs to render. */
 data class AddAccountUiState(
