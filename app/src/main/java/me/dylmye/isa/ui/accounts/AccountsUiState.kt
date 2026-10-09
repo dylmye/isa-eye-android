@@ -10,7 +10,15 @@ import me.dylmye.isa.data.db.dao.AccountSummary
  */
 data class AccountsUiState(
   val accounts: List<AccountListItemUiState> = emptyList(),
+  val ruleset: RulesetState = RulesetState(),
   val isLoading: Boolean = false,
+)
+
+/** The tax year the accounts view is scoped to, and whether the user can step either way. */
+data class RulesetState(
+  val current: String? = null,
+  val canGoBack: Boolean = false,
+  val canGoForward: Boolean = false,
 )
 
 /** A single account row in the list. */
@@ -33,3 +41,17 @@ internal fun AccountSummary.toListItemUiState(): AccountListItemUiState = Accoun
   balancePence = 0L,
   providerIconUrl = providerIconUrl,
 )
+
+/**
+ * Resolves the selected ruleset from [selectedId], falling back to the latest one. An id that is no
+ * longer present (e.g. after a seed change) also falls back to the latest.
+ */
+internal fun resolveRuleset(rulesetIds: List<String>, selectedId: String?): RulesetState {
+  val current = selectedId?.takeIf { it in rulesetIds } ?: rulesetIds.lastOrNull()
+  val index = rulesetIds.indexOf(current)
+  return RulesetState(
+    current = current,
+    canGoBack = index > 0,
+    canGoForward = index in 0 until rulesetIds.lastIndex,
+  )
+}

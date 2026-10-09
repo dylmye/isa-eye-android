@@ -49,7 +49,14 @@ import java.util.Locale
 fun AccountsScreen(onAccountClick: (String) -> Unit, modifier: Modifier = Modifier) {
   val viewModel: AccountsViewModel = viewModel(factory = AccountsViewModel.Factory)
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-  AccountsContent(uiState = uiState, onAccountClick = onAccountClick, modifier = modifier)
+  AccountsContent(
+    uiState = uiState,
+    onAccountClick = onAccountClick,
+    onPreviousRuleset = viewModel::onPreviousRuleset,
+    onNextRuleset = viewModel::onNextRuleset,
+    onResetRuleset = viewModel::onResetRuleset,
+    modifier = modifier,
+  )
 }
 
 /**
@@ -61,12 +68,27 @@ fun AccountsScreen(onAccountClick: (String) -> Unit, modifier: Modifier = Modifi
 fun AccountsContent(
   uiState: AccountsUiState,
   onAccountClick: (String) -> Unit,
+  onPreviousRuleset: () -> Unit,
+  onNextRuleset: () -> Unit,
+  onResetRuleset: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
   Scaffold(
     modifier = modifier,
-    topBar = { TopAppBar(title = { Text("Accounts") }, scrollBehavior = scrollBehavior) },
+    topBar = {
+      Column {
+        TopAppBar(title = { Text("Accounts") }, scrollBehavior = scrollBehavior)
+        if (uiState.ruleset.current != null) {
+          RulesetHeader(
+            state = uiState.ruleset,
+            onPrevious = onPreviousRuleset,
+            onNext = onNextRuleset,
+            onReset = onResetRuleset,
+          )
+        }
+      }
+    },
     contentWindowInsets = WindowInsets(0.dp),
   ) { innerPadding ->
     val layoutDirection = LocalLayoutDirection.current
@@ -182,7 +204,13 @@ private fun String.toTint(): Color = runCatching { Color(toColorInt()) }.getOrDe
 @Composable
 private fun AccountsContentPreview() {
   ISAEyeTheme {
-    AccountsContent(uiState = PreviewAccountsUiState, onAccountClick = {})
+    AccountsContent(
+      uiState = PreviewAccountsUiState,
+      onAccountClick = {},
+      onPreviousRuleset = {},
+      onNextRuleset = {},
+      onResetRuleset = {},
+    )
   }
 }
 
@@ -190,7 +218,13 @@ private fun AccountsContentPreview() {
 @Composable
 private fun AccountsEmptyPreview() {
   ISAEyeTheme {
-    AccountsContent(uiState = AccountsUiState(), onAccountClick = {})
+    AccountsContent(
+      uiState = AccountsUiState(ruleset = RulesetState(current = "2026/2027", canGoBack = true)),
+      onAccountClick = {},
+      onPreviousRuleset = {},
+      onNextRuleset = {},
+      onResetRuleset = {},
+    )
   }
 }
 
@@ -203,4 +237,5 @@ private val PreviewAccountsUiState =
         AccountListItemUiState("3", "Help to Buy ISA", "Nationwide", "#004B87", 0),
         AccountListItemUiState("4", "Junior ISA", "Hargreaves Lansdown", "#003A70", 0),
       ),
+    ruleset = RulesetState(current = "2026/2027", canGoBack = true),
   )

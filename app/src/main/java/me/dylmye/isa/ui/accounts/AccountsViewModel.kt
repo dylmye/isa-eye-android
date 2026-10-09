@@ -5,23 +5,36 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import me.dylmye.isa.IsaEyeApplication
 import me.dylmye.isa.data.AccountRepository
 import me.dylmye.isa.data.UserPreferences
+import me.dylmye.isa.data.db.entity.RulesetEntity
 
 class AccountsViewModel(
-  repository: AccountRepository,
+  private val repository: AccountRepository,
   private val userPreferences: UserPreferences,
 ) : ViewModel() {
+  private val rulesets = MutableStateFlow<List<RulesetEntity>>(emptyList())
+
   val uiState: StateFlow<AccountsUiState> =
-    repository
-      .observeAccounts()
-      .map { summaries -> AccountsUiState(accounts = summaries.map { it.toListItemUiState() }) }
+    combine(
+      repository.observeAccounts(),
+      rulesets,
+      userPreferences.currentRulesetId,
+    ) { accounts, availableRulesets, selectedId ->
+      AccountsUiState(
+        accounts = accounts.map { it.toListItemUiState() },
+        ruleset = resolveRuleset(availableRulesets.map { it.id }, selectedId),
+        isLoading = false,
+      )
+    }
       .onEach { state ->
         // Remember that accounts exist so the next launch can open on Insights. This also heals
         // installs that predate the preference, and restored backups.
@@ -32,6 +45,25 @@ class AccountsViewModel(
         SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
         AccountsUiState(isLoading = true),
       )
+
+  init {
+    viewModelScope.launch {
+      repository.observeRulesets().collect { rulesets.value = it }
+    }
+  }
+
+  fun onPreviousRuleset() = shiftRuleset(-1)
+
+  fun onNextRuleset() = shiftRuleset(1)
+
+  fun onResetRuleset() = userPreferences.setCurrentRulesetId(null)
+
+  private fun shiftRuleset(delta: Int) {
+    val ids = rulesets.value.map { it.id }
+    val selected = resolveRuleset(ids, userPreferences.currentRulesetId.value).current
+    val target = ids.getOrNull(ids.indexOf(selected) + delta) ?: return
+    userPreferences.setCurrentRulesetId(target)
+  }
 
   companion object {
     private const val STOP_TIMEOUT_MILLIS = 5_000L
