@@ -2,15 +2,18 @@ package me.dylmye.isa.ui.accounts
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
@@ -27,10 +30,14 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,6 +48,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -48,10 +57,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
+import androidx.window.core.layout.WindowSizeClass
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
 
 /** Stateful entry point: owns the ViewModel and hoists its state into [AddAccountContent]. */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun AddAccountScreen(onClose: () -> Unit, modifier: Modifier = Modifier) {
   val viewModel: AddAccountViewModel = viewModel(factory = AddAccountViewModel.Factory)
@@ -73,6 +84,11 @@ fun AddAccountScreen(onClose: () -> Unit, modifier: Modifier = Modifier) {
     onBackCompleted = viewModel::onBack,
   )
 
+  val isCompact =
+    !currentWindowAdaptiveInfoV2().windowSizeClass.isWidthAtLeastBreakpoint(
+      WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND,
+    )
+
   AddAccountContent(
     uiState = uiState,
     onNicknameChange = viewModel::onNicknameChange,
@@ -84,6 +100,7 @@ fun AddAccountScreen(onClose: () -> Unit, modifier: Modifier = Modifier) {
     onBack = viewModel::onBack,
     onSave = viewModel::save,
     onClose = onClose,
+    isCompact = isCompact,
     modifier = modifier,
   )
 }
@@ -102,39 +119,54 @@ fun AddAccountContent(
   onBack: () -> Unit,
   onSave: () -> Unit,
   onClose: () -> Unit,
+  isCompact: Boolean,
   modifier: Modifier = Modifier,
 ) {
-  Scaffold(
-    modifier = modifier,
-    topBar = {
-      TopAppBar(
-        title = { Text("Add account") },
-        actions = { TextButton(onClick = onClose) { Text("Cancel") } },
-      )
-    },
-    contentWindowInsets = WindowInsets(0.dp),
-  ) { innerPadding ->
-    when (uiState.step) {
-      AddAccountStep.Details -> {
-        AddAccountDetailsContent(
-          uiState = uiState,
-          onNicknameChange = onNicknameChange,
-          onProviderSelected = onProviderSelected,
-          onRulesetSelected = onRulesetSelected,
-          onNext = onNext,
-          modifier = Modifier.padding(innerPadding),
-        )
-      }
+  Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Surface(
+      shape = if (isCompact) RectangleShape else MaterialTheme.shapes.extraLarge,
+      tonalElevation = if (isCompact) 0.dp else 6.dp,
+      modifier =
+        if (isCompact) {
+          Modifier.fillMaxSize()
+        } else {
+          Modifier.widthIn(max = 560.dp).fillMaxHeight(0.9f)
+        },
+    ) {
+      Scaffold(
+        containerColor = Color.Transparent,
+        topBar = {
+          TopAppBar(
+            title = { Text("Add account") },
+            actions = { TextButton(onClick = onClose) { Text("Cancel") } },
+          )
+        },
+        contentWindowInsets =
+          if (isCompact) ScaffoldDefaults.contentWindowInsets else WindowInsets(0.dp),
+      ) { innerPadding ->
+        when (uiState.step) {
+          AddAccountStep.Details -> {
+            AddAccountDetailsContent(
+              uiState = uiState,
+              onNicknameChange = onNicknameChange,
+              onProviderSelected = onProviderSelected,
+              onRulesetSelected = onRulesetSelected,
+              onNext = onNext,
+              modifier = Modifier.padding(innerPadding),
+            )
+          }
 
-      AddAccountStep.FollowUp -> {
-        AddAccountFollowUpContent(
-          uiState = uiState,
-          onProductTypeSelected = onProductTypeSelected,
-          onFlexibleChange = onFlexibleChange,
-          onBack = onBack,
-          onSave = onSave,
-          modifier = Modifier.padding(innerPadding),
-        )
+          AddAccountStep.FollowUp -> {
+            AddAccountFollowUpContent(
+              uiState = uiState,
+              onProductTypeSelected = onProductTypeSelected,
+              onFlexibleChange = onFlexibleChange,
+              onBack = onBack,
+              onSave = onSave,
+              modifier = Modifier.padding(innerPadding),
+            )
+          }
+        }
       }
     }
   }
@@ -373,6 +405,7 @@ private fun AddAccountDetailsPreview() {
           rulesetOptions = listOf(PickerOption("2025/2026", "2025/2026")),
           selectedRulesetId = "2025/2026",
         ),
+      isCompact = true,
       onNicknameChange = {},
       onProviderSelected = {},
       onRulesetSelected = {},
@@ -398,6 +431,7 @@ private fun AddAccountFollowUpPreview() {
           selectedProductTypeId = "CASH",
           flexible = true,
         ),
+      isCompact = false,
       onNicknameChange = {},
       onProviderSelected = {},
       onRulesetSelected = {},

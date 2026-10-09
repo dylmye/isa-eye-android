@@ -17,11 +17,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.scene.DialogSceneStrategy
 import androidx.navigation3.ui.NavDisplay
 import me.dylmye.isa.ui.accounts.AccountDetailPlaceholder
 import me.dylmye.isa.ui.accounts.AccountDetailScreen
@@ -53,6 +55,7 @@ fun MainNavigation() {
     calculatePaneScaffoldDirective(windowAdaptiveInfo).copy(horizontalPartitionSpacerSize = 0.dp)
   }
   val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>(directive = directive)
+  val dialogStrategy = remember { DialogSceneStrategy<NavKey>() }
 
   NavigationSuiteScaffold(
     navigationSuiteItems = {
@@ -76,32 +79,55 @@ fun MainNavigation() {
         )
       },
     ) { innerPadding ->
-      NavDisplay(
-        backStack = backStack.backStack,
-        onBack = { backStack.removeLast() },
-        sceneStrategies = listOf(listDetailStrategy),
-        // Scope ViewModels to their NavEntry so the add-account draft resets each time the flow opens.
-        entryDecorators =
-          listOf(
-            rememberSaveableStateHolderNavEntryDecorator(),
-            rememberViewModelStoreNavEntryDecorator(),
-          ),
+      AppNavDisplay(
+        backStack = backStack,
+        listDetailStrategy = listDetailStrategy,
+        dialogStrategy = dialogStrategy,
         modifier = Modifier.padding(innerPadding),
-        entryProvider = entryProvider {
-          entry<Accounts>(
-            metadata =
-              ListDetailSceneStrategy.listPane(detailPlaceholder = { AccountDetailPlaceholder() }),
-          ) {
-            AccountsScreen(onAccountClick = { name -> backStack.add(AccountDetail(name)) })
-          }
-          entry<AccountDetail>(metadata = ListDetailSceneStrategy.detailPane()) { detail ->
-            AccountDetailScreen(name = detail.name)
-          }
-          entry<Insights> { InsightsScreen() }
-          entry<Help> { HelpScreen() }
-          entry<AddAccount> { AddAccountScreen(onClose = { backStack.removeLast() }) }
-        },
       )
     }
   }
+}
+
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@Composable
+private fun AppNavDisplay(
+  backStack: TopLevelBackStack<NavKey>,
+  listDetailStrategy: ListDetailSceneStrategy<NavKey>,
+  dialogStrategy: DialogSceneStrategy<NavKey>,
+  modifier: Modifier = Modifier,
+) {
+  NavDisplay(
+    backStack = backStack.backStack,
+    onBack = { backStack.removeLast() },
+    sceneStrategies = listOf(dialogStrategy, listDetailStrategy),
+    // Scope ViewModels to their NavEntry so the add-account draft resets each time the flow opens.
+    entryDecorators =
+      listOf(
+        rememberSaveableStateHolderNavEntryDecorator(),
+        rememberViewModelStoreNavEntryDecorator(),
+      ),
+    modifier = modifier,
+    entryProvider = entryProvider {
+      entry<Accounts>(
+        metadata =
+          ListDetailSceneStrategy.listPane(detailPlaceholder = { AccountDetailPlaceholder() }),
+      ) {
+        AccountsScreen(onAccountClick = { name -> backStack.add(AccountDetail(name)) })
+      }
+      entry<AccountDetail>(metadata = ListDetailSceneStrategy.detailPane()) { detail ->
+        AccountDetailScreen(name = detail.name)
+      }
+      entry<Insights> { InsightsScreen() }
+      entry<Help> { HelpScreen() }
+      entry<AddAccount>(
+        metadata =
+          DialogSceneStrategy.dialog(
+            DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+          ),
+      ) {
+        AddAccountScreen(onClose = { backStack.removeLast() })
+      }
+    },
+  )
 }
