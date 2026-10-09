@@ -5,6 +5,12 @@
 //
 // Only reference data is seeded (providers + aliases, product types, rulesets + exceptions).
 // User data (products, balances) is not seeded.
+//
+// Each row is emitted as an idempotent upsert (`INSERT OR IGNORE` + `UPDATE`), so the same file
+// can seed a fresh database and refresh an existing one without `INSERT OR REPLACE`'s
+// delete-then-insert semantics (which would trigger ON DELETE CASCADE).
+//
+// Bump SeedData.SEED_VERSION when this data changes so existing installs re-run the seed.
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -17,51 +23,67 @@ const sqlString = (value) =>
 
 const statements = [];
 
+/**
+ * Emits an idempotent upsert for a row keyed by `_id`.
+ * @param table table name
+ * @param id already-quoted SQL literal for the primary key
+ * @param columns array of `[columnName, sqlLiteral]` for the non-key columns
+ */
+const upsert = (table, id, columns) => {
+  const names = ["_id", ...columns.map(([name]) => name)].join(", ");
+  const values = [id, ...columns.map(([, value]) => value)].join(", ");
+  statements.push(`INSERT OR IGNORE INTO ${table} (${names}) VALUES (${values});`);
+  const assignments = columns.map(([name, value]) => `${name} = ${value}`).join(", ");
+  statements.push(`UPDATE ${table} SET ${assignments} WHERE _id = ${id};`);
+};
+
 // Rulesets first (referenced by product types and ruleset exceptions).
 for (const ruleset of rulesets) {
-  statements.push(
-    "INSERT INTO rulesets (_id, sharedAllowancePence, startDate, endDate, notes) VALUES " +
-      `(${sqlString(ruleset.name)}, ${ruleset.sharedAllowancePence}, ${sqlString(ruleset.startDate)}, ` +
-      `${sqlString(ruleset.endDate)}, ${sqlString(ruleset.notes)});`,
-  );
+  upsert("rulesets", sqlString(ruleset.name), [
+    ["sharedAllowancePence", ruleset.sharedAllowancePence],
+    ["startDate", sqlString(ruleset.startDate)],
+    ["endDate", sqlString(ruleset.endDate)],
+    ["notes", sqlString(ruleset.notes)],
+  ]);
 }
 
 // Product types.
 for (const type of isaTypes) {
-  statements.push(
-    "INSERT INTO productTypes (_id, name, introducedWithRuleset, removedWithRuleset, " +
-      "shortDescription, longDescription) VALUES " +
-      `(${sqlString(type.code)}, ${sqlString(type.name)}, ${sqlString(type.introducedWithRuleset)}, ` +
-      `${sqlString(type.removedWithRuleset)}, ${sqlString(type.shortDescription)}, ` +
-      `${sqlString(type.longDescription)});`,
-  );
+  upsert("productTypes", sqlString(type.code), [
+    ["name", sqlString(type.name)],
+    ["introducedWithRuleset", sqlString(type.introducedWithRuleset)],
+    ["removedWithRuleset", sqlString(type.removedWithRuleset)],
+    ["shortDescription", sqlString(type.shortDescription)],
+    ["longDescription", sqlString(type.longDescription)],
+  ]);
 }
 
-// Providers and their aliases.
+// Providers and their aliases. Alias ids are content-based so they stay stable if the alias order
+// in the seed changes.
 for (const bank of banks) {
-  statements.push(
-    "INSERT INTO providers (_id, name, iconRelativeUrl, colour) VALUES " +
-      `(${sqlString(bank.id)}, ${sqlString(bank.name)}, ${sqlString(bank.iconRelativeUrl)}, ` +
-      `${sqlString(bank.colour ?? "#ffffff")});`,
-  );
-  (bank.aliases ?? []).forEach((alias, index) => {
-    statements.push(
-      "INSERT INTO providerAliases (_id, alias, providerId) VALUES " +
-        `(${sqlString(`${bank.id}-${index}`)}, ${sqlString(alias)}, ${sqlString(bank.id)});`,
-    );
-  });
+  upsert("providers", sqlString(bank.id), [
+    ["name", sqlString(bank.name)],
+    ["iconRelativeUrl", sqlString(bank.iconRelativeUrl)],
+    ["colour", sqlString(bank.colour ?? "#ffffff")],
+  ]);
+  for (const alias of bank.aliases ?? []) {
+    upsert("providerAliases", sqlString(`${bank.id}-${alias}`), [
+      ["alias", sqlString(alias)],
+      ["providerId", sqlString(bank.id)],
+    ]);
+  }
 }
 
 // Ruleset exceptions (product-type-specific allowances).
 for (const ruleset of rulesets) {
   for (const exception of ruleset.productSpecificRulesets ?? []) {
-    statements.push(
-      "INSERT INTO rulesetExceptions (_id, productTypeId, rulesetId, allowancePence, notes, " +
-        "includedInShared) VALUES " +
-        `(${sqlString(`${ruleset.name}-${exception.code}`)}, ${sqlString(exception.code)}, ` +
-        `${sqlString(ruleset.name)}, ${exception.allowancePence}, ${sqlString(exception.notes)}, ` +
-        `${exception.includedInOverall ? 1 : 0});`,
-    );
+    upsert("rulesetExceptions", sqlString(`${ruleset.name}-${exception.code}`), [
+      ["productTypeId", sqlString(exception.code)],
+      ["rulesetId", sqlString(ruleset.name)],
+      ["allowancePence", exception.allowancePence],
+      ["notes", sqlString(exception.notes)],
+      ["includedInShared", exception.includedInOverall ? 1 : 0],
+    ]);
   }
 }
 
