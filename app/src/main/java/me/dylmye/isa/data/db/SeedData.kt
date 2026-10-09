@@ -44,7 +44,7 @@ internal class SeedData(context: Context) {
 
   internal companion object {
     /** Bump when `seed/` changes so existing installs re-apply the seed. */
-    const val SEED_VERSION = 1
+    const val SEED_VERSION = 2
 
     private const val SEED_ASSET = "seed.sql"
     private const val SEED_ID = 1
