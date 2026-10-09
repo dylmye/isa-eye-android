@@ -4,7 +4,7 @@ package me.dylmye.isa.data.db.dao
 data class AccountSummary(
   val productId: String,
   val friendlyName: String,
-  val productTypeCode: String,
+  val productTypeId: String,
   val providerId: String,
   val providerName: String,
   val providerColour: String,

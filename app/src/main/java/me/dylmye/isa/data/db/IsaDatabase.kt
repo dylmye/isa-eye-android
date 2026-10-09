@@ -18,6 +18,7 @@ import me.dylmye.isa.data.db.entity.ProviderAliasEntity
 import me.dylmye.isa.data.db.entity.ProviderEntity
 import me.dylmye.isa.data.db.entity.RulesetEntity
 import me.dylmye.isa.data.db.entity.RulesetExceptionEntity
+import me.dylmye.isa.data.db.entity.SeedStateEntity
 
 @Database(
   entities = [
@@ -28,8 +29,9 @@ import me.dylmye.isa.data.db.entity.RulesetExceptionEntity
     ProductEntity::class,
     AnnualBalanceEntity::class,
     RulesetExceptionEntity::class,
+    SeedStateEntity::class,
   ],
-  version = 3,
+  version = 1,
   exportSchema = true,
 )
 abstract class IsaDatabase : RoomDatabase() {
@@ -54,7 +56,6 @@ abstract class IsaDatabase : RoomDatabase() {
       val applicationContext = context.applicationContext
       return Room.databaseBuilder(applicationContext, IsaDatabase::class.java, NAME)
         .addCallback(SeedData(applicationContext).callback)
-        .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
         .build()
     }
   }

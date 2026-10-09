@@ -11,7 +11,7 @@ class AccountsUiStateTest {
       AccountSummary(
         productId = "p1",
         friendlyName = "Cash ISA",
-        productTypeCode = "CASH",
+        productTypeId = "CASH",
         providerId = "lloyds",
         providerName = "Lloyds Bank",
         providerColour = "#006A4D",

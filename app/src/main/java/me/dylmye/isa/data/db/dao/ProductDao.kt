@@ -11,7 +11,7 @@ interface ProductDao {
   @Query(
     "SELECT p._id AS productId, " +
       "p.friendlyName AS friendlyName, " +
-      "p.productTypeCode AS productTypeCode, " +
+      "p.productTypeId AS productTypeId, " +
       "pr._id AS providerId, " +
       "pr.name AS providerName, " +
       "pr.colour AS providerColour " +
