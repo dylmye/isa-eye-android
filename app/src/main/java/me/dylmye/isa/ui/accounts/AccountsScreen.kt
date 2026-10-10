@@ -100,9 +100,21 @@ fun AccountsContent(
         bottom = innerPadding.calculateBottomPadding() + 88.dp,
       )
     when {
-      uiState.isLoading -> AccountsLoading(contentPadding)
-      uiState.accounts.isEmpty() -> AccountsEmpty(Modifier.fillMaxSize().padding(contentPadding))
-      else -> AccountsList(uiState.accounts, onAccountClick, scrollBehavior, contentPadding)
+      uiState.isLoading -> {
+        AccountsLoading(contentPadding)
+      }
+
+      uiState.accounts.isEmpty() -> {
+        AccountsEmpty(
+          hasAccounts = uiState.hasAccounts,
+          ruleset = uiState.ruleset.current,
+          modifier = Modifier.fillMaxSize().padding(contentPadding),
+        )
+      }
+
+      else -> {
+        AccountsList(uiState.accounts, onAccountClick, scrollBehavior, contentPadding)
+      }
     }
   }
 }
@@ -174,7 +186,13 @@ private fun AccountRow(
 }
 
 @Composable
-private fun AccountsEmpty(modifier: Modifier = Modifier) {
+private fun AccountsEmpty(hasAccounts: Boolean, ruleset: String?, modifier: Modifier = Modifier) {
+  val message =
+    if (hasAccounts) {
+      "No accounts were open in ${ruleset.orEmpty()}."
+    } else {
+      "Add an account to get started!"
+    }
   Box(modifier = modifier, contentAlignment = Alignment.Center) {
     Column(
       horizontalAlignment = Alignment.CenterHorizontally,
@@ -182,7 +200,7 @@ private fun AccountsEmpty(modifier: Modifier = Modifier) {
     ) {
       Text("Nothing to see here", style = MaterialTheme.typography.titleMedium)
       Text(
-        text = "Add an account to get started!",
+        text = message,
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,

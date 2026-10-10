@@ -5,6 +5,8 @@ data class AccountSummary(
   val productId: String,
   val friendlyName: String,
   val productTypeId: String,
+  val startTaxYear: String,
+  val endTaxYear: String?,
   val providerId: String,
   val providerName: String,
   val providerColour: String,

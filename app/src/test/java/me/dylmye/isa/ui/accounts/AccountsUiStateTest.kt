@@ -15,6 +15,8 @@ class AccountsUiStateTest {
         productId = "p1",
         friendlyName = "Cash ISA",
         productTypeId = "CASH",
+        startTaxYear = "2020/2021",
+        endTaxYear = null,
         providerId = "lloyds",
         providerName = "Lloyds Bank",
         providerColour = "#006A4D",
@@ -72,5 +74,30 @@ class AccountsUiStateTest {
     assertNull(empty.current)
     assertFalse(empty.canGoBack)
     assertFalse(empty.canGoForward)
+  }
+
+  @Test
+  fun isOpenDuringRuleset_includesAccountsOpenInTheTargetYear() {
+    // Still open, opened before the target.
+    assertTrue(isOpenDuringRuleset("2025/2026", "2020/2021", null))
+    // Opened in the target year.
+    assertTrue(isOpenDuringRuleset("2025/2026", "2025/2026", null))
+    // Closed in the target year.
+    assertTrue(isOpenDuringRuleset("2025/2026", "2020/2021", "2025/2026"))
+    // Closed after the target year.
+    assertTrue(isOpenDuringRuleset("2025/2026", "2020/2021", "2026/2027"))
+  }
+
+  @Test
+  fun isOpenDuringRuleset_excludesAccountsOpenedAfterOrClosedBefore() {
+    // Opened after the target.
+    assertFalse(isOpenDuringRuleset("2024/2025", "2025/2026", null))
+    // Closed before the target.
+    assertFalse(isOpenDuringRuleset("2025/2026", "2020/2021", "2024/2025"))
+  }
+
+  @Test
+  fun isOpenDuringRuleset_withBlankTarget_includesEverything() {
+    assertTrue(isOpenDuringRuleset("", "2025/2026", "2025/2026"))
   }
 }

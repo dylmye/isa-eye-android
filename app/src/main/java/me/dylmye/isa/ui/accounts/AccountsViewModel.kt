@@ -29,9 +29,15 @@ class AccountsViewModel(
       rulesets,
       userPreferences.currentRulesetId,
     ) { accounts, availableRulesets, selectedId ->
+      val selection = resolveRuleset(availableRulesets.map { it.id }, selectedId)
+      val currentRuleset = selection.current.orEmpty()
       AccountsUiState(
-        accounts = accounts.map { it.toListItemUiState() },
-        ruleset = resolveRuleset(availableRulesets.map { it.id }, selectedId),
+        accounts =
+          accounts
+            .filter { isOpenDuringRuleset(currentRuleset, it.startTaxYear, it.endTaxYear) }
+            .map { it.toListItemUiState() },
+        ruleset = selection,
+        hasAccounts = accounts.isNotEmpty(),
         isLoading = false,
       )
     }

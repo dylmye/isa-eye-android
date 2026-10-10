@@ -11,6 +11,7 @@ import me.dylmye.isa.data.db.dao.AccountSummary
 data class AccountsUiState(
   val accounts: List<AccountListItemUiState> = emptyList(),
   val ruleset: RulesetState = RulesetState(),
+  val hasAccounts: Boolean = false,
   val isLoading: Boolean = false,
 )
 
@@ -55,3 +56,21 @@ internal fun resolveRuleset(rulesetIds: List<String>, selectedId: String?): Rule
     canGoForward = index in 0 until rulesetIds.lastIndex,
   )
 }
+
+/**
+ * Whether a tax year [target] falls within an account's open range: the account opened in or before
+ * [target] and either is still open or closed in or after [target]. A blank [target] includes all.
+ */
+internal fun isOpenDuringRuleset(
+  target: String,
+  startTaxYear: String,
+  endTaxYear: String?,
+): Boolean {
+  val targetYear = target.taxYearStart()
+  val startYear = startTaxYear.taxYearStart()
+  if (targetYear == null || startYear == null) return true
+  val endYear = endTaxYear?.taxYearStart()
+  return startYear <= targetYear && (endYear == null || targetYear <= endYear)
+}
+
+private fun String.taxYearStart(): Int? = substringBefore('/').toIntOrNull()

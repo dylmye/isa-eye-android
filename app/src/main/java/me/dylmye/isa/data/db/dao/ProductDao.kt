@@ -12,6 +12,8 @@ interface ProductDao {
     "SELECT p._id AS productId, " +
       "p.friendlyName AS friendlyName, " +
       "p.productTypeId AS productTypeId, " +
+      "p.startTaxYear AS startTaxYear, " +
+      "p.endTaxYear AS endTaxYear, " +
       "pr._id AS providerId, " +
       "pr.name AS providerName, " +
       "pr.iconRelativeUrl AS providerIconUrl, " +
