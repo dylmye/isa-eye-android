@@ -7,23 +7,48 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
+import me.dylmye.isa.ui.icons.edit
 
+/** Stateful entry point: owns the detail ViewModel and surfaces the edit action. */
+@Composable
+fun AccountDetailScreen(productId: String, onEdit: () -> Unit, modifier: Modifier = Modifier) {
+  val viewModel: AccountDetailViewModel =
+    viewModel(factory = AccountDetailViewModel.factory(productId))
+  val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  AccountDetailContent(name = uiState.name, onEdit = onEdit, modifier = modifier)
+}
+
+/** Stateless account detail pane. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AccountDetailScreen(name: String, modifier: Modifier = Modifier) {
+fun AccountDetailContent(name: String?, onEdit: () -> Unit, modifier: Modifier = Modifier) {
   Scaffold(
     modifier = modifier,
-    topBar = { TopAppBar(title = { Text(name) }) },
+    topBar = {
+      TopAppBar(
+        title = { Text(name.orEmpty()) },
+        actions = {
+          IconButton(onClick = onEdit) {
+            Icon(edit, contentDescription = "Edit account")
+          }
+        },
+      )
+    },
     contentWindowInsets = WindowInsets(0.dp),
   ) { innerPadding ->
     Box(
@@ -61,6 +86,6 @@ fun AccountDetailPlaceholder(modifier: Modifier = Modifier) {
 
 @FormFactorPreviews
 @Composable
-private fun AccountDetailScreenPreview() {
-  ISAEyeTheme { AccountDetailScreen(name = "Cash ISA 2025/26") }
+private fun AccountDetailContentPreview() {
+  ISAEyeTheme { AccountDetailContent(name = "Cash ISA", onEdit = {}) }
 }

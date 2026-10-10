@@ -11,6 +11,9 @@ interface ProductTypeDao {
   @Query("SELECT * FROM productTypes ORDER BY name")
   fun observeAll(): Flow<List<ProductTypeEntity>>
 
+  @Query("SELECT name FROM productTypes WHERE _id = :id")
+  suspend fun getName(id: String): String?
+
   @Upsert
   suspend fun upsertAll(productTypes: List<ProductTypeEntity>)
 }

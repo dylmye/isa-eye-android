@@ -22,6 +22,9 @@ interface ProductDao {
   )
   fun observeSummaries(): Flow<List<AccountSummary>>
 
+  @Query("SELECT * FROM products WHERE _id = :id")
+  fun observeById(id: String): Flow<ProductEntity?>
+
   @Upsert
   suspend fun upsert(product: ProductEntity)
 

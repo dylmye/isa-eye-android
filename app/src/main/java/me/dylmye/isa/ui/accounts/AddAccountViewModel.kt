@@ -85,7 +85,7 @@ class AddAccountViewModel(private val repository: AccountRepository) : ViewModel
     val product = buildProduct(uiState.value) ?: return
     draft.update { it.copy(isSaving = true) }
     viewModelScope.launch {
-      repository.addProduct(product)
+      repository.upsertProduct(product)
       savedEvents.send(AddAccountEvent.Saved)
     }
   }
@@ -103,7 +103,6 @@ class AddAccountViewModel(private val repository: AccountRepository) : ViewModel
       friendlyName =
         accountDisplayName(
           nickname = state.nickname,
-          providerName = state.selectedProvider?.label ?: providerId,
           productTypeName = state.selectedProductType?.label ?: productTypeId,
         ),
       productTypeId = productTypeId,

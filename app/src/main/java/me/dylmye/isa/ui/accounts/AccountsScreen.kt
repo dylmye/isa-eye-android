@@ -122,7 +122,7 @@ private fun AccountsList(
     verticalArrangement = Arrangement.spacedBy(12.dp),
   ) {
     items(accounts, key = { it.productId }) { account ->
-      AccountRow(account = account, onClick = { onAccountClick(account.name) })
+      AccountRow(account = account, onClick = { onAccountClick(account.productId) })
     }
   }
 }

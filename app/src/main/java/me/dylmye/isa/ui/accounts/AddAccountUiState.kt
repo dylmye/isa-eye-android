@@ -50,6 +50,6 @@ val AddAccountUiState.canContinue: Boolean
 val AddAccountUiState.canSave: Boolean
   get() = selectedProductTypeId != null
 
-/** The account name: the nickname, or provider + type when none was given. */
-fun accountDisplayName(nickname: String, providerName: String, productTypeName: String): String =
-  nickname.trim().ifEmpty { "$providerName $productTypeName" }
+/** The account name: the nickname, or the product type when none was given. */
+fun accountDisplayName(nickname: String, productTypeName: String): String =
+  nickname.trim().ifEmpty { productTypeName }

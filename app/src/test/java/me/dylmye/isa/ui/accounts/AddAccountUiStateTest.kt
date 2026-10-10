@@ -8,12 +8,12 @@ import org.junit.Test
 class AddAccountUiStateTest {
   @Test
   fun accountDisplayName_usesNicknameWhenPresent() {
-    assertEquals("My Cash ISA", accountDisplayName("My Cash ISA", "Lloyds Bank", "Cash ISA"))
+    assertEquals("My Cash ISA", accountDisplayName("My Cash ISA", "Cash ISA"))
   }
 
   @Test
-  fun accountDisplayName_fallsBackToProviderAndType() {
-    assertEquals("Lloyds Bank Cash ISA", accountDisplayName("   ", "Lloyds Bank", "Cash ISA"))
+  fun accountDisplayName_fallsBackToTheProductType() {
+    assertEquals("Cash ISA", accountDisplayName("   ", "Cash ISA"))
   }
 
   @Test

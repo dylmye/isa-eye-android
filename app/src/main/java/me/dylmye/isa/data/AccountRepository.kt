@@ -13,6 +13,8 @@ import me.dylmye.isa.data.db.entity.RulesetEntity
 class AccountRepository(private val database: IsaDatabase) {
   fun observeAccounts(): Flow<List<AccountSummary>> = database.productDao().observeSummaries()
 
+  fun observeProduct(id: String): Flow<ProductEntity?> = database.productDao().observeById(id)
+
   fun observeProviders(): Flow<List<ProviderEntity>> = database.providerDao().observeAll()
 
   fun observeProviderAliases(): Flow<List<ProviderAliasEntity>> =
@@ -22,5 +24,8 @@ class AccountRepository(private val database: IsaDatabase) {
 
   fun observeProductTypes(): Flow<List<ProductTypeEntity>> = database.productTypeDao().observeAll()
 
-  suspend fun addProduct(product: ProductEntity) = database.productDao().upsert(product)
+  /** The name of the product type [id], used to detect account names derived from the type. */
+  suspend fun productTypeName(id: String): String? = database.productTypeDao().getName(id)
+
+  suspend fun upsertProduct(product: ProductEntity) = database.productDao().upsert(product)
 }

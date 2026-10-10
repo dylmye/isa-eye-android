@@ -29,6 +29,7 @@ import me.dylmye.isa.ui.accounts.AccountDetailPlaceholder
 import me.dylmye.isa.ui.accounts.AccountDetailScreen
 import me.dylmye.isa.ui.accounts.AccountsScreen
 import me.dylmye.isa.ui.accounts.AddAccountScreen
+import me.dylmye.isa.ui.accounts.EditAccountScreen
 import me.dylmye.isa.ui.help.HelpScreen
 import me.dylmye.isa.ui.insights.InsightsScreen
 import me.dylmye.isa.ui.icons.add as AddIcon
@@ -116,10 +117,13 @@ private fun AppNavDisplay(
         metadata =
           ListDetailSceneStrategy.listPane(detailPlaceholder = { AccountDetailPlaceholder() }),
       ) {
-        AccountsScreen(onAccountClick = { name -> backStack.add(AccountDetail(name)) })
+        AccountsScreen(onAccountClick = { productId -> backStack.add(AccountDetail(productId)) })
       }
       entry<AccountDetail>(metadata = ListDetailSceneStrategy.detailPane()) { detail ->
-        AccountDetailScreen(name = detail.name)
+        AccountDetailScreen(
+          productId = detail.productId,
+          onEdit = { backStack.add(EditAccount(detail.productId)) },
+        )
       }
       entry<Insights> { InsightsScreen() }
       entry<Help> { HelpScreen() }
@@ -130,6 +134,14 @@ private fun AppNavDisplay(
           ),
       ) {
         AddAccountScreen(onClose = { backStack.removeLast() })
+      }
+      entry<EditAccount>(
+        metadata =
+          DialogSceneStrategy.dialog(
+            DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+          ),
+      ) { edit ->
+        EditAccountScreen(productId = edit.productId, onClose = { backStack.removeLast() })
       }
     },
   )
