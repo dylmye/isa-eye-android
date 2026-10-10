@@ -42,6 +42,7 @@ class AccountsUiStateTest {
     assertEquals("2026/2027", latest.current)
     assertTrue(latest.canGoBack)
     assertFalse(latest.canGoForward)
+    assertFalse(latest.canReset)
   }
 
   @Test
@@ -52,6 +53,7 @@ class AccountsUiStateTest {
     assertEquals("2025/2026", middle.current)
     assertTrue(middle.canGoBack)
     assertTrue(middle.canGoForward)
+    assertTrue(middle.canReset)
 
     val oldest = resolveRuleset(ids, selectedId = "2024/2025")
     assertFalse(oldest.canGoBack)
@@ -74,6 +76,7 @@ class AccountsUiStateTest {
     assertNull(empty.current)
     assertFalse(empty.canGoBack)
     assertFalse(empty.canGoForward)
+    assertFalse(empty.canReset)
   }
 
   @Test

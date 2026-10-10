@@ -20,6 +20,7 @@ data class RulesetState(
   val current: String? = null,
   val canGoBack: Boolean = false,
   val canGoForward: Boolean = false,
+  val canReset: Boolean = false,
 )
 
 /** A single account row in the list. */
@@ -54,6 +55,7 @@ internal fun resolveRuleset(rulesetIds: List<String>, selectedId: String?): Rule
     current = current,
     canGoBack = index > 0,
     canGoForward = index in 0 until rulesetIds.lastIndex,
+    canReset = current != rulesetIds.lastOrNull(),
   )
 }
 

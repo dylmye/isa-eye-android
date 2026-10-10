@@ -46,7 +46,7 @@ fun RulesetHeader(
     IconButton(onClick = onNext, enabled = state.canGoForward) {
       Icon(chevronForward, contentDescription = "Next ruleset")
     }
-    IconButton(onClick = onReset) {
+    IconButton(onClick = onReset, enabled = state.canReset) {
       Icon(settingsBackupRestore, contentDescription = "Reset to current ruleset")
     }
   }
@@ -57,7 +57,7 @@ fun RulesetHeader(
 private fun RulesetHeaderPreview() {
   ISAEyeTheme {
     RulesetHeader(
-      state = RulesetState(current = "2026/2027", canGoBack = true),
+      state = RulesetState(current = "2026/2027", canGoBack = true, canReset = true),
       onPrevious = {},
       onNext = {},
       onReset = {},
