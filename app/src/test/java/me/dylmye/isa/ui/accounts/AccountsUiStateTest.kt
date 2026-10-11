@@ -30,7 +30,7 @@ class AccountsUiStateTest {
     assertEquals("Lloyds Bank", item.providerName)
     assertEquals("#006A4D", item.providerColour)
     assertEquals("https://example.com/lloyds.svg", item.providerIconUrl)
-    assertEquals(0L, item.balancePence)
+    assertEquals(0L, item.contributionsPence)
   }
 
   @Test

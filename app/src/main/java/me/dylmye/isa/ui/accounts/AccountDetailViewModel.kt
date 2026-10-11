@@ -14,8 +14,8 @@ import me.dylmye.isa.data.AccountRepository
 import me.dylmye.isa.data.UserPreferences
 
 /**
- * Loads the selected account and its balances for the detail pane. The tax year comes from the same
- * preference the accounts list is scoped to, so the pane stays in step as the year changes.
+ * Loads the selected account and its contributions for the detail pane. The tax year comes from the
+ * same preference the accounts list is scoped to, so the pane stays in step as the year changes.
  */
 class AccountDetailViewModel(
   repository: AccountRepository,

@@ -29,7 +29,7 @@ data class AccountListItemUiState(
   val name: String,
   val providerName: String,
   val providerColour: String,
-  val balancePence: Long = 0L,
+  val contributionsPence: Long = 0L,
   val providerIconUrl: String? = null,
 )
 
@@ -39,8 +39,8 @@ internal fun AccountSummary.toListItemUiState(): AccountListItemUiState = Accoun
   name = friendlyName,
   providerName = providerName,
   providerColour = providerColour,
-  // Placeholder until the current tax year's allowance is modelled.
-  balancePence = 0L,
+  // Placeholder until the current tax year's contributions are recorded.
+  contributionsPence = 0L,
   providerIconUrl = providerIconUrl,
 )
 

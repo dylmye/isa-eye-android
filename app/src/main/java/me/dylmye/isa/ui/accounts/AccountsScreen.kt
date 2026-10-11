@@ -174,7 +174,7 @@ private fun AccountRow(
       },
       trailingContent = {
         Text(
-          text = formatGbp(account.balancePence),
+          text = formatGbp(account.contributionsPence),
           style = MaterialTheme.typography.titleLarge,
           fontWeight = FontWeight.SemiBold,
         )

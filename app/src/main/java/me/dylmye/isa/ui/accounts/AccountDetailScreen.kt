@@ -106,20 +106,20 @@ private fun AccountDetailGrid(
     horizontalArrangement = Arrangement.spacedBy(12.dp),
     verticalArrangement = Arrangement.spacedBy(12.dp),
   ) {
-    item(key = "balance") { BalanceCard(uiState) }
+    item(key = "contributions") { ContributionsCard(uiState) }
   }
 }
 
-/** The current tax year's balance, marked up or down against the previous year. */
+/** Contributions towards the allowance for the selected year, marked against the previous year. */
 @Composable
-private fun BalanceCard(uiState: AccountDetailUiState, modifier: Modifier = Modifier) {
+private fun ContributionsCard(uiState: AccountDetailUiState, modifier: Modifier = Modifier) {
   Card(modifier = modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
     Column(
       modifier = Modifier.padding(16.dp),
       verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
       Text(
-        text = "Current balance",
+        text = contributionLabel(uiState),
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
@@ -128,7 +128,7 @@ private fun BalanceCard(uiState: AccountDetailUiState, modifier: Modifier = Modi
         horizontalArrangement = Arrangement.spacedBy(8.dp),
       ) {
         Text(
-          text = formatGbp(uiState.balancePence),
+          text = formatGbp(uiState.contributionsPence),
           style = MaterialTheme.typography.headlineMedium,
           fontWeight = FontWeight.SemiBold,
         )
@@ -136,42 +136,44 @@ private fun BalanceCard(uiState: AccountDetailUiState, modifier: Modifier = Modi
           TrendIndicator(trend = trend, previousRuleset = uiState.previousRuleset)
         }
       }
-      Text(
-        text = uiState.ruleset.orEmpty(),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
     }
   }
 }
 
+/** Names the year the contributions are for, or "so far" while the latest tax year is in progress. */
+private fun contributionLabel(uiState: AccountDetailUiState): String = when {
+  uiState.ruleset == null -> "Contributions"
+  uiState.isLatestRuleset -> "Contributions so far"
+  else -> "Contributions for ${uiState.ruleset.orEmpty()}"
+}
+
 /**
- * Direction-only marker for the balance change: green when up, error red when down, neutral when
- * level. The spoken description names the year it is compared against.
+ * Direction-only marker for the change in contributions: green when up, error red when down,
+ * neutral when level. The spoken description names the year it is compared against.
  */
 @Composable
 private fun TrendIndicator(
-  trend: BalanceTrend,
+  trend: ContributionTrend,
   previousRuleset: String?,
   modifier: Modifier = Modifier,
 ) {
   val icon =
     when (trend) {
-      BalanceTrend.Up -> trendingUp
-      BalanceTrend.Down -> trendingDown
-      BalanceTrend.Flat -> trendingFlat
+      ContributionTrend.Up -> trendingUp
+      ContributionTrend.Down -> trendingDown
+      ContributionTrend.Flat -> trendingFlat
     }
   val tint =
     when (trend) {
-      BalanceTrend.Up -> if (isSystemInDarkTheme()) TrendUpDark else TrendUpLight
-      BalanceTrend.Down -> MaterialTheme.colorScheme.error
-      BalanceTrend.Flat -> MaterialTheme.colorScheme.onSurfaceVariant
+      ContributionTrend.Up -> if (isSystemInDarkTheme()) TrendUpDark else TrendUpLight
+      ContributionTrend.Down -> MaterialTheme.colorScheme.error
+      ContributionTrend.Flat -> MaterialTheme.colorScheme.onSurfaceVariant
     }
   val description =
     when (trend) {
-      BalanceTrend.Up -> "Up on ${previousRuleset.orEmpty()}"
-      BalanceTrend.Down -> "Down on ${previousRuleset.orEmpty()}"
-      BalanceTrend.Flat -> "Unchanged from ${previousRuleset.orEmpty()}"
+      ContributionTrend.Up -> "Up on ${previousRuleset.orEmpty()}"
+      ContributionTrend.Down -> "Down on ${previousRuleset.orEmpty()}"
+      ContributionTrend.Flat -> "Unchanged from ${previousRuleset.orEmpty()}"
     }
   Icon(
     imageVector = icon,
@@ -206,10 +208,11 @@ private fun AccountDetailContentPreview() {
       uiState =
         AccountDetailUiState(
           name = "Cash ISA",
-          balancePence = 125_000,
+          contributionsPence = 125_000,
           ruleset = "2026/2027",
           previousRuleset = "2025/2026",
-          trend = BalanceTrend.Up,
+          isLatestRuleset = true,
+          trend = ContributionTrend.Up,
         ),
       onEdit = {},
     )
@@ -218,15 +221,17 @@ private fun AccountDetailContentPreview() {
 
 @FormFactorPreviews
 @Composable
-private fun AccountDetailContentNoComparisonPreview() {
+private fun AccountDetailContentEarlierYearPreview() {
   ISAEyeTheme {
     AccountDetailContent(
       uiState =
         AccountDetailUiState(
           name = "Stocks & Shares ISA",
-          balancePence = 432_050,
-          ruleset = "2026/2027",
-          trend = BalanceTrend.Flat,
+          contributionsPence = 432_050,
+          ruleset = "2024/2025",
+          previousRuleset = "2023/2024",
+          isLatestRuleset = false,
+          trend = ContributionTrend.Down,
         ),
       onEdit = {},
     )

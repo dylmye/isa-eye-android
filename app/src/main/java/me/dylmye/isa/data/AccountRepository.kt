@@ -16,7 +16,7 @@ class AccountRepository(private val database: IsaDatabase) {
 
   fun observeProduct(id: String): Flow<ProductEntity?> = database.productDao().observeById(id)
 
-  /** Every recorded balance for [productId], one row per tax year it has been updated in. */
+  /** Every recorded contribution total for [productId], one row per tax year it has been updated in. */
   fun observeBalances(productId: String): Flow<List<AnnualBalanceEntity>> =
     database.annualBalanceDao().observeForProduct(productId)
 

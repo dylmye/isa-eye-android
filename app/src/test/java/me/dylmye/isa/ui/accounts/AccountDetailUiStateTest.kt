@@ -3,53 +3,56 @@ package me.dylmye.isa.ui.accounts
 import me.dylmye.isa.data.db.entity.AnnualBalanceEntity
 import me.dylmye.isa.data.db.entity.ProductEntity
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AccountDetailUiStateTest {
   private val rulesetIds = listOf("2024/2025", "2025/2026", "2026/2027")
 
   @Test
-  fun resolveAccountDetail_readsTheSelectedYearsBalanceAndComparesToThePrevious() {
+  fun resolveAccountDetail_readsTheSelectedYearsContributionsAndComparesToThePrevious() {
     val state =
       resolveAccountDetail(
         product = product(),
-        balances = listOf(balance("2025/2026", 100_000), balance("2026/2027", 125_000)),
+        balances = listOf(contribution("2025/2026", 100_000), contribution("2026/2027", 125_000)),
         rulesetIds = rulesetIds,
         selectedId = "2026/2027",
       )
 
     assertEquals("Cash ISA", state.name)
-    assertEquals(125_000L, state.balancePence)
+    assertEquals(125_000L, state.contributionsPence)
     assertEquals("2026/2027", state.ruleset)
     assertEquals("2025/2026", state.previousRuleset)
-    assertEquals(BalanceTrend.Up, state.trend)
+    assertEquals(ContributionTrend.Up, state.trend)
+    assertTrue(state.isLatestRuleset)
   }
 
   @Test
-  fun resolveAccountDetail_reportsDownWhenTheBalanceFalls() {
+  fun resolveAccountDetail_reportsDownWhenContributionsFall() {
     val state =
       resolveAccountDetail(
         product = product(),
-        balances = listOf(balance("2025/2026", 100_000), balance("2026/2027", 80_000)),
+        balances = listOf(contribution("2025/2026", 100_000), contribution("2026/2027", 80_000)),
         rulesetIds = rulesetIds,
         selectedId = "2026/2027",
       )
 
-    assertEquals(BalanceTrend.Down, state.trend)
+    assertEquals(ContributionTrend.Down, state.trend)
   }
 
   @Test
-  fun resolveAccountDetail_reportsFlatWhenTheBalanceIsUnchanged() {
+  fun resolveAccountDetail_reportsFlatWhenContributionsAreUnchanged() {
     val state =
       resolveAccountDetail(
         product = product(),
-        balances = listOf(balance("2025/2026", 100_000), balance("2026/2027", 100_000)),
+        balances = listOf(contribution("2025/2026", 100_000), contribution("2026/2027", 100_000)),
         rulesetIds = rulesetIds,
         selectedId = "2026/2027",
       )
 
-    assertEquals(BalanceTrend.Flat, state.trend)
+    assertEquals(ContributionTrend.Flat, state.trend)
   }
 
   @Test
@@ -57,7 +60,7 @@ class AccountDetailUiStateTest {
     val state =
       resolveAccountDetail(
         product = product(),
-        balances = listOf(balance("2026/2027", 125_000)),
+        balances = listOf(contribution("2026/2027", 125_000)),
         rulesetIds = rulesetIds,
         selectedId = "2026/2027",
       )
@@ -67,22 +70,23 @@ class AccountDetailUiStateTest {
   }
 
   @Test
-  fun resolveAccountDetail_omitsTheComparisonWhenThereIsNoEarlierRuleset() {
+  fun resolveAccountDetail_marksAnEarlierRulesetAsNotLatest() {
     val state =
       resolveAccountDetail(
         product = product(),
-        balances = listOf(balance("2024/2025", 50_000)),
+        balances = listOf(contribution("2024/2025", 50_000)),
         rulesetIds = rulesetIds,
         selectedId = "2024/2025",
       )
 
     assertEquals("2024/2025", state.ruleset)
+    assertFalse(state.isLatestRuleset)
     assertNull(state.previousRuleset)
     assertNull(state.trend)
   }
 
   @Test
-  fun resolveAccountDetail_defaultsToTheLatestRulesetAndZeroBalance() {
+  fun resolveAccountDetail_defaultsToTheLatestRulesetAndZeroContributions() {
     val state =
       resolveAccountDetail(
         product = product(),
@@ -92,7 +96,8 @@ class AccountDetailUiStateTest {
       )
 
     assertEquals("2026/2027", state.ruleset)
-    assertEquals(0L, state.balancePence)
+    assertTrue(state.isLatestRuleset)
+    assertEquals(0L, state.contributionsPence)
     assertNull(state.trend)
   }
 
@@ -106,7 +111,7 @@ class AccountDetailUiStateTest {
     flexible = false,
   )
 
-  private fun balance(rulesetId: String, pence: Long) = AnnualBalanceEntity(
+  private fun contribution(rulesetId: String, pence: Long) = AnnualBalanceEntity(
     productId = "p1",
     rulesetId = rulesetId,
     lastUpdatedDateUnix = 0L,
