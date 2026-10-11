@@ -7,20 +7,30 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import me.dylmye.isa.IsaEyeApplication
 import me.dylmye.isa.data.AccountRepository
+import me.dylmye.isa.data.UserPreferences
 
-/** Everything the account detail pane needs to render. */
-data class AccountDetailUiState(val name: String? = null)
-
-/** Loads the selected account for the detail pane (currently just its display name). */
-class AccountDetailViewModel(repository: AccountRepository, productId: String) : ViewModel() {
+/**
+ * Loads the selected account and its balances for the detail pane. The tax year comes from the same
+ * preference the accounts list is scoped to, so the pane stays in step as the year changes.
+ */
+class AccountDetailViewModel(
+  repository: AccountRepository,
+  userPreferences: UserPreferences,
+  productId: String,
+) : ViewModel() {
   val uiState: StateFlow<AccountDetailUiState> =
-    repository
-      .observeProduct(productId)
-      .map { product -> AccountDetailUiState(name = product?.friendlyName) }
+    combine(
+      repository.observeProduct(productId),
+      repository.observeBalances(productId),
+      repository.observeRulesets(),
+      userPreferences.currentRulesetId,
+    ) { product, balances, rulesets, selectedId ->
+      resolveAccountDetail(product, balances, rulesets.map { it.id }, selectedId)
+    }
       .stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
@@ -33,7 +43,11 @@ class AccountDetailViewModel(repository: AccountRepository, productId: String) :
     fun factory(productId: String) = viewModelFactory {
       initializer {
         val application = this[APPLICATION_KEY] as IsaEyeApplication
-        AccountDetailViewModel(application.accountRepository, productId)
+        AccountDetailViewModel(
+          application.accountRepository,
+          application.userPreferences,
+          productId,
+        )
       }
     }
   }

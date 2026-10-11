@@ -41,8 +41,7 @@ import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
 import me.dylmye.isa.ui.components.ProviderAvatar
 import me.dylmye.isa.ui.components.containerTint
-import java.text.NumberFormat
-import java.util.Locale
+import me.dylmye.isa.ui.formatGbp
 
 /** Stateful entry point: owns the ViewModel and hoists its state down into [AccountsContent]. */
 @Composable
@@ -207,11 +206,6 @@ private fun AccountsEmpty(hasAccounts: Boolean, ruleset: String?, modifier: Modi
       )
     }
   }
-}
-
-private fun formatGbp(pence: Long): String {
-  val format = NumberFormat.getCurrencyInstance(Locale.UK)
-  return format.format(pence / 100.0)
 }
 
 private val FallbackTint = Color(0xFF9E9E9E)

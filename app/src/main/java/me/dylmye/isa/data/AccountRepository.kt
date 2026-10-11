@@ -3,6 +3,7 @@ package me.dylmye.isa.data
 import kotlinx.coroutines.flow.Flow
 import me.dylmye.isa.data.db.IsaDatabase
 import me.dylmye.isa.data.db.dao.AccountSummary
+import me.dylmye.isa.data.db.entity.AnnualBalanceEntity
 import me.dylmye.isa.data.db.entity.ProductEntity
 import me.dylmye.isa.data.db.entity.ProductTypeEntity
 import me.dylmye.isa.data.db.entity.ProviderAliasEntity
@@ -14,6 +15,10 @@ class AccountRepository(private val database: IsaDatabase) {
   fun observeAccounts(): Flow<List<AccountSummary>> = database.productDao().observeSummaries()
 
   fun observeProduct(id: String): Flow<ProductEntity?> = database.productDao().observeById(id)
+
+  /** Every recorded balance for [productId], one row per tax year it has been updated in. */
+  fun observeBalances(productId: String): Flow<List<AnnualBalanceEntity>> =
+    database.annualBalanceDao().observeForProduct(productId)
 
   fun observeProviders(): Flow<List<ProviderEntity>> = database.providerDao().observeAll()
 
