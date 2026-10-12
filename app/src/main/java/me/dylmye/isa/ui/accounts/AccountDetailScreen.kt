@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,6 +38,7 @@ import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
 import me.dylmye.isa.ui.formatGbp
 import me.dylmye.isa.ui.icons.edit
+import me.dylmye.isa.ui.icons.quickReference
 import me.dylmye.isa.ui.icons.trendingDown
 import me.dylmye.isa.ui.icons.trendingFlat
 import me.dylmye.isa.ui.icons.trendingUp
@@ -107,7 +109,54 @@ private fun AccountDetailGrid(
     verticalArrangement = Arrangement.spacedBy(12.dp),
   ) {
     item(key = "contributions") { ContributionsCard(uiState) }
+    val description = uiState.longDescription
+    if (!description.isNullOrBlank()) {
+      item(key = "info") {
+        InfoCalloutCard(title = infoTitle(uiState.typeName), text = description)
+      }
+    }
   }
+}
+
+/**
+ * Callout explaining what this type of ISA is: titled after the product type, with its body drawn
+ * from the type's long description.
+ */
+@Composable
+private fun InfoCalloutCard(title: String, text: String, modifier: Modifier = Modifier) {
+  Card(
+    modifier = modifier.fillMaxWidth(),
+    shape = MaterialTheme.shapes.large,
+    colors =
+      CardDefaults.cardColors(
+        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+      ),
+  ) {
+    Row(
+      modifier = Modifier.padding(16.dp),
+      horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+      Icon(imageVector = quickReference, contentDescription = null, modifier = Modifier.size(24.dp))
+      Column(
+        modifier = Modifier.weight(1f),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+      ) {
+        Text(
+          text = title,
+          style = MaterialTheme.typography.titleSmall,
+          fontWeight = FontWeight.SemiBold,
+        )
+        Text(text = text, style = MaterialTheme.typography.bodyMedium)
+      }
+    }
+  }
+}
+
+/** Titles the callout after the ISA type, e.g. "All about Cash ISAs". */
+private fun infoTitle(typeName: String?): String {
+  val base = typeName.orEmpty().removeSuffix(" ISA").trim()
+  return if (base.isEmpty()) "All about ISAs" else "All about $base ISAs"
 }
 
 /** Contributions towards the allowance for the selected year, marked against the previous year. */
@@ -208,6 +257,10 @@ private fun AccountDetailContentPreview() {
       uiState =
         AccountDetailUiState(
           name = "Cash ISA",
+          typeName = "Cash ISA",
+          longDescription =
+            "A deposit account, where your cash is guaranteed. The rules for accessing the cash " +
+              "once deposited may differ by account.",
           contributionsPence = 125_000,
           ruleset = "2026/2027",
           previousRuleset = "2025/2026",

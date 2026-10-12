@@ -2,6 +2,7 @@ package me.dylmye.isa.ui.accounts
 
 import me.dylmye.isa.data.db.entity.AnnualBalanceEntity
 import me.dylmye.isa.data.db.entity.ProductEntity
+import me.dylmye.isa.data.db.entity.ProductTypeEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -16,6 +17,7 @@ class AccountDetailUiStateTest {
     val state =
       resolveAccountDetail(
         product = product(),
+        productTypes = emptyList(),
         balances = listOf(contribution("2025/2026", 100_000), contribution("2026/2027", 125_000)),
         rulesetIds = rulesetIds,
         selectedId = "2026/2027",
@@ -34,6 +36,7 @@ class AccountDetailUiStateTest {
     val state =
       resolveAccountDetail(
         product = product(),
+        productTypes = emptyList(),
         balances = listOf(contribution("2025/2026", 100_000), contribution("2026/2027", 80_000)),
         rulesetIds = rulesetIds,
         selectedId = "2026/2027",
@@ -47,6 +50,7 @@ class AccountDetailUiStateTest {
     val state =
       resolveAccountDetail(
         product = product(),
+        productTypes = emptyList(),
         balances = listOf(contribution("2025/2026", 100_000), contribution("2026/2027", 100_000)),
         rulesetIds = rulesetIds,
         selectedId = "2026/2027",
@@ -60,6 +64,7 @@ class AccountDetailUiStateTest {
     val state =
       resolveAccountDetail(
         product = product(),
+        productTypes = emptyList(),
         balances = listOf(contribution("2026/2027", 125_000)),
         rulesetIds = rulesetIds,
         selectedId = "2026/2027",
@@ -74,6 +79,7 @@ class AccountDetailUiStateTest {
     val state =
       resolveAccountDetail(
         product = product(),
+        productTypes = emptyList(),
         balances = listOf(contribution("2024/2025", 50_000)),
         rulesetIds = rulesetIds,
         selectedId = "2024/2025",
@@ -90,6 +96,7 @@ class AccountDetailUiStateTest {
     val state =
       resolveAccountDetail(
         product = product(),
+        productTypes = emptyList(),
         balances = emptyList(),
         rulesetIds = rulesetIds,
         selectedId = null,
@@ -101,6 +108,36 @@ class AccountDetailUiStateTest {
     assertNull(state.trend)
   }
 
+  @Test
+  fun resolveAccountDetail_carriesTheProductTypesNameAndLongDescription() {
+    val state =
+      resolveAccountDetail(
+        product = product(),
+        productTypes = listOf(productType()),
+        balances = emptyList(),
+        rulesetIds = rulesetIds,
+        selectedId = null,
+      )
+
+    assertEquals("Cash ISA", state.typeName)
+    assertEquals("A deposit account, where your cash is guaranteed.", state.longDescription)
+  }
+
+  @Test
+  fun resolveAccountDetail_omitsTypeDetailsWhenTheTypeIsUnknown() {
+    val state =
+      resolveAccountDetail(
+        product = product(),
+        productTypes = emptyList(),
+        balances = emptyList(),
+        rulesetIds = rulesetIds,
+        selectedId = null,
+      )
+
+    assertNull(state.typeName)
+    assertNull(state.longDescription)
+  }
+
   private fun product() = ProductEntity(
     id = "p1",
     startTaxYear = "2024/2025",
@@ -109,6 +146,15 @@ class AccountDetailUiStateTest {
     friendlyName = "Cash ISA",
     productTypeId = "CASH",
     flexible = false,
+  )
+
+  private fun productType() = ProductTypeEntity(
+    id = "CASH",
+    name = "Cash ISA",
+    introducedWithRuleset = "2008/2009",
+    removedWithRuleset = null,
+    shortDescription = "Earn interest on cash tax-free",
+    longDescription = "A deposit account, where your cash is guaranteed.",
   )
 
   private fun contribution(rulesetId: String, pence: Long) = AnnualBalanceEntity(

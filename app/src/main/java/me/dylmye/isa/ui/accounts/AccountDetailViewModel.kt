@@ -25,11 +25,12 @@ class AccountDetailViewModel(
   val uiState: StateFlow<AccountDetailUiState> =
     combine(
       repository.observeProduct(productId),
+      repository.observeProductTypes(),
       repository.observeBalances(productId),
       repository.observeRulesets(),
       userPreferences.currentRulesetId,
-    ) { product, balances, rulesets, selectedId ->
-      resolveAccountDetail(product, balances, rulesets.map { it.id }, selectedId)
+    ) { product, productTypes, balances, rulesets, selectedId ->
+      resolveAccountDetail(product, productTypes, balances, rulesets.map { it.id }, selectedId)
     }
       .stateIn(
         viewModelScope,
