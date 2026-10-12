@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,7 +32,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import me.dylmye.isa.theme.ISAEyeTheme
@@ -176,10 +179,19 @@ private fun ContributionsCard(uiState: AccountDetailUiState, modifier: Modifier 
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
       ) {
+        // The hero figure scales up to about three times the body heading, shrinking as needed to
+        // stay on a single line.
         Text(
           text = formatGbp(uiState.contributionsPence),
-          style = MaterialTheme.typography.headlineMedium,
-          fontWeight = FontWeight.SemiBold,
+          modifier = Modifier.weight(1f, fill = false),
+          autoSize =
+            TextAutoSize.StepBased(minFontSize = 28.sp, maxFontSize = 84.sp, stepSize = 4.sp),
+          style =
+            MaterialTheme.typography.headlineMedium.copy(
+              fontWeight = FontWeight.SemiBold,
+              lineHeight = TextUnit.Unspecified,
+            ),
+          maxLines = 1,
         )
         uiState.trend?.let { trend ->
           TrendIndicator(trend = trend, previousRuleset = uiState.previousRuleset)
