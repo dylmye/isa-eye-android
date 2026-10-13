@@ -1,21 +1,13 @@
 package me.dylmye.isa.ui.accounts
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.text.TextAutoSize
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,22 +21,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
-import me.dylmye.isa.ui.formatGbp
 import me.dylmye.isa.ui.icons.edit
-import me.dylmye.isa.ui.icons.quickReference
-import me.dylmye.isa.ui.icons.trendingDown
-import me.dylmye.isa.ui.icons.trendingFlat
-import me.dylmye.isa.ui.icons.trendingUp
 
 /** Stateful entry point: owns the detail ViewModel and surfaces the edit action. */
 @Composable
@@ -111,137 +94,19 @@ private fun AccountDetailGrid(
     horizontalArrangement = Arrangement.spacedBy(12.dp),
     verticalArrangement = Arrangement.spacedBy(12.dp),
   ) {
-    item(key = "contributions") { ContributionsCard(uiState) }
+    // Contributions take every column but one, leaving room for the actions card beside them; on a
+    // single-column phone the span collapses and every card is full width.
+    item(key = "contributions", span = { GridItemSpan((maxLineSpan - 1).coerceAtLeast(1)) }) {
+      ContributionsCard(uiState)
+    }
+    item(key = "actions") { ActionsCardPlaceholder() }
     val description = uiState.longDescription
     if (!description.isNullOrBlank()) {
-      item(key = "info") {
+      item(key = "info", span = { GridItemSpan(maxLineSpan) }) {
         InfoCalloutCard(title = infoTitle(uiState.typeName), text = description)
       }
     }
   }
-}
-
-/**
- * Callout explaining what this type of ISA is: titled after the product type, with its body drawn
- * from the type's long description.
- */
-@Composable
-private fun InfoCalloutCard(title: String, text: String, modifier: Modifier = Modifier) {
-  Card(
-    modifier = modifier.fillMaxWidth(),
-    shape = MaterialTheme.shapes.large,
-    colors =
-      CardDefaults.cardColors(
-        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-      ),
-  ) {
-    Row(
-      modifier = Modifier.padding(16.dp),
-      horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-      Icon(imageVector = quickReference, contentDescription = null, modifier = Modifier.size(24.dp))
-      Column(
-        modifier = Modifier.weight(1f),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-      ) {
-        Text(
-          text = title,
-          style = MaterialTheme.typography.titleSmall,
-          fontWeight = FontWeight.SemiBold,
-        )
-        Text(text = text, style = MaterialTheme.typography.bodyMedium)
-      }
-    }
-  }
-}
-
-/** Titles the callout after the ISA type, e.g. "All about Cash ISAs". */
-private fun infoTitle(typeName: String?): String {
-  val base = typeName.orEmpty().removeSuffix(" ISA").trim()
-  return if (base.isEmpty()) "All about ISAs" else "All about $base ISAs"
-}
-
-/** Contributions towards the allowance for the selected year, marked against the previous year. */
-@Composable
-private fun ContributionsCard(uiState: AccountDetailUiState, modifier: Modifier = Modifier) {
-  Card(modifier = modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
-    Column(
-      modifier = Modifier.padding(16.dp),
-      verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-      Text(
-        text = contributionLabel(uiState),
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-      ) {
-        // The hero figure scales up to about three times the body heading, shrinking as needed to
-        // stay on a single line.
-        Text(
-          text = formatGbp(uiState.contributionsPence),
-          modifier = Modifier.weight(1f, fill = false),
-          autoSize =
-            TextAutoSize.StepBased(minFontSize = 28.sp, maxFontSize = 84.sp, stepSize = 4.sp),
-          style =
-            MaterialTheme.typography.headlineMedium.copy(
-              fontWeight = FontWeight.SemiBold,
-              lineHeight = TextUnit.Unspecified,
-            ),
-          maxLines = 1,
-        )
-        uiState.trend?.let { trend ->
-          TrendIndicator(trend = trend, previousRuleset = uiState.previousRuleset)
-        }
-      }
-    }
-  }
-}
-
-/** Names the year the contributions are for, or "so far" while the latest tax year is in progress. */
-private fun contributionLabel(uiState: AccountDetailUiState): String = when {
-  uiState.ruleset == null -> "Contributions"
-  uiState.isLatestRuleset -> "Contributions so far"
-  else -> "Contributions for ${uiState.ruleset.orEmpty()}"
-}
-
-/**
- * Direction-only marker for the change in contributions: green when up, error red when down,
- * neutral when level. The spoken description names the year it is compared against.
- */
-@Composable
-private fun TrendIndicator(
-  trend: ContributionTrend,
-  previousRuleset: String?,
-  modifier: Modifier = Modifier,
-) {
-  val icon =
-    when (trend) {
-      ContributionTrend.Up -> trendingUp
-      ContributionTrend.Down -> trendingDown
-      ContributionTrend.Flat -> trendingFlat
-    }
-  val tint =
-    when (trend) {
-      ContributionTrend.Up -> if (isSystemInDarkTheme()) TrendUpDark else TrendUpLight
-      ContributionTrend.Down -> MaterialTheme.colorScheme.error
-      ContributionTrend.Flat -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
-  val description =
-    when (trend) {
-      ContributionTrend.Up -> "Up on ${previousRuleset.orEmpty()}"
-      ContributionTrend.Down -> "Down on ${previousRuleset.orEmpty()}"
-      ContributionTrend.Flat -> "Unchanged from ${previousRuleset.orEmpty()}"
-    }
-  Icon(
-    imageVector = icon,
-    contentDescription = description,
-    tint = tint,
-    modifier = modifier.size(24.dp),
-  )
 }
 
 @Composable
@@ -257,9 +122,6 @@ fun AccountDetailPlaceholder(modifier: Modifier = Modifier) {
     )
   }
 }
-
-private val TrendUpLight = Color(0xFF2E7D32)
-private val TrendUpDark = Color(0xFF81C784)
 
 @FormFactorPreviews
 @Composable
