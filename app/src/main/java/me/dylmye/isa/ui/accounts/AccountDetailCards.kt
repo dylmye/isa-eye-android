@@ -4,10 +4,13 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -22,6 +25,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.dylmye.isa.ui.formatGbp
+import me.dylmye.isa.ui.icons.balance
+import me.dylmye.isa.ui.icons.deleteForever
 import me.dylmye.isa.ui.icons.quickReference
 import me.dylmye.isa.ui.icons.trendingDown
 import me.dylmye.isa.ui.icons.trendingFlat
@@ -67,26 +72,46 @@ internal fun ContributionsCard(uiState: AccountDetailUiState, modifier: Modifier
 }
 
 /**
- * Placeholder for the account actions card. It occupies a single grid column, sitting beside the
- * contributions figure on wider layouts and stacking full-width on mobile.
+ * Actions for the selected account: recording this year's contributions, and deleting the account.
  */
 @Composable
-internal fun ActionsCardPlaceholder(modifier: Modifier = Modifier) {
+internal fun ActionsCard(
+  onUpdateContributions: () -> Unit = {},
+  onDeleteAccount: () -> Unit = {},
+  modifier: Modifier = Modifier,
+) {
   Card(modifier = modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
     Column(
       modifier = Modifier.padding(16.dp),
-      verticalArrangement = Arrangement.spacedBy(4.dp),
+      verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
       Text(
         text = "Actions",
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
-      Text(
-        text = "Coming soon",
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
+      Button(onClick = onUpdateContributions, modifier = Modifier.fillMaxWidth()) {
+        Icon(balance, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+        Text("Update contributions")
+      }
+      Button(
+        onClick = onDeleteAccount,
+        modifier = Modifier.fillMaxWidth(),
+        colors =
+          ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.error,
+            contentColor = MaterialTheme.colorScheme.onError,
+          ),
+      ) {
+        Icon(
+          deleteForever,
+          contentDescription = null,
+          modifier = Modifier.size(ButtonDefaults.IconSize),
+        )
+        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+        Text("Delete account")
+      }
     }
   }
 }

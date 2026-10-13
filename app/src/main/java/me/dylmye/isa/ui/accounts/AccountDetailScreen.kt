@@ -99,7 +99,7 @@ private fun AccountDetailGrid(
     item(key = "contributions", span = { GridItemSpan((maxLineSpan - 1).coerceAtLeast(1)) }) {
       ContributionsCard(uiState)
     }
-    item(key = "actions") { ActionsCardPlaceholder() }
+    item(key = "actions") { ActionsCard() }
     val description = uiState.longDescription
     if (!description.isNullOrBlank()) {
       item(key = "info", span = { GridItemSpan(maxLineSpan) }) {
