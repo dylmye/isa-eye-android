@@ -1,6 +1,7 @@
 package me.dylmye.isa.ui.accounts
 
 import me.dylmye.isa.data.db.dao.AccountSummary
+import me.dylmye.isa.data.db.entity.AnnualBalanceEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -9,28 +10,45 @@ import org.junit.Test
 
 class AccountsUiStateTest {
   @Test
-  fun toListItemUiState_mapsRow_andDefaultsBalanceToZero() {
-    val summary =
-      AccountSummary(
-        productId = "p1",
-        friendlyName = "Cash ISA",
-        productTypeId = "CASH",
-        startTaxYear = "2020/2021",
-        endTaxYear = null,
-        providerId = "lloyds",
-        providerName = "Lloyds Bank",
-        providerColour = "#006A4D",
-        providerIconUrl = "https://example.com/lloyds.svg",
-      )
-
-    val item = summary.toListItemUiState()
+  fun toListItemUiState_mapsRowAndCarriesTheContribution() {
+    val item = summary("p1").toListItemUiState(125_000)
 
     assertEquals("p1", item.productId)
     assertEquals("Cash ISA", item.name)
     assertEquals("Lloyds Bank", item.providerName)
     assertEquals("#006A4D", item.providerColour)
     assertEquals("https://example.com/lloyds.svg", item.providerIconUrl)
-    assertEquals(0L, item.contributionsPence)
+    assertEquals(125_000L, item.contributionsPence)
+  }
+
+  @Test
+  fun resolveAccountsUiState_showsTheContributionRecordedForTheSelectedYear() {
+    val state =
+      resolveAccountsUiState(
+        accounts = listOf(summary("p1"), summary("p2")),
+        balances = listOf(balance("p1", "2026/2027", 125_000), balance("p2", "2025/2026", 80_000)),
+        rulesetIds = listOf("2025/2026", "2026/2027"),
+        selectedId = "2026/2027",
+      )
+
+    assertEquals(listOf("p1", "p2"), state.accounts.map { it.productId })
+    assertEquals(125_000L, state.accounts.first { it.productId == "p1" }.contributionsPence)
+    // p2 has no figure for the selected year, so it falls back to zero.
+    assertEquals(0L, state.accounts.first { it.productId == "p2" }.contributionsPence)
+  }
+
+  @Test
+  fun resolveAccountsUiState_dropsAccountsClosedBeforeTheSelectedYear() {
+    val state =
+      resolveAccountsUiState(
+        accounts = listOf(summary("p1", endTaxYear = "2024/2025"), summary("p2")),
+        balances = emptyList(),
+        rulesetIds = listOf("2025/2026", "2026/2027"),
+        selectedId = "2026/2027",
+      )
+
+    assertEquals(listOf("p2"), state.accounts.map { it.productId })
+    assertTrue(state.hasAccounts)
   }
 
   @Test
@@ -103,4 +121,23 @@ class AccountsUiStateTest {
   fun isOpenDuringRuleset_withBlankTarget_includesEverything() {
     assertTrue(isOpenDuringRuleset("", "2025/2026", "2025/2026"))
   }
+
+  private fun summary(id: String, endTaxYear: String? = null) = AccountSummary(
+    productId = id,
+    friendlyName = "Cash ISA",
+    productTypeId = "CASH",
+    startTaxYear = "2020/2021",
+    endTaxYear = endTaxYear,
+    providerId = "lloyds",
+    providerName = "Lloyds Bank",
+    providerColour = "#006A4D",
+    providerIconUrl = "https://example.com/lloyds.svg",
+  )
+
+  private fun balance(productId: String, rulesetId: String, pence: Long) = AnnualBalanceEntity(
+    productId = productId,
+    rulesetId = rulesetId,
+    lastUpdatedDateUnix = 0L,
+    deductedFromAllowancePence = pence,
+  )
 }

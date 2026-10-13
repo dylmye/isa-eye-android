@@ -11,6 +11,9 @@ interface AnnualBalanceDao {
   @Query("SELECT * FROM annualBalances WHERE productId = :productId ORDER BY rulesetId")
   fun observeForProduct(productId: String): Flow<List<AnnualBalanceEntity>>
 
+  @Query("SELECT * FROM annualBalances")
+  fun observeAll(): Flow<List<AnnualBalanceEntity>>
+
   @Upsert
   suspend fun upsertAll(balances: List<AnnualBalanceEntity>)
 

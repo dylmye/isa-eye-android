@@ -20,6 +20,9 @@ class AccountRepository(private val database: IsaDatabase) {
   fun observeBalances(productId: String): Flow<List<AnnualBalanceEntity>> =
     database.annualBalanceDao().observeForProduct(productId)
 
+  /** Every recorded contribution total, across all accounts and tax years. */
+  fun observeBalances(): Flow<List<AnnualBalanceEntity>> = database.annualBalanceDao().observeAll()
+
   fun observeProviders(): Flow<List<ProviderEntity>> = database.providerDao().observeAll()
 
   fun observeProviderAliases(): Flow<List<ProviderAliasEntity>> =

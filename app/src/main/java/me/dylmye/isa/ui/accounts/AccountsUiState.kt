@@ -1,6 +1,7 @@
 package me.dylmye.isa.ui.accounts
 
 import me.dylmye.isa.data.db.dao.AccountSummary
+import me.dylmye.isa.data.db.entity.AnnualBalanceEntity
 
 /**
  * Immutable snapshot of everything the accounts list needs to render.
@@ -33,16 +34,46 @@ data class AccountListItemUiState(
   val providerIconUrl: String? = null,
 )
 
-/** Maps a flattened data-layer row into its UI representation. */
-internal fun AccountSummary.toListItemUiState(): AccountListItemUiState = AccountListItemUiState(
-  productId = productId,
-  name = friendlyName,
-  providerName = providerName,
-  providerColour = providerColour,
-  // Placeholder until the current tax year's contributions are recorded.
-  contributionsPence = 0L,
-  providerIconUrl = providerIconUrl,
-)
+/** Maps a flattened data-layer row into its UI representation, carrying [contributionsPence]. */
+internal fun AccountSummary.toListItemUiState(contributionsPence: Long): AccountListItemUiState =
+  AccountListItemUiState(
+    productId = productId,
+    name = friendlyName,
+    providerName = providerName,
+    providerColour = providerColour,
+    contributionsPence = contributionsPence,
+    providerIconUrl = providerIconUrl,
+  )
+
+/**
+ * Builds the list state from the account rows, their recorded [balances], the available [rulesetIds]
+ * and the [selectedId]. Accounts not open in the selected year are dropped, and each remaining row
+ * shows the contribution recorded for that year. [AccountsUiState.hasAccounts] counts every account,
+ * so the empty state can tell "no accounts" apart from "none open this year".
+ */
+internal fun resolveAccountsUiState(
+  accounts: List<AccountSummary>,
+  balances: List<AnnualBalanceEntity>,
+  rulesetIds: List<String>,
+  selectedId: String?,
+): AccountsUiState {
+  val selection = resolveRuleset(rulesetIds, selectedId)
+  val currentRuleset = selection.current.orEmpty()
+  val recorded =
+    balances.associate { (it.productId to it.rulesetId) to it.deductedFromAllowancePence }
+  val items =
+    accounts
+      .filter { isOpenDuringRuleset(currentRuleset, it.startTaxYear, it.endTaxYear) }
+      .map { account ->
+        account.toListItemUiState(recorded[account.productId to currentRuleset] ?: 0L)
+      }
+  return AccountsUiState(
+    accounts = items,
+    ruleset = selection,
+    hasAccounts = accounts.isNotEmpty(),
+    isLoading = false,
+  )
+}
 
 /**
  * Resolves the selected ruleset from [selectedId], falling back to the latest one. An id that is no

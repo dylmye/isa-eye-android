@@ -26,20 +26,11 @@ class AccountsViewModel(
   val uiState: StateFlow<AccountsUiState> =
     combine(
       repository.observeAccounts(),
+      repository.observeBalances(),
       rulesets,
       userPreferences.currentRulesetId,
-    ) { accounts, availableRulesets, selectedId ->
-      val selection = resolveRuleset(availableRulesets.map { it.id }, selectedId)
-      val currentRuleset = selection.current.orEmpty()
-      AccountsUiState(
-        accounts =
-          accounts
-            .filter { isOpenDuringRuleset(currentRuleset, it.startTaxYear, it.endTaxYear) }
-            .map { it.toListItemUiState() },
-        ruleset = selection,
-        hasAccounts = accounts.isNotEmpty(),
-        isLoading = false,
-      )
+    ) { accounts, balances, availableRulesets, selectedId ->
+      resolveAccountsUiState(accounts, balances, availableRulesets.map { it.id }, selectedId)
     }
       .onEach { state ->
         // Remember that accounts exist so the next launch can open on Insights. This also heals
