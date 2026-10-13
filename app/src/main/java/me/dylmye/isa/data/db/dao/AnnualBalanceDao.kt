@@ -13,4 +13,7 @@ interface AnnualBalanceDao {
 
   @Upsert
   suspend fun upsertAll(balances: List<AnnualBalanceEntity>)
+
+  @Upsert
+  suspend fun upsert(balance: AnnualBalanceEntity)
 }

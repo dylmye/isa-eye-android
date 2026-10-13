@@ -33,4 +33,9 @@ class AccountRepository(private val database: IsaDatabase) {
   suspend fun productTypeName(id: String): String? = database.productTypeDao().getName(id)
 
   suspend fun upsertProduct(product: ProductEntity) = database.productDao().upsert(product)
+
+  /** Records [balance] for its tax year, replacing any figure already stored for that year. */
+  suspend fun upsertBalance(balance: AnnualBalanceEntity) {
+    database.annualBalanceDao().upsert(balance)
+  }
 }

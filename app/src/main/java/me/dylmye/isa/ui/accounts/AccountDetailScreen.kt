@@ -31,11 +31,21 @@ import me.dylmye.isa.ui.icons.edit
 
 /** Stateful entry point: owns the detail ViewModel and surfaces the edit action. */
 @Composable
-fun AccountDetailScreen(productId: String, onEdit: () -> Unit, modifier: Modifier = Modifier) {
+fun AccountDetailScreen(
+  productId: String,
+  onEdit: () -> Unit,
+  onUpdateContributions: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
   val viewModel: AccountDetailViewModel =
     viewModel(factory = AccountDetailViewModel.factory(productId))
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-  AccountDetailContent(uiState = uiState, onEdit = onEdit, modifier = modifier)
+  AccountDetailContent(
+    uiState = uiState,
+    onEdit = onEdit,
+    onUpdateContributions = onUpdateContributions,
+    modifier = modifier,
+  )
 }
 
 /**
@@ -47,6 +57,7 @@ fun AccountDetailScreen(productId: String, onEdit: () -> Unit, modifier: Modifie
 fun AccountDetailContent(
   uiState: AccountDetailUiState,
   onEdit: () -> Unit,
+  onUpdateContributions: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -76,6 +87,7 @@ fun AccountDetailContent(
       uiState = uiState,
       contentPadding = contentPadding,
       scrollBehavior = scrollBehavior,
+      onUpdateContributions = onUpdateContributions,
     )
   }
 }
@@ -86,6 +98,7 @@ private fun AccountDetailGrid(
   uiState: AccountDetailUiState,
   contentPadding: PaddingValues,
   scrollBehavior: TopAppBarScrollBehavior,
+  onUpdateContributions: () -> Unit,
 ) {
   LazyVerticalGrid(
     columns = GridCells.Adaptive(minSize = 320.dp),
@@ -99,7 +112,7 @@ private fun AccountDetailGrid(
     item(key = "contributions", span = { GridItemSpan((maxLineSpan - 1).coerceAtLeast(1)) }) {
       ContributionsCard(uiState)
     }
-    item(key = "actions") { ActionsCard() }
+    item(key = "actions") { ActionsCard(onUpdateContributions = onUpdateContributions) }
     val description = uiState.longDescription
     if (!description.isNullOrBlank()) {
       item(key = "info", span = { GridItemSpan(maxLineSpan) }) {
@@ -142,6 +155,7 @@ private fun AccountDetailContentPreview() {
           trend = ContributionTrend.Up,
         ),
       onEdit = {},
+      onUpdateContributions = {},
     )
   }
 }
@@ -161,6 +175,7 @@ private fun AccountDetailContentEarlierYearPreview() {
           trend = ContributionTrend.Down,
         ),
       onEdit = {},
+      onUpdateContributions = {},
     )
   }
 }

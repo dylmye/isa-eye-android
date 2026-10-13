@@ -30,6 +30,7 @@ import me.dylmye.isa.ui.accounts.AccountDetailScreen
 import me.dylmye.isa.ui.accounts.AccountsScreen
 import me.dylmye.isa.ui.accounts.AddAccountScreen
 import me.dylmye.isa.ui.accounts.EditAccountScreen
+import me.dylmye.isa.ui.accounts.UpdateContributionsScreen
 import me.dylmye.isa.ui.help.HelpScreen
 import me.dylmye.isa.ui.insights.InsightsScreen
 import me.dylmye.isa.ui.icons.add as AddIcon
@@ -123,6 +124,7 @@ private fun AppNavDisplay(
         AccountDetailScreen(
           productId = detail.productId,
           onEdit = { backStack.add(EditAccount(detail.productId)) },
+          onUpdateContributions = { backStack.add(UpdateContributions(detail.productId)) },
         )
       }
       entry<Insights> { InsightsScreen() }
@@ -142,6 +144,17 @@ private fun AppNavDisplay(
           ),
       ) { edit ->
         EditAccountScreen(productId = edit.productId, onClose = { backStack.removeLast() })
+      }
+      entry<UpdateContributions>(
+        metadata =
+          DialogSceneStrategy.dialog(
+            DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+          ),
+      ) { update ->
+        UpdateContributionsScreen(
+          productId = update.productId,
+          onClose = { backStack.removeLast() },
+        )
       }
     },
   )

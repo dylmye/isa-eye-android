@@ -14,3 +14,5 @@ import kotlinx.serialization.Serializable
 @Serializable data object AddAccount : NavKey
 
 @Serializable data class EditAccount(val productId: String) : NavKey
+
+@Serializable data class UpdateContributions(val productId: String) : NavKey
