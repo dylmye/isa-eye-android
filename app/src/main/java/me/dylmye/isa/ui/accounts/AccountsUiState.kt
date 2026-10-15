@@ -3,6 +3,10 @@ package me.dylmye.isa.ui.accounts
 import me.dylmye.isa.data.db.dao.AccountSummary
 import me.dylmye.isa.data.db.entity.AnnualBalanceEntity
 import me.dylmye.isa.data.db.entity.RulesetEntity
+import me.dylmye.isa.ui.formatGbp
+
+/** Shown in place of the figure once a year's allowance has been used up. */
+private const val ALLOWANCE_MAXED_OUT = "Allowance maxed out!"
 
 /**
  * Immutable snapshot of everything the accounts list needs to render.
@@ -92,6 +96,16 @@ internal fun remainingAllowancePence(
   val contributed =
     balances.filter { it.rulesetId == rulesetId }.sumOf { it.deductedFromAllowancePence }
   return allowance - contributed
+}
+
+/**
+ * The hero headline for a year: the remaining allowance, or a nudge once it is all used up. Null
+ * when there is no year to describe.
+ */
+internal fun allowanceHeadline(remainingPence: Long?): String? = when {
+  remainingPence == null -> null
+  remainingPence <= 0L -> ALLOWANCE_MAXED_OUT
+  else -> "${formatGbp(remainingPence)} remaining"
 }
 
 /**

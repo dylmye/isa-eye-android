@@ -127,10 +127,10 @@ fun AccountsContent(
 @Composable
 private fun AccountsTopBar(remainingPence: Long?, scrollBehavior: TopAppBarScrollBehavior) {
   val collapsed = scrollBehavior.state.collapsedFraction > 0.5f
-  val remaining = remainingPence?.let { "${formatGbp(it)} remaining" }
+  val headline = allowanceHeadline(remainingPence)
   LargeTopAppBar(
     title = {
-      Crossfade(targetState = if (collapsed) null else remaining, label = "accountsTitle") { text ->
+      Crossfade(targetState = if (collapsed) null else headline, label = "accountsTitle") { text ->
         if (text == null) {
           Text("Accounts")
         } else {

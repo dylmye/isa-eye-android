@@ -68,6 +68,14 @@ class AccountsUiStateTest {
   }
 
   @Test
+  fun allowanceHeadline_showsTheRemainingUntilItIsUsedUp() {
+    assertEquals("£12,500.00 remaining", allowanceHeadline(1_250_000))
+    assertEquals("Allowance maxed out!", allowanceHeadline(0))
+    assertEquals("Allowance maxed out!", allowanceHeadline(-500))
+    assertNull(allowanceHeadline(null))
+  }
+
+  @Test
   fun remainingAllowancePence_returnsNullForAnUnknownYear() {
     assertNull(remainingAllowancePence("1999/2000", emptyList(), rulesets()))
     assertNull(remainingAllowancePence(null, emptyList(), rulesets()))
