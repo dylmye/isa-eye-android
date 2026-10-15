@@ -76,9 +76,9 @@ internal fun ContributionsCard(uiState: AccountDetailUiState, modifier: Modifier
  */
 @Composable
 internal fun ActionsCard(
+  modifier: Modifier = Modifier,
   onUpdateContributions: () -> Unit = {},
   onDeleteAccount: () -> Unit = {},
-  modifier: Modifier = Modifier,
 ) {
   Card(modifier = modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
     Column(
