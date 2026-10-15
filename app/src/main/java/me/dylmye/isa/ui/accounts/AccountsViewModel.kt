@@ -30,7 +30,7 @@ class AccountsViewModel(
       rulesets,
       userPreferences.currentRulesetId,
     ) { accounts, balances, availableRulesets, selectedId ->
-      resolveAccountsUiState(accounts, balances, availableRulesets.map { it.id }, selectedId)
+      resolveAccountsUiState(accounts, balances, availableRulesets, selectedId)
     }
       .onEach { state ->
         // Remember that accounts exist so the next launch can open on Insights. This also heals

@@ -2,6 +2,7 @@ package me.dylmye.isa.ui.accounts
 
 import me.dylmye.isa.data.db.dao.AccountSummary
 import me.dylmye.isa.data.db.entity.AnnualBalanceEntity
+import me.dylmye.isa.data.db.entity.RulesetEntity
 
 /**
  * Immutable snapshot of everything the accounts list needs to render.
@@ -12,6 +13,7 @@ import me.dylmye.isa.data.db.entity.AnnualBalanceEntity
 data class AccountsUiState(
   val accounts: List<AccountListItemUiState> = emptyList(),
   val ruleset: RulesetState = RulesetState(),
+  val remainingPence: Long? = null,
   val hasAccounts: Boolean = false,
   val isLoading: Boolean = false,
 )
@@ -46,7 +48,7 @@ internal fun AccountSummary.toListItemUiState(contributionsPence: Long): Account
   )
 
 /**
- * Builds the list state from the account rows, their recorded [balances], the available [rulesetIds]
+ * Builds the list state from the account rows, their recorded [balances], the available [rulesets]
  * and the [selectedId]. Accounts not open in the selected year are dropped, and each remaining row
  * shows the contribution recorded for that year. [AccountsUiState.hasAccounts] counts every account,
  * so the empty state can tell "no accounts" apart from "none open this year".
@@ -54,10 +56,10 @@ internal fun AccountSummary.toListItemUiState(contributionsPence: Long): Account
 internal fun resolveAccountsUiState(
   accounts: List<AccountSummary>,
   balances: List<AnnualBalanceEntity>,
-  rulesetIds: List<String>,
+  rulesets: List<RulesetEntity>,
   selectedId: String?,
 ): AccountsUiState {
-  val selection = resolveRuleset(rulesetIds, selectedId)
+  val selection = resolveRuleset(rulesets.map { it.id }, selectedId)
   val currentRuleset = selection.current.orEmpty()
   val recorded =
     balances.associate { (it.productId to it.rulesetId) to it.deductedFromAllowancePence }
@@ -70,9 +72,26 @@ internal fun resolveAccountsUiState(
   return AccountsUiState(
     accounts = items,
     ruleset = selection,
+    remainingPence = remainingAllowancePence(selection.current, balances, rulesets),
     hasAccounts = accounts.isNotEmpty(),
     isLoading = false,
   )
+}
+
+/**
+ * The shared allowance left for [rulesetId]: that year's shared allowance minus every contribution
+ * recorded against it, matching the web. Junior ISA contributions are counted here too, which the
+ * web also gets wrong — separating them out is a known follow-up.
+ */
+internal fun remainingAllowancePence(
+  rulesetId: String?,
+  balances: List<AnnualBalanceEntity>,
+  rulesets: List<RulesetEntity>,
+): Long? {
+  val allowance = rulesets.firstOrNull { it.id == rulesetId }?.sharedAllowancePence ?: return null
+  val contributed =
+    balances.filter { it.rulesetId == rulesetId }.sumOf { it.deductedFromAllowancePence }
+  return allowance - contributed
 }
 
 /**

@@ -1,5 +1,6 @@
 package me.dylmye.isa.ui.accounts
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,13 +16,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
@@ -77,7 +78,7 @@ fun AccountsContent(
     modifier = modifier,
     topBar = {
       Column {
-        TopAppBar(title = { Text("Accounts") }, scrollBehavior = scrollBehavior)
+        AccountsTopBar(remainingPence = uiState.remainingPence, scrollBehavior = scrollBehavior)
         if (uiState.ruleset.current != null) {
           RulesetHeader(
             state = uiState.ruleset,
@@ -116,6 +117,22 @@ fun AccountsContent(
       }
     }
   }
+}
+
+/** Hero app bar: the year's remaining allowance while expanded, the screen name once collapsed. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AccountsTopBar(remainingPence: Long?, scrollBehavior: TopAppBarScrollBehavior) {
+  val collapsed = scrollBehavior.state.collapsedFraction > 0.5f
+  val remaining = remainingPence?.let { "${formatGbp(it)} remaining" }
+  LargeTopAppBar(
+    title = {
+      Crossfade(targetState = if (collapsed) null else remaining, label = "accountsTitle") { text ->
+        Text(text ?: "Accounts")
+      }
+    },
+    scrollBehavior = scrollBehavior,
+  )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -250,4 +267,5 @@ private val PreviewAccountsUiState =
         AccountListItemUiState("4", "Junior ISA", "Hargreaves Lansdown", "#003A70", 0),
       ),
     ruleset = RulesetState(current = "2026/2027", canGoBack = true),
+    remainingPence = 1_250_000,
   )

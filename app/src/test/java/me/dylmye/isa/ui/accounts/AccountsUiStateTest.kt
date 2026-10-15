@@ -2,6 +2,7 @@ package me.dylmye.isa.ui.accounts
 
 import me.dylmye.isa.data.db.dao.AccountSummary
 import me.dylmye.isa.data.db.entity.AnnualBalanceEntity
+import me.dylmye.isa.data.db.entity.RulesetEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -27,7 +28,7 @@ class AccountsUiStateTest {
       resolveAccountsUiState(
         accounts = listOf(summary("p1"), summary("p2")),
         balances = listOf(balance("p1", "2026/2027", 125_000), balance("p2", "2025/2026", 80_000)),
-        rulesetIds = listOf("2025/2026", "2026/2027"),
+        rulesets = rulesets(),
         selectedId = "2026/2027",
       )
 
@@ -38,17 +39,38 @@ class AccountsUiStateTest {
   }
 
   @Test
+  fun resolveAccountsUiState_reportsTheSharedAllowanceMinusRecordedContributions() {
+    val state =
+      resolveAccountsUiState(
+        accounts = listOf(summary("p1"), summary("p2")),
+        balances =
+          listOf(balance("p1", "2026/2027", 1_500_000), balance("p2", "2026/2027", 250_000)),
+        rulesets = rulesets(),
+        selectedId = "2026/2027",
+      )
+
+    // £20,000 shared allowance less the £17,500 contributed this year.
+    assertEquals(250_000L, state.remainingPence)
+  }
+
+  @Test
   fun resolveAccountsUiState_dropsAccountsClosedBeforeTheSelectedYear() {
     val state =
       resolveAccountsUiState(
         accounts = listOf(summary("p1", endTaxYear = "2024/2025"), summary("p2")),
         balances = emptyList(),
-        rulesetIds = listOf("2025/2026", "2026/2027"),
+        rulesets = rulesets(),
         selectedId = "2026/2027",
       )
 
     assertEquals(listOf("p2"), state.accounts.map { it.productId })
     assertTrue(state.hasAccounts)
+  }
+
+  @Test
+  fun remainingAllowancePence_returnsNullForAnUnknownYear() {
+    assertNull(remainingAllowancePence("1999/2000", emptyList(), rulesets()))
+    assertNull(remainingAllowancePence(null, emptyList(), rulesets()))
   }
 
   @Test
@@ -121,6 +143,11 @@ class AccountsUiStateTest {
   fun isOpenDuringRuleset_withBlankTarget_includesEverything() {
     assertTrue(isOpenDuringRuleset("", "2025/2026", "2025/2026"))
   }
+
+  private fun rulesets() = listOf(
+    RulesetEntity("2025/2026", 2_000_000, "2025-04-06", "2026-04-05", null),
+    RulesetEntity("2026/2027", 2_000_000, "2026-04-06", "2027-04-05", null),
+  )
 
   private fun summary(id: String, endTaxYear: String? = null) = AccountSummary(
     productId = id,
