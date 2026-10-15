@@ -19,6 +19,8 @@ import me.dylmye.isa.IsaEyeApplication
 import me.dylmye.isa.data.AccountRepository
 import me.dylmye.isa.data.UserPreferences
 import me.dylmye.isa.data.db.entity.AnnualBalanceEntity
+import me.dylmye.isa.data.db.entity.RulesetEntity
+import me.dylmye.isa.data.db.entity.RulesetExceptionEntity
 import me.dylmye.isa.ui.sanitizePoundsInput
 
 /**
@@ -33,6 +35,15 @@ class UpdateContributionsViewModel(
   private val draft = MutableStateFlow(UpdateContributionsDraft())
   private val savedEvents = Channel<UpdateContributionsEvent>(Channel.BUFFERED)
 
+  /** Rulesets and their per-type exceptions, combined to keep the form's flow count down. */
+  private val rulesetData =
+    combine(
+      repository.observeRulesets(),
+      repository.observeRulesetExceptions(),
+    ) { rulesets, exceptions ->
+      RulesetData(rulesets, exceptions)
+    }
+
   /** One-off events, e.g. the contribution was saved and the form should close. */
   val events: Flow<UpdateContributionsEvent> = savedEvents.receiveAsFlow()
 
@@ -40,11 +51,18 @@ class UpdateContributionsViewModel(
     combine(
       repository.observeProduct(productId),
       repository.observeBalances(productId),
-      repository.observeRulesets(),
+      rulesetData,
       userPreferences.currentRulesetId,
       draft,
-    ) { product, balances, rulesets, currentRulesetId, form ->
-      resolveUpdateContributions(product, balances, rulesets.map { it.id }, currentRulesetId, form)
+    ) { product, balances, data, currentRulesetId, form ->
+      resolveUpdateContributions(
+        product,
+        balances,
+        data.rulesets,
+        data.exceptions,
+        currentRulesetId,
+        form,
+      )
     }
       .stateIn(
         viewModelScope,
@@ -91,6 +109,11 @@ class UpdateContributionsViewModel(
     }
   }
 }
+
+private data class RulesetData(
+  val rulesets: List<RulesetEntity>,
+  val exceptions: List<RulesetExceptionEntity>,
+)
 
 sealed interface UpdateContributionsEvent {
   data object Saved : UpdateContributionsEvent

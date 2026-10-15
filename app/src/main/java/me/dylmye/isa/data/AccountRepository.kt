@@ -9,6 +9,7 @@ import me.dylmye.isa.data.db.entity.ProductTypeEntity
 import me.dylmye.isa.data.db.entity.ProviderAliasEntity
 import me.dylmye.isa.data.db.entity.ProviderEntity
 import me.dylmye.isa.data.db.entity.RulesetEntity
+import me.dylmye.isa.data.db.entity.RulesetExceptionEntity
 
 /** Read/write access to ISA accounts and the reference data that supports them. */
 class AccountRepository(private val database: IsaDatabase) {
@@ -16,12 +17,15 @@ class AccountRepository(private val database: IsaDatabase) {
 
   fun observeProduct(id: String): Flow<ProductEntity?> = database.productDao().observeById(id)
 
-  /** Every recorded contribution total for [productId], one row per tax year it has been updated in. */
-  fun observeBalances(productId: String): Flow<List<AnnualBalanceEntity>> =
-    database.annualBalanceDao().observeForProduct(productId)
-
-  /** Every recorded contribution total, across all accounts and tax years. */
-  fun observeBalances(): Flow<List<AnnualBalanceEntity>> = database.annualBalanceDao().observeAll()
+  /**
+   * Recorded contribution totals: for [productId] when one is given, otherwise for every account.
+   */
+  fun observeBalances(productId: String? = null): Flow<List<AnnualBalanceEntity>> =
+    if (productId == null) {
+      database.annualBalanceDao().observeAll()
+    } else {
+      database.annualBalanceDao().observeForProduct(productId)
+    }
 
   fun observeProviders(): Flow<List<ProviderEntity>> = database.providerDao().observeAll()
 
@@ -29,6 +33,10 @@ class AccountRepository(private val database: IsaDatabase) {
     database.providerAliasDao().observeAll()
 
   fun observeRulesets(): Flow<List<RulesetEntity>> = database.rulesetDao().observeAll()
+
+  /** Per-type allowance exceptions, one row per product type and tax year that has its own limit. */
+  fun observeRulesetExceptions(): Flow<List<RulesetExceptionEntity>> =
+    database.rulesetExceptionDao().observeAll()
 
   fun observeProductTypes(): Flow<List<ProductTypeEntity>> = database.productTypeDao().observeAll()
 

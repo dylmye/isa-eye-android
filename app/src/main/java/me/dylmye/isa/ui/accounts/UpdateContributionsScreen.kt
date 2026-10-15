@@ -27,6 +27,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.window.core.layout.WindowSizeClass
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
+import me.dylmye.isa.ui.formatGbp
 
 private const val REDUCTION_WARNING =
   "This ISA isn't flexible, so its contributions shouldn't go down. Save only if the recorded " +
@@ -112,12 +113,7 @@ private fun UpdateContributionsForm(
   onSave: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  val warning: (@Composable () -> Unit)? =
-    if (uiState.showReductionWarning) {
-      { Text(REDUCTION_WARNING) }
-    } else {
-      null
-    }
+  val warnings = warningMessages(uiState)
   Column(
     modifier = modifier.fillMaxSize().padding(16.dp).imePadding(),
     verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -136,8 +132,13 @@ private fun UpdateContributionsForm(
       prefix = { Text("£") },
       singleLine = true,
       keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-      isError = uiState.showReductionWarning,
-      supportingText = warning,
+      isError = warnings.isNotEmpty(),
+      supportingText =
+        if (warnings.isEmpty()) {
+          null
+        } else {
+          { Column { warnings.forEach { message -> Text(message) } } }
+        },
       modifier = Modifier.fillMaxWidth(),
     )
     Spacer(Modifier.weight(1f))
@@ -149,6 +150,15 @@ private fun UpdateContributionsForm(
       Text("Save")
     }
   }
+}
+
+/** Field cautions for [uiState]; none block saving, they only explain the entered figure. */
+private fun warningMessages(uiState: UpdateContributionsUiState): List<String> = buildList {
+  val allowance = uiState.allowancePence
+  if (uiState.showAllowanceWarning && allowance != null) {
+    add("The maximum contribution for this year is ${formatGbp(allowance)}.")
+  }
+  if (uiState.showReductionWarning) add(REDUCTION_WARNING)
 }
 
 @FormFactorPreviews
