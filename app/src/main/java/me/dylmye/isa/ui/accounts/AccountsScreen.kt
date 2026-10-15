@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LargeTopAppBar
@@ -34,7 +35,9 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.graphics.toColorInt
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -128,7 +131,20 @@ private fun AccountsTopBar(remainingPence: Long?, scrollBehavior: TopAppBarScrol
   LargeTopAppBar(
     title = {
       Crossfade(targetState = if (collapsed) null else remaining, label = "accountsTitle") { text ->
-        Text(text ?: "Accounts")
+        if (text == null) {
+          Text("Accounts")
+        } else {
+          // The amount is the headline figure, so it grows to fill one line rather than sitting at
+          // the app bar's default headline size.
+          Text(
+            text = text,
+            maxLines = 1,
+            autoSize =
+              TextAutoSize.StepBased(minFontSize = 24.sp, maxFontSize = 57.sp, stepSize = 4.sp),
+            style =
+              MaterialTheme.typography.displayLarge.copy(lineHeight = TextUnit.Unspecified),
+          )
+        }
       }
     },
     scrollBehavior = scrollBehavior,
