@@ -123,6 +123,7 @@ private fun AppNavDisplay(
       entry<AccountDetail>(metadata = ListDetailSceneStrategy.detailPane()) { detail ->
         AccountDetailScreen(
           productId = detail.productId,
+          onBack = { backStack.removeLast() },
           onEdit = { backStack.add(EditAccount(detail.productId)) },
           onUpdateContributions = { backStack.add(UpdateContributions(detail.productId)) },
         )

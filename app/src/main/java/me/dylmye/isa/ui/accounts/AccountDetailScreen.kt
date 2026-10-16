@@ -17,8 +17,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -27,12 +31,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
+import me.dylmye.isa.ui.icons.arrowBack
 import me.dylmye.isa.ui.icons.edit
 
-/** Stateful entry point: owns the detail ViewModel and surfaces the edit action. */
+/** Stateful entry point: owns the detail ViewModel and surfaces the back and edit actions. */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun AccountDetailScreen(
   productId: String,
+  onBack: () -> Unit,
   onEdit: () -> Unit,
   onUpdateContributions: () -> Unit,
   modifier: Modifier = Modifier,
@@ -40,8 +47,17 @@ fun AccountDetailScreen(
   val viewModel: AccountDetailViewModel =
     viewModel(factory = AccountDetailViewModel.factory(productId))
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  // A pane that has the list beside it needs no way back; a lone one does. This asks the same
+  // question of the same directive that the list-detail scene strategy is built with.
+  val windowAdaptiveInfo = currentWindowAdaptiveInfoV2()
+  val showBackButton =
+    remember(windowAdaptiveInfo) {
+      calculatePaneScaffoldDirective(windowAdaptiveInfo).maxHorizontalPartitions == 1
+    }
   AccountDetailContent(
     uiState = uiState,
+    showBackButton = showBackButton,
+    onBack = onBack,
     onEdit = onEdit,
     onUpdateContributions = onUpdateContributions,
     modifier = modifier,
@@ -56,6 +72,8 @@ fun AccountDetailScreen(
 @Composable
 fun AccountDetailContent(
   uiState: AccountDetailUiState,
+  showBackButton: Boolean,
+  onBack: () -> Unit,
   onEdit: () -> Unit,
   onUpdateContributions: () -> Unit,
   modifier: Modifier = Modifier,
@@ -66,6 +84,13 @@ fun AccountDetailContent(
     topBar = {
       TopAppBar(
         title = { Text(uiState.name.orEmpty()) },
+        navigationIcon = {
+          if (showBackButton) {
+            IconButton(onClick = onBack) {
+              Icon(arrowBack, contentDescription = "Back to accounts")
+            }
+          }
+        },
         actions = {
           IconButton(onClick = onEdit) {
             Icon(edit, contentDescription = "Edit account")
@@ -154,6 +179,8 @@ private fun AccountDetailContentPreview() {
           isLatestRuleset = true,
           trend = ContributionTrend.Up,
         ),
+      showBackButton = true,
+      onBack = {},
       onEdit = {},
       onUpdateContributions = {},
     )
@@ -174,6 +201,8 @@ private fun AccountDetailContentEarlierYearPreview() {
           isLatestRuleset = false,
           trend = ContributionTrend.Down,
         ),
+      showBackButton = false,
+      onBack = {},
       onEdit = {},
       onUpdateContributions = {},
     )
