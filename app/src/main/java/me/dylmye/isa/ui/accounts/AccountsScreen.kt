@@ -14,13 +14,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -37,7 +36,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.graphics.toColorInt
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -128,21 +126,18 @@ fun AccountsContent(
 private fun AccountsTopBar(remainingPence: Long?, scrollBehavior: TopAppBarScrollBehavior) {
   val collapsed = scrollBehavior.state.collapsedFraction > 0.5f
   val headline = allowanceHeadline(remainingPence)
-  LargeTopAppBar(
+  MediumTopAppBar(
     title = {
       Crossfade(targetState = if (collapsed) null else headline, label = "accountsTitle") { text ->
         if (text == null) {
           Text("Accounts")
         } else {
-          // The amount is the headline figure, so it grows to fill one line rather than sitting at
-          // the app bar's default headline size.
+          // Fixed size on purpose: sizing to the text made short figures balloon and long ones
+          // shrink, so the header changed size whenever the amount did.
           Text(
             text = text,
             maxLines = 1,
-            autoSize =
-              TextAutoSize.StepBased(minFontSize = 24.sp, maxFontSize = 57.sp, stepSize = 4.sp),
-            style =
-              MaterialTheme.typography.displayLarge.copy(lineHeight = TextUnit.Unspecified),
+            style = MaterialTheme.typography.displaySmall.copy(lineHeight = TextUnit.Unspecified),
           )
         }
       }
