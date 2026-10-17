@@ -15,7 +15,9 @@ import kotlinx.coroutines.launch
 import me.dylmye.isa.IsaEyeApplication
 import me.dylmye.isa.data.AccountRepository
 import me.dylmye.isa.data.UserPreferences
+import me.dylmye.isa.data.db.entity.ProductTypeEntity
 import me.dylmye.isa.data.db.entity.RulesetEntity
+import me.dylmye.isa.data.db.entity.RulesetExceptionEntity
 
 class AccountsViewModel(
   private val repository: AccountRepository,
@@ -23,14 +25,31 @@ class AccountsViewModel(
 ) : ViewModel() {
   private val rulesets = MutableStateFlow<List<RulesetEntity>>(emptyList())
 
+  /** Exceptions and the product types that name them, paired to keep the view's flow count down. */
+  private val allowanceData =
+    combine(
+      repository.observeRulesetExceptions(),
+      repository.observeProductTypes(),
+    ) { exceptions, productTypes ->
+      AllowanceData(exceptions, productTypes)
+    }
+
   val uiState: StateFlow<AccountsUiState> =
     combine(
       repository.observeAccounts(),
       repository.observeBalances(),
       rulesets,
+      allowanceData,
       userPreferences.currentRulesetId,
-    ) { accounts, balances, availableRulesets, selectedId ->
-      resolveAccountsUiState(accounts, balances, availableRulesets, selectedId)
+    ) { accounts, balances, availableRulesets, allowance, selectedId ->
+      resolveAccountsUiState(
+        accounts = accounts,
+        balances = balances,
+        rulesets = availableRulesets,
+        selectedId = selectedId,
+        exceptions = allowance.exceptions,
+        productTypes = allowance.productTypes,
+      )
     }
       .onEach { state ->
         // Remember that accounts exist so the next launch can open on Insights. This also heals
@@ -73,3 +92,8 @@ class AccountsViewModel(
     }
   }
 }
+
+private data class AllowanceData(
+  val exceptions: List<RulesetExceptionEntity>,
+  val productTypes: List<ProductTypeEntity>,
+)

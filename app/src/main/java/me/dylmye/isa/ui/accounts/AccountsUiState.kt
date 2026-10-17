@@ -2,7 +2,9 @@ package me.dylmye.isa.ui.accounts
 
 import me.dylmye.isa.data.db.dao.AccountSummary
 import me.dylmye.isa.data.db.entity.AnnualBalanceEntity
+import me.dylmye.isa.data.db.entity.ProductTypeEntity
 import me.dylmye.isa.data.db.entity.RulesetEntity
+import me.dylmye.isa.data.db.entity.RulesetExceptionEntity
 import me.dylmye.isa.ui.formatGbp
 
 /** Shown in place of the figure once a year's allowance has been used up. */
@@ -18,6 +20,7 @@ data class AccountsUiState(
   val accounts: List<AccountListItemUiState> = emptyList(),
   val ruleset: RulesetState = RulesetState(),
   val remainingPence: Long? = null,
+  val notes: RulesetNotesUiState = RulesetNotesUiState(),
   val hasAccounts: Boolean = false,
   val isLoading: Boolean = false,
 )
@@ -55,13 +58,16 @@ internal fun AccountSummary.toListItemUiState(contributionsPence: Long): Account
  * Builds the list state from the account rows, their recorded [balances], the available [rulesets]
  * and the [selectedId]. Accounts not open in the selected year are dropped, and each remaining row
  * shows the contribution recorded for that year. [AccountsUiState.hasAccounts] counts every account,
- * so the empty state can tell "no accounts" apart from "none open this year".
+ * so the empty state can tell "no accounts" apart from "none open this year". The selected year's
+ * notes are resolved from [exceptions] and the [productTypes] that name them.
  */
 internal fun resolveAccountsUiState(
   accounts: List<AccountSummary>,
   balances: List<AnnualBalanceEntity>,
   rulesets: List<RulesetEntity>,
   selectedId: String?,
+  exceptions: List<RulesetExceptionEntity> = emptyList(),
+  productTypes: List<ProductTypeEntity> = emptyList(),
 ): AccountsUiState {
   val selection = resolveRuleset(rulesets.map { it.id }, selectedId)
   val currentRuleset = selection.current.orEmpty()
@@ -77,6 +83,7 @@ internal fun resolveAccountsUiState(
     accounts = items,
     ruleset = selection,
     remainingPence = remainingAllowancePence(selection.current, balances, rulesets),
+    notes = resolveRulesetNotes(selection.current, rulesets, exceptions, productTypes),
     hasAccounts = accounts.isNotEmpty(),
     isLoading = false,
   )

@@ -25,8 +25,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.window.core.layout.WindowSizeClass
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
 import me.dylmye.isa.ui.components.ProviderAvatar
@@ -46,18 +52,33 @@ import me.dylmye.isa.ui.components.containerTint
 import me.dylmye.isa.ui.formatGbp
 
 /** Stateful entry point: owns the ViewModel and hoists its state down into [AccountsContent]. */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun AccountsScreen(onAccountClick: (String) -> Unit, modifier: Modifier = Modifier) {
   val viewModel: AccountsViewModel = viewModel(factory = AccountsViewModel.Factory)
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  var notesVisible by rememberSaveable { mutableStateOf(false) }
+  val isCompact =
+    !currentWindowAdaptiveInfoV2().windowSizeClass.isWidthAtLeastBreakpoint(
+      WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND,
+    )
   AccountsContent(
     uiState = uiState,
     onAccountClick = onAccountClick,
     onPreviousRuleset = viewModel::onPreviousRuleset,
     onNextRuleset = viewModel::onNextRuleset,
     onResetRuleset = viewModel::onResetRuleset,
+    onShowNotes = { notesVisible = true },
     modifier = modifier,
   )
+  // The year's notes follow the selection, so they stay live while the surface is open.
+  if (notesVisible) {
+    RulesetNotesSurface(
+      notes = uiState.notes,
+      isCompact = isCompact,
+      onDismiss = { notesVisible = false },
+    )
+  }
 }
 
 /**
@@ -72,6 +93,7 @@ fun AccountsContent(
   onPreviousRuleset: () -> Unit,
   onNextRuleset: () -> Unit,
   onResetRuleset: () -> Unit,
+  onShowNotes: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -86,6 +108,7 @@ fun AccountsContent(
             onPrevious = onPreviousRuleset,
             onNext = onNextRuleset,
             onReset = onResetRuleset,
+            onShowNotes = onShowNotes,
           )
         }
       }
@@ -250,6 +273,7 @@ private fun AccountsContentPreview() {
       onPreviousRuleset = {},
       onNextRuleset = {},
       onResetRuleset = {},
+      onShowNotes = {},
     )
   }
 }
@@ -264,6 +288,7 @@ private fun AccountsEmptyPreview() {
       onPreviousRuleset = {},
       onNextRuleset = {},
       onResetRuleset = {},
+      onShowNotes = {},
     )
   }
 }
