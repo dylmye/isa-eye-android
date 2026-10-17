@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">ISA Eye</string>
+    <string name="shortcut_add_account">Add account</string>
 </resources>

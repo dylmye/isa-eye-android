@@ -13,6 +13,7 @@ import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -26,6 +27,9 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.scene.DialogSceneStrategy
 import androidx.navigation3.ui.NavDisplay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.emptyFlow
 import me.dylmye.isa.ui.accounts.AccountDetailPlaceholder
 import me.dylmye.isa.ui.accounts.AccountDetailScreen
 import me.dylmye.isa.ui.accounts.AccountsScreen
@@ -61,8 +65,14 @@ private const val HELP_SCENE_KEY = "help"
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
-fun MainNavigation(startTab: NavKey = Accounts) {
+fun MainNavigation(startTab: NavKey = Accounts, addAccountShortcut: Flow<Unit> = emptyFlow()) {
   val backStack = remember { TopLevelBackStack<NavKey>(startTab) }
+  // The add button and the shortcut share one action, so neither can open the form on top of a
+  // dialog that is already showing.
+  val openAddAccount = {
+    if (backStack.backStack.lastOrNull()?.isDialog() != true) backStack.add(AddAccount)
+  }
+  LaunchedEffect(Unit) { addAccountShortcut.collect { openAddAccount() } }
 
   val windowAdaptiveInfo = currentWindowAdaptiveInfoV2()
   val directive = remember(windowAdaptiveInfo) {
@@ -87,7 +97,7 @@ fun MainNavigation(startTab: NavKey = Accounts) {
       contentWindowInsets = WindowInsets(0.dp),
       floatingActionButton = {
         ExtendedFloatingActionButton(
-          onClick = dropUnlessResumed { backStack.add(AddAccount) },
+          onClick = dropUnlessResumed { openAddAccount() },
           icon = { Icon(AddIcon, contentDescription = null) },
           text = { Text("Add account") },
         )
@@ -184,3 +194,10 @@ private fun EntryProviderScope<NavKey>.dialogEntries(backStack: TopLevelBackStac
     UpdateContributionsScreen(productId = update.productId, onClose = { backStack.removeLast() })
   }
 }
+
+/**
+ * True for the keys that [dialogEntries] presents as a dialog. Kept next to it so that adding a
+ * dialog there is a reminder to extend this.
+ */
+private fun NavKey.isDialog(): Boolean =
+  this is AddAccount || this is EditAccount || this is UpdateContributions
