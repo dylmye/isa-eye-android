@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
@@ -32,6 +33,8 @@ import me.dylmye.isa.ui.accounts.AddAccountScreen
 import me.dylmye.isa.ui.accounts.EditAccountScreen
 import me.dylmye.isa.ui.accounts.UpdateContributionsScreen
 import me.dylmye.isa.ui.help.HelpScreen
+import me.dylmye.isa.ui.help.HelpTopicPlaceholder
+import me.dylmye.isa.ui.help.HelpTopicScreen
 import me.dylmye.isa.ui.insights.InsightsScreen
 import me.dylmye.isa.ui.icons.add as AddIcon
 import me.dylmye.isa.ui.icons.financeMode as InsightsIcon
@@ -49,6 +52,12 @@ private val AppTabs =
 
 /** Chooses the tab shown on launch: Insights once an account exists, Accounts until then. */
 internal fun launchTab(hasAccount: Boolean): NavKey = if (hasAccount) Insights else Accounts
+
+/**
+ * Help runs its own list-detail scaffold, so it takes a scene key of its own. The accounts scaffold
+ * uses the default key, which keeps the two from ever pairing an entry with the wrong pane.
+ */
+private const val HELP_SCENE_KEY = "help"
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
@@ -129,34 +138,49 @@ private fun AppNavDisplay(
         )
       }
       entry<Insights> { InsightsScreen() }
-      entry<Help> { HelpScreen() }
-      entry<AddAccount>(
+      entry<Help>(
         metadata =
-          DialogSceneStrategy.dialog(
-            DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+          ListDetailSceneStrategy.listPane(
+            sceneKey = HELP_SCENE_KEY,
+            detailPlaceholder = { HelpTopicPlaceholder() },
           ),
       ) {
-        AddAccountScreen(onClose = { backStack.removeLast() })
+        HelpScreen(onTopicClick = { id -> backStack.add(HelpTopicPage(id)) })
       }
-      entry<EditAccount>(
-        metadata =
-          DialogSceneStrategy.dialog(
-            DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
-          ),
-      ) { edit ->
-        EditAccountScreen(productId = edit.productId, onClose = { backStack.removeLast() })
+      entry<HelpTopicPage>(
+        metadata = ListDetailSceneStrategy.detailPane(sceneKey = HELP_SCENE_KEY),
+      ) { page ->
+        HelpTopicScreen(topicId = page.id, onBack = { backStack.removeLast() })
       }
-      entry<UpdateContributions>(
-        metadata =
-          DialogSceneStrategy.dialog(
-            DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
-          ),
-      ) { update ->
-        UpdateContributionsScreen(
-          productId = update.productId,
-          onClose = { backStack.removeLast() },
-        )
-      }
+      dialogEntries(backStack)
     },
   )
+}
+
+/** The account flows, each shown as a dialog over whatever is behind it rather than as a page. */
+private fun EntryProviderScope<NavKey>.dialogEntries(backStack: TopLevelBackStack<NavKey>) {
+  entry<AddAccount>(
+    metadata =
+      DialogSceneStrategy.dialog(
+        DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+      ),
+  ) {
+    AddAccountScreen(onClose = { backStack.removeLast() })
+  }
+  entry<EditAccount>(
+    metadata =
+      DialogSceneStrategy.dialog(
+        DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+      ),
+  ) { edit ->
+    EditAccountScreen(productId = edit.productId, onClose = { backStack.removeLast() })
+  }
+  entry<UpdateContributions>(
+    metadata =
+      DialogSceneStrategy.dialog(
+        DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+      ),
+  ) { update ->
+    UpdateContributionsScreen(productId = update.productId, onClose = { backStack.removeLast() })
+  }
 }

@@ -11,6 +11,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable data object Help : NavKey
 
+@Serializable data class HelpTopicPage(val id: String) : NavKey
+
 @Serializable data object AddAccount : NavKey
 
 @Serializable data class EditAccount(val productId: String) : NavKey
