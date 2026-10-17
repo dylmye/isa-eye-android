@@ -12,7 +12,6 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,7 +26,6 @@ import androidx.compose.ui.unit.sp
 import me.dylmye.isa.ui.formatGbp
 import me.dylmye.isa.ui.icons.balance
 import me.dylmye.isa.ui.icons.deleteForever
-import me.dylmye.isa.ui.icons.quickReference
 import me.dylmye.isa.ui.icons.trendingDown
 import me.dylmye.isa.ui.icons.trendingFlat
 import me.dylmye.isa.ui.icons.trendingUp
@@ -157,41 +155,6 @@ private fun TrendIndicator(
     tint = tint,
     modifier = modifier.size(24.dp),
   )
-}
-
-/**
- * Callout explaining what this type of ISA is: titled after the product type, with its body drawn
- * from the type's long description.
- */
-@Composable
-internal fun InfoCalloutCard(title: String, text: String, modifier: Modifier = Modifier) {
-  Card(
-    modifier = modifier.fillMaxWidth(),
-    shape = MaterialTheme.shapes.large,
-    colors =
-      CardDefaults.cardColors(
-        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-      ),
-  ) {
-    Row(
-      modifier = Modifier.padding(16.dp),
-      horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-      Icon(imageVector = quickReference, contentDescription = null, modifier = Modifier.size(24.dp))
-      Column(
-        modifier = Modifier.weight(1f),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-      ) {
-        Text(
-          text = title,
-          style = MaterialTheme.typography.titleSmall,
-          fontWeight = FontWeight.SemiBold,
-        )
-        Text(text = text, style = MaterialTheme.typography.bodyMedium)
-      }
-    }
-  }
 }
 
 /** Titles the callout after the ISA type, e.g. "All about Cash ISAs". */

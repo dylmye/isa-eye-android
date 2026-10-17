@@ -34,7 +34,8 @@ private val MaxReadingWidth = 680.dp
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun HelpTopicScreen(topicId: String, onBack: () -> Unit, modifier: Modifier = Modifier) {
-  val topic = remember(topicId) { HelpTopic.fromId(topicId) }
+  val topic = remember(topicId) { HelpTopics.firstOrNull { it.id == topicId } }
+  val blocks = remember(topicId) { HelpContent[topicId].orEmpty() }
   // A pane that has the topic list beside it needs no way back; a lone one does. This asks the same
   // question of the same directive that the list-detail scene strategy is built with.
   val windowAdaptiveInfo = currentWindowAdaptiveInfoV2()
@@ -44,6 +45,7 @@ fun HelpTopicScreen(topicId: String, onBack: () -> Unit, modifier: Modifier = Mo
     }
   HelpTopicContent(
     title = topic?.title.orEmpty(),
+    blocks = blocks,
     showBackButton = showBackButton,
     onBack = onBack,
     modifier = modifier,
@@ -51,14 +53,14 @@ fun HelpTopicScreen(topicId: String, onBack: () -> Unit, modifier: Modifier = Mo
 }
 
 /**
- * Stateless help topic page.
- *
- * The body is deliberately empty: the copy for each topic is written separately.
+ * Stateless help topic page: the article's heading in the app bar, its copy below. The copy is
+ * generated from the markdown in `app/src/main/assets/help` by `scripts/generate-help.mjs`.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HelpTopicContent(
   title: String,
+  blocks: List<HelpBlock>,
   showBackButton: Boolean,
   onBack: () -> Unit,
   modifier: Modifier = Modifier,
@@ -87,9 +89,10 @@ fun HelpTopicContent(
         modifier =
           Modifier.widthIn(max = MaxReadingWidth)
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 16.dp),
+            // The extra bottom room clears the add-account button floating over every tab.
+            .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp),
       ) {
-        // Topic copy goes here.
+        HelpArticle(blocks)
       }
     }
   }
@@ -113,9 +116,11 @@ fun HelpTopicPlaceholder(modifier: Modifier = Modifier) {
 @FormFactorPreviews
 @Composable
 private fun HelpTopicContentPreview() {
+  val topic = HelpTopics.first()
   ISAEyeTheme {
     HelpTopicContent(
-      title = HelpTopic.WhatIsAnIsa.title,
+      title = topic.title,
+      blocks = HelpContent[topic.id].orEmpty(),
       showBackButton = true,
       onBack = {},
     )

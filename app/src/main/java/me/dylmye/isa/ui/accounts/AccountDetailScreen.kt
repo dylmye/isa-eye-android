@@ -26,11 +26,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
+import me.dylmye.isa.ui.components.InfoCalloutCard
 import me.dylmye.isa.ui.icons.arrowBack
 import me.dylmye.isa.ui.icons.edit
 
@@ -141,7 +143,10 @@ private fun AccountDetailGrid(
     val description = uiState.longDescription
     if (!description.isNullOrBlank()) {
       item(key = "info", span = { GridItemSpan(maxLineSpan) }) {
-        InfoCalloutCard(title = infoTitle(uiState.typeName), text = description)
+        InfoCalloutCard(
+          text = AnnotatedString(description),
+          title = infoTitle(uiState.typeName),
+        )
       }
     }
   }

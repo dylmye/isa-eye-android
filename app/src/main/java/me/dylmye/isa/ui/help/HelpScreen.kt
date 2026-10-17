@@ -69,7 +69,7 @@ fun HelpScreen(onTopicClick: (String) -> Unit, modifier: Modifier = Modifier) {
       verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
       item { HelpIntro() }
-      items(HelpTopic.entries, key = { it.id }) { topic ->
+      items(HelpTopics, key = { it.id }) { topic ->
         HelpTopicCard(topic = topic, onClick = { onTopicClick(topic.id) })
       }
       item { HelpAttribution() }
@@ -85,7 +85,6 @@ private fun HelpIntro(modifier: Modifier = Modifier) {
     modifier = modifier.fillMaxWidth().padding(top = 8.dp),
     verticalArrangement = Arrangement.spacedBy(8.dp),
   ) {
-    Text("This is your ISA Eye.", style = MaterialTheme.typography.titleLarge)
     Text(
       text = "Keep track of your ISA contributions, across banks and years.",
       style = MaterialTheme.typography.bodyMedium,
@@ -130,17 +129,20 @@ private fun HelpDisclaimer(modifier: Modifier = Modifier) {
 
 /**
  * A distinct wash per topic. These are unrelated to any account's provider colour; they exist to put
- * some colour into a page that would otherwise be a stack of identical cards.
+ * some colour into a page that would otherwise be a stack of identical cards. An article with no
+ * line here falls back to [FallbackTint].
  */
 private val HelpTopic.tint: Color
   get() =
-    when (this) {
-      HelpTopic.WhatIsAnIsa -> Color(0xFF42A5F5)
-      HelpTopic.WhatCanISaveWithAnIsa -> Color(0xFF66BB6A)
-      HelpTopic.AreIsasRightForMe -> Color(0xFFFFA726)
-      HelpTopic.FindingTheBestAccounts -> Color(0xFFAB47BC)
-      HelpTopic.MaximisingTheAllowance -> Color(0xFF26A69A)
+    when (id) {
+      "what-is-an-isa" -> Color(0xFF42A5F5)
+      "what-can-i-put-in-an-isa" -> Color(0xFF66BB6A)
+      "maximising-isa-allowance" -> Color(0xFFFFA726)
+      "glossary" -> Color(0xFFAB47BC)
+      else -> FallbackTint
     }
+
+private val FallbackTint = Color(0xFF26A69A)
 
 /** One topic, opening its page. */
 @Composable
