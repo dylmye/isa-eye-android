@@ -29,10 +29,12 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import me.dylmye.isa.theme.ISAEyeTheme
+import me.dylmye.isa.ui.FINANCIAL_DISCLAIMER
 import me.dylmye.isa.ui.FormFactorPreviews
 import me.dylmye.isa.ui.components.containerTint
 import me.dylmye.isa.ui.icons.chevronForward
@@ -71,6 +73,7 @@ fun HelpScreen(onTopicClick: (String) -> Unit, modifier: Modifier = Modifier) {
         HelpTopicCard(topic = topic, onClick = { onTopicClick(topic.id) })
       }
       item { HelpAttribution() }
+      item { HelpDisclaimer() }
     }
   }
 }
@@ -109,7 +112,19 @@ private fun HelpAttribution(modifier: Modifier = Modifier) {
     text = attribution(),
     style = MaterialTheme.typography.bodySmall,
     color = MaterialTheme.colorScheme.onSurfaceVariant,
-    modifier = modifier.fillMaxWidth().padding(top = 4.dp, bottom = 8.dp),
+    modifier = modifier.fillMaxWidth().padding(top = 4.dp),
+  )
+}
+
+/** The financial disclaimer, closing the page. Styled as it is in the year notes. */
+@Composable
+private fun HelpDisclaimer(modifier: Modifier = Modifier) {
+  Text(
+    text = FINANCIAL_DISCLAIMER,
+    style = MaterialTheme.typography.bodySmall,
+    fontStyle = FontStyle.Italic,
+    color = MaterialTheme.colorScheme.onSurfaceVariant,
+    modifier = modifier.fillMaxWidth().padding(bottom = 8.dp),
   )
 }
 

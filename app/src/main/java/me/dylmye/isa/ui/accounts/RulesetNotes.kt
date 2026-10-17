@@ -24,14 +24,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import me.dylmye.isa.theme.ISAEyeTheme
+import me.dylmye.isa.ui.FINANCIAL_DISCLAIMER
 import me.dylmye.isa.ui.FormFactorPreviews
 import me.dylmye.isa.ui.formatGbp
-
-/** Carried through from the web so the figures are never read as advice. */
-private const val DISCLAIMER =
-  "ISA Eye provides this analysis of the changes announced by the Government exclusively for " +
-    "informative purposes. This analysis is not financial advice or recommendations, nor is it a " +
-    "substitute for financial advice. E&OE."
 
 /**
  * The tax year's notes, in the container that suits the width: a bottom sheet on compact widths,
@@ -109,7 +104,7 @@ fun RulesetNotesBody(notes: RulesetNotesUiState, modifier: Modifier = Modifier) 
       )
     }
     Text(
-      text = DISCLAIMER,
+      text = FINANCIAL_DISCLAIMER,
       style = MaterialTheme.typography.bodySmall,
       fontStyle = FontStyle.Italic,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
