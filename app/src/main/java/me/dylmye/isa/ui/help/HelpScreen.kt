@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -22,6 +23,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.AnnotatedString
@@ -32,6 +34,7 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
+import me.dylmye.isa.ui.components.containerTint
 import me.dylmye.isa.ui.icons.chevronForward
 
 private const val AUTHOR_URL = "https://dylmye.me"
@@ -67,6 +70,7 @@ fun HelpScreen(onTopicClick: (String) -> Unit, modifier: Modifier = Modifier) {
       items(HelpTopic.entries, key = { it.id }) { topic ->
         HelpTopicCard(topic = topic, onClick = { onTopicClick(topic.id) })
       }
+      item { HelpAttribution() }
     }
   }
 }
@@ -95,18 +99,43 @@ private fun HelpIntro(modifier: Modifier = Modifier) {
       style = MaterialTheme.typography.bodyMedium,
       fontWeight = FontWeight.SemiBold,
     )
-    Text(
-      text = attribution(),
-      style = MaterialTheme.typography.bodySmall,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
   }
 }
+
+/** The attribution line, kept at the foot of the page under the topic cards. */
+@Composable
+private fun HelpAttribution(modifier: Modifier = Modifier) {
+  Text(
+    text = attribution(),
+    style = MaterialTheme.typography.bodySmall,
+    color = MaterialTheme.colorScheme.onSurfaceVariant,
+    modifier = modifier.fillMaxWidth().padding(top = 4.dp, bottom = 8.dp),
+  )
+}
+
+/**
+ * A distinct wash per topic. These are unrelated to any account's provider colour; they exist to put
+ * some colour into a page that would otherwise be a stack of identical cards.
+ */
+private val HelpTopic.tint: Color
+  get() =
+    when (this) {
+      HelpTopic.WhatIsAnIsa -> Color(0xFF42A5F5)
+      HelpTopic.WhatCanISaveWithAnIsa -> Color(0xFF66BB6A)
+      HelpTopic.AreIsasRightForMe -> Color(0xFFFFA726)
+      HelpTopic.FindingTheBestAccounts -> Color(0xFFAB47BC)
+      HelpTopic.MaximisingTheAllowance -> Color(0xFF26A69A)
+    }
 
 /** One topic, opening its page. */
 @Composable
 private fun HelpTopicCard(topic: HelpTopic, onClick: () -> Unit, modifier: Modifier = Modifier) {
-  Card(onClick = onClick, modifier = modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
+  Card(
+    onClick = onClick,
+    modifier = modifier.fillMaxWidth(),
+    shape = MaterialTheme.shapes.large,
+    colors = CardDefaults.cardColors(containerColor = topic.tint.containerTint()),
+  ) {
     Row(
       modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 20.dp),
       verticalAlignment = Alignment.CenterVertically,
