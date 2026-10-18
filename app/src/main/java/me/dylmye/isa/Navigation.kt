@@ -54,8 +54,8 @@ private val AppTabs =
     AppTab(Help, "Help", HelpIcon),
   )
 
-/** Chooses the tab shown on launch: Insights once an account exists, Accounts until then. */
-internal fun launchTab(hasAccount: Boolean): NavKey = if (hasAccount) Insights else Accounts
+/** Chooses the tab shown on launch: Insights once an account exists, Help until then. */
+internal fun launchTab(hasAccount: Boolean): NavKey = if (hasAccount) Insights else Help
 
 /**
  * Help runs its own list-detail scaffold, so it takes a scene key of its own. The accounts scaffold
