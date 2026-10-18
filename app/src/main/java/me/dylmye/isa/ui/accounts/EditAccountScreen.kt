@@ -3,11 +3,12 @@ package me.dylmye.isa.ui.accounts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
@@ -110,37 +111,38 @@ private fun EditAccountForm(
   onSave: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  Column(
-    modifier = modifier.fillMaxSize().padding(16.dp).imePadding(),
-    verticalArrangement = Arrangement.spacedBy(16.dp),
-  ) {
-    OutlinedTextField(
-      value = uiState.nickname,
-      onValueChange = onNicknameChange,
-      label = { Text("Nickname (optional)") },
-      singleLine = true,
-      modifier = Modifier.fillMaxWidth(),
-    )
-    ReadOnlyField(label = "Bank", value = uiState.providerName)
-    ReadOnlyField(label = "Year of opening", value = uiState.startTaxYear)
-    OptionDropdownField(
-      label = "Type of ISA",
-      options = uiState.productTypeOptions,
-      selectedId = uiState.selectedProductTypeId,
-      onSelected = onProductTypeSelected,
-    )
-    FlexibleField(flexible = uiState.flexible, onFlexibleChange = onFlexibleChange)
-    OptionDropdownField(
-      label = "Closing year",
-      options = uiState.closingYearOptions,
-      selectedId = uiState.selectedClosingYearId,
-      onSelected = onClosingYearSelected,
-    )
-    Spacer(Modifier.weight(1f))
+  Column(modifier = modifier.fillMaxSize().imePadding()) {
+    Column(
+      modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp),
+      verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+      OutlinedTextField(
+        value = uiState.nickname,
+        onValueChange = onNicknameChange,
+        label = { Text("Nickname (optional)") },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+      )
+      ReadOnlyField(label = "Bank", value = uiState.providerName)
+      ReadOnlyField(label = "Year of opening", value = uiState.startTaxYear)
+      OptionDropdownField(
+        label = "Type of ISA",
+        options = uiState.productTypeOptions,
+        selectedId = uiState.selectedProductTypeId,
+        onSelected = onProductTypeSelected,
+      )
+      FlexibleField(flexible = uiState.flexible, onFlexibleChange = onFlexibleChange)
+      OptionDropdownField(
+        label = "Closing year",
+        options = uiState.closingYearOptions,
+        selectedId = uiState.selectedClosingYearId,
+        onSelected = onClosingYearSelected,
+      )
+    }
     Button(
       onClick = onSave,
       enabled = uiState.canSave && !uiState.isSaving,
-      modifier = Modifier.fillMaxWidth(),
+      modifier = Modifier.fillMaxWidth().padding(16.dp),
     ) {
       Text("Save")
     }

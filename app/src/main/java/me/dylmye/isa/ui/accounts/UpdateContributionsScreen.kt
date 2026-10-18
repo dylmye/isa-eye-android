@@ -3,12 +3,13 @@ package me.dylmye.isa.ui.accounts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
@@ -114,38 +115,39 @@ private fun UpdateContributionsForm(
   modifier: Modifier = Modifier,
 ) {
   val warnings = warningMessages(uiState)
-  Column(
-    modifier = modifier.fillMaxSize().padding(16.dp).imePadding(),
-    verticalArrangement = Arrangement.spacedBy(16.dp),
-  ) {
-    ReadOnlyField(label = "Account", value = uiState.accountName)
-    OptionDropdownField(
-      label = "Tax year",
-      options = uiState.yearOptions,
-      selectedId = uiState.selectedYearId,
-      onSelected = onYearSelected,
-    )
-    OutlinedTextField(
-      value = uiState.amountInput,
-      onValueChange = onAmountChange,
-      label = { Text("Contributions") },
-      prefix = { Text("£") },
-      singleLine = true,
-      keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-      isError = warnings.isNotEmpty(),
-      supportingText =
-        if (warnings.isEmpty()) {
-          null
-        } else {
-          { Column { warnings.forEach { message -> Text(message) } } }
-        },
-      modifier = Modifier.fillMaxWidth(),
-    )
-    Spacer(Modifier.weight(1f))
+  Column(modifier = modifier.fillMaxSize().imePadding()) {
+    Column(
+      modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp),
+      verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+      ReadOnlyField(label = "Account", value = uiState.accountName)
+      OptionDropdownField(
+        label = "Tax year",
+        options = uiState.yearOptions,
+        selectedId = uiState.selectedYearId,
+        onSelected = onYearSelected,
+      )
+      OutlinedTextField(
+        value = uiState.amountInput,
+        onValueChange = onAmountChange,
+        label = { Text("Contributions") },
+        prefix = { Text("£") },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        isError = warnings.isNotEmpty(),
+        supportingText =
+          if (warnings.isEmpty()) {
+            null
+          } else {
+            { Column { warnings.forEach { message -> Text(message) } } }
+          },
+        modifier = Modifier.fillMaxWidth(),
+      )
+    }
     Button(
       onClick = onSave,
       enabled = uiState.canSave && !uiState.isSaving,
-      modifier = Modifier.fillMaxWidth(),
+      modifier = Modifier.fillMaxWidth().padding(16.dp),
     ) {
       Text("Save")
     }

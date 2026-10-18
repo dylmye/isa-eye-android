@@ -24,6 +24,9 @@ import androidx.compose.ui.unit.dp
 /**
  * Adaptive shell shared by the add and edit account forms: full-screen on compact widths, a
  * centred card on wider ones. [content] receives the inner padding for its own layout.
+ *
+ * A form built on this scrolls its fields and pins its action below them. A window shorter than the
+ * form - or one shortened by the keyboard - would otherwise push the button out of reach.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -5,14 +5,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -150,33 +151,34 @@ private fun AddAccountDetailsContent(
 ) {
   var showProviderSheet by rememberSaveable { mutableStateOf(false) }
 
-  Column(
-    modifier = modifier.fillMaxSize().padding(16.dp).imePadding(),
-    verticalArrangement = Arrangement.spacedBy(16.dp),
-  ) {
-    OutlinedTextField(
-      value = uiState.nickname,
-      onValueChange = onNicknameChange,
-      label = { Text("Nickname (optional)") },
-      singleLine = true,
-      keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-      modifier = Modifier.fillMaxWidth(),
-    )
-    ProviderField(
-      selected = uiState.selectedProvider,
-      onClick = { showProviderSheet = true },
-    )
-    OptionDropdownField(
-      label = "Year of opening",
-      options = uiState.rulesetOptions,
-      selectedId = uiState.selectedRulesetId,
-      onSelected = onRulesetSelected,
-    )
-    Spacer(Modifier.weight(1f))
+  Column(modifier = modifier.fillMaxSize().imePadding()) {
+    Column(
+      modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp),
+      verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+      OutlinedTextField(
+        value = uiState.nickname,
+        onValueChange = onNicknameChange,
+        label = { Text("Nickname (optional)") },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+        modifier = Modifier.fillMaxWidth(),
+      )
+      ProviderField(
+        selected = uiState.selectedProvider,
+        onClick = { showProviderSheet = true },
+      )
+      OptionDropdownField(
+        label = "Year of opening",
+        options = uiState.rulesetOptions,
+        selectedId = uiState.selectedRulesetId,
+        onSelected = onRulesetSelected,
+      )
+    }
     Button(
       onClick = onNext,
       enabled = uiState.canContinue,
-      modifier = Modifier.fillMaxWidth(),
+      modifier = Modifier.fillMaxWidth().padding(16.dp),
     ) {
       Text("Continue")
     }
@@ -201,19 +203,23 @@ private fun AddAccountFollowUpContent(
   onSave: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  Column(
-    modifier = modifier.fillMaxSize().padding(16.dp).imePadding(),
-    verticalArrangement = Arrangement.spacedBy(16.dp),
-  ) {
-    OptionDropdownField(
-      label = "Type of ISA",
-      options = uiState.productTypeOptions,
-      selectedId = uiState.selectedProductTypeId,
-      onSelected = onProductTypeSelected,
-    )
-    FlexibleField(flexible = uiState.flexible, onFlexibleChange = onFlexibleChange)
-    Spacer(Modifier.weight(1f))
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+  Column(modifier = modifier.fillMaxSize().imePadding()) {
+    Column(
+      modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp),
+      verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+      OptionDropdownField(
+        label = "Type of ISA",
+        options = uiState.productTypeOptions,
+        selectedId = uiState.selectedProductTypeId,
+        onSelected = onProductTypeSelected,
+      )
+      FlexibleField(flexible = uiState.flexible, onFlexibleChange = onFlexibleChange)
+    }
+    Row(
+      modifier = Modifier.fillMaxWidth().padding(16.dp),
+      horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
       OutlinedButton(onClick = onBack, modifier = Modifier.weight(1f)) { Text("Back") }
       Button(
         onClick = onSave,
