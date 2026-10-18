@@ -64,6 +64,8 @@ data class ProductTypeEntity(
   val removedWithRuleset: String?,
   val shortDescription: String,
   val longDescription: String,
+  @ColumnInfo(defaultValue = "'#ffffff'")
+  val colour: String = "#ffffff",
 )
 
 @Entity(

@@ -31,7 +31,7 @@ import me.dylmye.isa.data.db.entity.SeedStateEntity
     RulesetExceptionEntity::class,
     SeedStateEntity::class,
   ],
-  version = 1,
+  version = 2,
   exportSchema = true,
 )
 abstract class IsaDatabase : RoomDatabase() {
@@ -55,6 +55,9 @@ abstract class IsaDatabase : RoomDatabase() {
     fun build(context: Context): IsaDatabase {
       val applicationContext = context.applicationContext
       return Room.databaseBuilder(applicationContext, IsaDatabase::class.java, NAME)
+        // The colour column arrived before anything shipped, so there is no upgrade path to write
+        // and none is wanted: an older database is dropped and recreated rather than migrated.
+        .fallbackToDestructiveMigration(dropAllTables = true)
         .addCallback(SeedData(applicationContext).callback)
         .build()
     }

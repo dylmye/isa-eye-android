@@ -51,6 +51,7 @@ for (const ruleset of rulesets) {
 for (const type of isaTypes) {
   upsert("productTypes", sqlString(type.code), [
     ["name", sqlString(type.name)],
+    ["colour", sqlString(type.colour ?? "#ffffff")],
     ["introducedWithRuleset", sqlString(type.introducedWithRuleset)],
     ["removedWithRuleset", sqlString(type.removedWithRuleset)],
     ["shortDescription", sqlString(type.shortDescription)],

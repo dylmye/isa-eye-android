@@ -3,6 +3,8 @@ interface IsaTypeSeedData {
   name: string;
   /** Constant 'ID'. Must be unique. */
   code: string;
+  /** Hex colour representing the ISA type, for visualisations. */
+  colour?: string;
   /** Tax year this ISA was introduced with. Related to a single `Ruleset`. */
   introducedWithRuleset: string;
   /** Tax year the ISA was withdrawn. Related to a single `Ruleset`. */
@@ -16,6 +18,7 @@ interface IsaTypeSeedData {
 export const isaTypes: readonly IsaTypeSeedData[] = [
   {
     code: "CASH",
+    colour: "#2E7D32",
     name: "Cash ISA",
     introducedWithRuleset: "2008/2009",
     shortDescription: "Earn interest on cash tax-free",
@@ -24,6 +27,7 @@ export const isaTypes: readonly IsaTypeSeedData[] = [
   },
   {
     code: "STOCKS_AND_SHARES",
+    colour: "#1565C0",
     name: "Stocks & Shares ISA",
     introducedWithRuleset: "2008/2009",
     shortDescription: "Invest without paying tax on gains",
@@ -32,6 +36,7 @@ export const isaTypes: readonly IsaTypeSeedData[] = [
   },
   {
     code: "INNOVATIVE_FINANCE",
+    colour: "#6A1B9A",
     name: "Innovative Finance ISA",
     introducedWithRuleset: "2016/2017",
     shortDescription: "Profit from peer-to-peer lending, tax-free",
@@ -40,6 +45,7 @@ export const isaTypes: readonly IsaTypeSeedData[] = [
   },
   {
     code: "LIFETIME",
+    colour: "#EF6C00",
     name: "Lifetime ISA",
     introducedWithRuleset: "2017/2018",
     shortDescription:
@@ -49,6 +55,7 @@ export const isaTypes: readonly IsaTypeSeedData[] = [
   },
   {
     code: "JUNIOR",
+    colour: "#00838F",
     name: "Junior ISA",
     introducedWithRuleset: "2011/2012",
     shortDescription: "Save for your child's future",
@@ -57,6 +64,7 @@ export const isaTypes: readonly IsaTypeSeedData[] = [
   },
   {
     code: "HELP_TO_BUY",
+    colour: "#AD1457",
     name: "Help To Buy ISA",
     introducedWithRuleset: "2015/2016",
     removedWithRuleset: "2019/2020",

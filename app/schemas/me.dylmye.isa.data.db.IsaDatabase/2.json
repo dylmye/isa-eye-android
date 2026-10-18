@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 1,
-    "identityHash": "6c96e0315a95a8fe0262b828e8479df2",
+    "version": 2,
+    "identityHash": "54039086ae85fac34831a0cb93d1c36f",
     "entities": [
       {
         "tableName": "providers",
@@ -146,7 +146,7 @@
       },
       {
         "tableName": "productTypes",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`_id` TEXT NOT NULL, `name` TEXT NOT NULL, `introducedWithRuleset` TEXT NOT NULL, `removedWithRuleset` TEXT, `shortDescription` TEXT NOT NULL, `longDescription` TEXT NOT NULL, PRIMARY KEY(`_id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`_id` TEXT NOT NULL, `name` TEXT NOT NULL, `introducedWithRuleset` TEXT NOT NULL, `removedWithRuleset` TEXT, `shortDescription` TEXT NOT NULL, `longDescription` TEXT NOT NULL, `colour` TEXT NOT NULL DEFAULT '#ffffff', PRIMARY KEY(`_id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -182,6 +182,13 @@
             "columnName": "longDescription",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "colour",
+            "columnName": "colour",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'#ffffff'"
           }
         ],
         "primaryKey": {
@@ -519,7 +526,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6c96e0315a95a8fe0262b828e8479df2')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '54039086ae85fac34831a0cb93d1c36f')"
     ]
   }
 }
