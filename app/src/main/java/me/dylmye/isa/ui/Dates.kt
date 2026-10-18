@@ -5,6 +5,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import kotlin.math.roundToInt
 
 /**
  * The zone dates are read in. Pinned rather than taken from the device, so one instant always renders
@@ -39,6 +40,27 @@ internal fun formatLastUpdated(unixMillis: Long, nowMillis: Long): String {
   }
 }
 
+/** [unixMillis] as `yyyy-MM-dd` in the UK zone, the form the seeded rulesets use. */
+internal fun isoDate(unixMillis: Long): String =
+  SimpleDateFormat(ISO_DATE, Locale.UK).apply { timeZone = UkZone }.format(Date(unixMillis))
+
+/**
+ * Whole calendar days from [fromIso] to [toIso], or null when either cannot be read. Both ends sit at
+ * midday so a daylight-saving change inside the span cannot shift the count.
+ */
+internal fun daysBetween(fromIso: String, toIso: String): Int? {
+  val from = parseIsoDate(fromIso)?.let(::atMidday)
+  val to = parseIsoDate(toIso)?.let(::atMidday)
+  if (from == null || to == null) return null
+  return ((to - from).toDouble() / DAY_MILLIS).roundToInt()
+}
+
+/** [iso] shifted by whole [months], as `yyyy-MM-dd`, or null when it cannot be read. */
+internal fun isoDatePlusMonths(iso: String, months: Int): String? {
+  val date = parseIsoDate(iso) ?: return null
+  return isoDate(calendar(date.time).apply { add(Calendar.MONTH, months) }.timeInMillis)
+}
+
 /** "3 days ago", with the unit left singular when the count is one. */
 private fun ago(count: Long, unit: String): String =
   if (count == 1L) "1 $unit ago" else "$count ${unit}s ago"
@@ -66,3 +88,16 @@ private fun wholeMonthsBetween(unixMillis: Long, nowMillis: Long): Long {
 
 private fun calendar(unixMillis: Long): Calendar =
   Calendar.getInstance(UkZone).apply { timeInMillis = unixMillis }
+
+/** Midnight is unsafe to subtract across a daylight-saving change, so both ends are pulled to noon. */
+private fun atMidday(date: Date): Long = calendar(date.time).apply {
+  set(Calendar.HOUR_OF_DAY, 12)
+  set(Calendar.MINUTE, 0)
+}.timeInMillis
+
+private fun parseIsoDate(iso: String): Date? = SimpleDateFormat(ISO_DATE, Locale.UK).apply {
+  timeZone = UkZone
+  isLenient = false
+}.parse(iso)
+
+private const val ISO_DATE = "yyyy-MM-dd"

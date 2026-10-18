@@ -41,7 +41,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.toColorInt
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.window.core.layout.WindowSizeClass
@@ -50,6 +49,7 @@ import me.dylmye.isa.ui.FormFactorPreviews
 import me.dylmye.isa.ui.components.ProviderAvatar
 import me.dylmye.isa.ui.components.containerTint
 import me.dylmye.isa.ui.formatGbp
+import me.dylmye.isa.ui.toTint
 
 /** Stateful entry point: owns the ViewModel and hoists its state down into [AccountsContent]. */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
@@ -258,10 +258,6 @@ private fun AccountsEmpty(hasAccounts: Boolean, ruleset: String?, modifier: Modi
     }
   }
 }
-
-private val FallbackTint = Color(0xFF9E9E9E)
-
-private fun String.toTint(): Color = runCatching { Color(toColorInt()) }.getOrDefault(FallbackTint)
 
 @FormFactorPreviews
 @Composable

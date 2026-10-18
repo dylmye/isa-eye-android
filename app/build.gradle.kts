@@ -122,6 +122,9 @@ dependencies {
   // Adaptive
   implementation(libs.androidx.compose.material3.adaptive.navigation.suite)
   implementation(libs.androidx.compose.material3.adaptive.navigation3)
+
+  // Charts
+  implementation(libs.vico.compose.m3)
   // Tooling
   debugImplementation(libs.androidx.compose.ui.tooling)
   // Instrumented tests
