@@ -30,7 +30,14 @@ class AccountDetailViewModel(
       repository.observeRulesets(),
       userPreferences.currentRulesetId,
     ) { product, productTypes, balances, rulesets, selectedId ->
-      resolveAccountDetail(product, productTypes, balances, rulesets.map { it.id }, selectedId)
+      resolveAccountDetail(
+        product,
+        productTypes,
+        balances,
+        rulesets.map { it.id },
+        selectedId,
+        System.currentTimeMillis(),
+      )
     }
       .stateIn(
         viewModelScope,

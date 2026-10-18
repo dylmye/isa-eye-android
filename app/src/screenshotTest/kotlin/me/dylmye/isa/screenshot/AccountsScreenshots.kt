@@ -86,6 +86,7 @@ fun AccountDetailEarlierYearScreenshot() {
           previousRuleset = "2023/2024",
           isLatestRuleset = false,
           trend = ContributionTrend.Down,
+          lastUpdatedLabel = "4 Jan 2025",
         ),
       showBackButton = paneNeedsBackButton(),
       onBack = {},
@@ -143,6 +144,7 @@ private val PreviewAccountDetail =
     previousRuleset = "2025/2026",
     isLatestRuleset = true,
     trend = ContributionTrend.Up,
+    lastUpdatedLabel = "3 days ago",
   )
 
 private val PreviewRulesetNotes =

@@ -65,6 +65,13 @@ internal fun ContributionsCard(uiState: AccountDetailUiState, modifier: Modifier
           TrendIndicator(trend = trend, previousRuleset = uiState.previousRuleset)
         }
       }
+      uiState.lastUpdatedLabel?.let { label ->
+        Text(
+          text = "Updated $label",
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
     }
   }
 }

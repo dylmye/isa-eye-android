@@ -8,9 +8,14 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 class AccountDetailUiStateTest {
   private val rulesetIds = listOf("2024/2025", "2025/2026", "2026/2027")
+  private val now = at("2026-03-15 12:00")
+  private val threeDaysAgo = at("2026-03-12 12:00")
 
   @Test
   fun resolveAccountDetail_readsTheSelectedYearsContributionsAndComparesToThePrevious() {
@@ -21,6 +26,7 @@ class AccountDetailUiStateTest {
         balances = listOf(contribution("2025/2026", 100_000), contribution("2026/2027", 125_000)),
         rulesetIds = rulesetIds,
         selectedId = "2026/2027",
+        nowMillis = now,
       )
 
     assertEquals("Cash ISA", state.name)
@@ -40,6 +46,7 @@ class AccountDetailUiStateTest {
         balances = listOf(contribution("2025/2026", 100_000), contribution("2026/2027", 80_000)),
         rulesetIds = rulesetIds,
         selectedId = "2026/2027",
+        nowMillis = now,
       )
 
     assertEquals(ContributionTrend.Down, state.trend)
@@ -54,6 +61,7 @@ class AccountDetailUiStateTest {
         balances = listOf(contribution("2025/2026", 100_000), contribution("2026/2027", 100_000)),
         rulesetIds = rulesetIds,
         selectedId = "2026/2027",
+        nowMillis = now,
       )
 
     assertEquals(ContributionTrend.Flat, state.trend)
@@ -68,6 +76,7 @@ class AccountDetailUiStateTest {
         balances = listOf(contribution("2026/2027", 125_000)),
         rulesetIds = rulesetIds,
         selectedId = "2026/2027",
+        nowMillis = now,
       )
 
     assertNull(state.previousRuleset)
@@ -83,6 +92,7 @@ class AccountDetailUiStateTest {
         balances = listOf(contribution("2024/2025", 50_000)),
         rulesetIds = rulesetIds,
         selectedId = "2024/2025",
+        nowMillis = now,
       )
 
     assertEquals("2024/2025", state.ruleset)
@@ -100,6 +110,7 @@ class AccountDetailUiStateTest {
         balances = emptyList(),
         rulesetIds = rulesetIds,
         selectedId = null,
+        nowMillis = now,
       )
 
     assertEquals("2026/2027", state.ruleset)
@@ -117,6 +128,7 @@ class AccountDetailUiStateTest {
         balances = emptyList(),
         rulesetIds = rulesetIds,
         selectedId = null,
+        nowMillis = now,
       )
 
     assertEquals("Cash ISA", state.typeName)
@@ -132,10 +144,57 @@ class AccountDetailUiStateTest {
         balances = emptyList(),
         rulesetIds = rulesetIds,
         selectedId = null,
+        nowMillis = now,
       )
 
     assertNull(state.typeName)
     assertNull(state.longDescription)
+  }
+
+  @Test
+  fun resolveAccountDetail_describesARecentFigureRelatively() {
+    val state =
+      resolveAccountDetail(
+        product = product(),
+        productTypes = emptyList(),
+        balances = listOf(contribution("2026/2027", 125_000, updatedMillis = threeDaysAgo)),
+        rulesetIds = rulesetIds,
+        selectedId = "2026/2027",
+        nowMillis = now,
+      )
+
+    assertEquals("3 days ago", state.lastUpdatedLabel)
+  }
+
+  @Test
+  fun resolveAccountDetail_datesAFigureOlderThanAYear() {
+    val state =
+      resolveAccountDetail(
+        product = product(),
+        productTypes = emptyList(),
+        balances =
+          listOf(contribution("2026/2027", 125_000, updatedMillis = at("2025-01-04 12:00"))),
+        rulesetIds = rulesetIds,
+        selectedId = "2026/2027",
+        nowMillis = now,
+      )
+
+    assertEquals("4 Jan 2025", state.lastUpdatedLabel)
+  }
+
+  @Test
+  fun resolveAccountDetail_omitsTheLabelWhenTheYearHasNoRecordedFigure() {
+    val state =
+      resolveAccountDetail(
+        product = product(),
+        productTypes = emptyList(),
+        balances = listOf(contribution("2024/2025", 50_000, updatedMillis = threeDaysAgo)),
+        rulesetIds = rulesetIds,
+        selectedId = "2026/2027",
+        nowMillis = now,
+      )
+
+    assertNull(state.lastUpdatedLabel)
   }
 
   private fun product() = ProductEntity(
@@ -157,10 +216,19 @@ class AccountDetailUiStateTest {
     longDescription = "A deposit account, where your cash is guaranteed.",
   )
 
-  private fun contribution(rulesetId: String, pence: Long) = AnnualBalanceEntity(
-    productId = "p1",
-    rulesetId = rulesetId,
-    lastUpdatedDateUnix = 0L,
-    deductedFromAllowancePence = pence,
-  )
+  private fun contribution(rulesetId: String, pence: Long, updatedMillis: Long = 0L) =
+    AnnualBalanceEntity(
+      productId = "p1",
+      rulesetId = rulesetId,
+      lastUpdatedDateUnix = updatedMillis,
+      deductedFromAllowancePence = pence,
+    )
+}
+
+private val ukZone: TimeZone = TimeZone.getTimeZone("Europe/London")
+
+/** Parses a UK wall-clock instant so the expectations above read as dates rather than millis. */
+private fun at(text: String): Long {
+  val parser = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.UK).apply { timeZone = ukZone }
+  return requireNotNull(parser.parse(text)).time
 }
