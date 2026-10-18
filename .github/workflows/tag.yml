@@ -1,0 +1,42 @@
+name: Tag
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    name: Version is new
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Compare with the previous tag
+        run: |
+          set -eu
+          current="${GITHUB_REF_NAME}"
+          previous="$(git tag --list 'v*' --sort=-v:refname | grep -vx "$current" | head -n 1)"
+          if [ -z "$previous" ]; then
+            echo "No previous tag, so there is nothing to compare against."
+            exit 0
+          fi
+          if [ "$(printf '%s\n%s\n' "$previous" "$current" | sort -V | tail -n 1)" != "$current" ]; then
+            echo "::error::$current does not sort after $previous."
+            exit 1
+          fi
+          current_code="$(sed -n 's/.*versionCode = \([0-9][0-9]*\).*/\1/p' app/build.gradle.kts)"
+          if [ -z "$current_code" ]; then
+            echo "::error::No versionCode found in app/build.gradle.kts."
+            exit 1
+          fi
+          previous_code="$(git show "$previous:app/build.gradle.kts" | sed -n 's/.*versionCode = \([0-9][0-9]*\).*/\1/p')"
+          if [ "$current_code" -le "$previous_code" ]; then
+            echo "::error::versionCode $current_code is not greater than $previous_code from $previous."
+            exit 1
+          fi
+          echo "$current sorts after $previous and versionCode $current_code is greater than $previous_code."
