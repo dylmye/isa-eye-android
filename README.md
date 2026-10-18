@@ -85,6 +85,9 @@ adb shell am start -n me.dylmye.isa/.MainActivity
 
 - Schemas are exported to `app/schemas/` (`exportSchema = true`) and **committed** - they are the migration history and are required for migration tests.
 - When you change entities: bump `@Database(version = ...)` and add a `Migration` (or an `@AutoMigration`). Never change the schema without bumping the version.
+- That rule has one exception in the history: the product-type colour column landed before
+  v0.1.0, when nothing had shipped, so it was covered by `fallbackToDestructiveMigration`
+  rather than a migration. From v0.1.0 onward, a schema change needs a real migration.
 - Reference data is seeded from `app/src/main/assets/seed.sql` on first create and whenever `SeedData.SEED_VERSION` changes.
 
 ### Updating seed data
