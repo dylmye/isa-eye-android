@@ -1,7 +1,10 @@
 package me.dylmye.isa.ui.accounts
 
-/** Sentinel id for the "still open" choice in the closing-year picker. */
-internal const val STILL_OPEN_ID = "open"
+/**
+ * Sentinel id for the "still open" choice in the closing-year picker. Public because it is the value
+ * [EditAccountUiState.selectedClosingYearId] carries, so anyone holding that state needs it.
+ */
+const val STILL_OPEN_ID = "open"
 
 /** Immutable snapshot of the edit-account form. Provider and opening year are fixed. */
 data class EditAccountUiState(

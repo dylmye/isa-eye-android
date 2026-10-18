@@ -27,9 +27,10 @@ git config core.hooksPath .githooks
 # Build and install on a connected device/emulator
 ./gradlew :app:installDebug
 
-# Full verification gate: build, unit tests, instrumented-test compile, detekt, ktlint, Android Lint
+# Full verification gate: build, unit tests, instrumented-test compile, screenshot tests,
+# detekt, ktlint, Android Lint
 ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:assembleDebugAndroidTest \
-  :app:detekt :app:ktlintCheck :app:lintDebug
+  :app:testScreenshotTestDefaultDebugTestSuite :app:detekt :app:ktlintCheck :app:lintDebug
 
 # Just the static analysis (what the pre-commit hook runs)
 ./gradlew :app:ktlintCheck :app:detekt
@@ -37,11 +38,33 @@ git config core.hooksPath .githooks
 # Unit tests
 ./gradlew :app:testDebugUnitTest
 
+# Local unit-test coverage (HTML and XML under app/build/reports/coverage)
+./gradlew :app:createDebugUnitTestCoverageReport
+
 # Instrumented tests (needs a device/emulator)
 ./gradlew :app:connectedDebugAndroidTest
 ```
 
 These are also set up as tasks in VS Code.
+
+### Screenshot tests
+
+The UI is covered by [Compose Preview Screenshot Testing](https://developer.android.com/studio/preview/compose-screenshot-testing-with-testsuites),
+which renders the previews in `app/src/screenshotTest/` host-side with layoutlib - no device or
+emulator needed.
+
+```sh
+# Compare against the committed reference images
+./gradlew :app:testScreenshotTestDefaultDebugTestSuite
+
+# Re-record them after an intended UI change
+./gradlew :app:updateScreenshotTestDefaultDebugTestSuite
+```
+
+Reference images live in `app/src/screenshotTestDefaultDebug/reference/` and are **committed** -
+they are the golden files. A failing run therefore means either a regression or a change you meant
+to make and need to re-record. Every preview carries `@PreviewTest`; the window sizes, themes and
+font scales come from the multi-preview annotations in `WindowSizePreviews.kt`.
 
 ### Debugging on device
 

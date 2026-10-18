@@ -23,6 +23,17 @@ android {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
+        debug {
+            // Coverage for the local unit tests. The instrumented tests are compile-only here, so
+            // there is nothing to instrument for those.
+            enableUnitTestCoverage = true
+        }
+    }
+
+    testCoverage {
+        // Pinned rather than left to AGP's default, so the agent and the reporting tool agree and a
+        // report can be reproduced.
+        jacocoVersion = libs.versions.jacoco.get()
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -38,6 +49,20 @@ android {
     packaging {
       resources {
         excludes += "/META-INF/{AL2.0,LGPL2.1}"
+      }
+    }
+
+    // Compose Preview Screenshot Testing. The suite renders previews from `src/screenshotTest`
+    // host-side with layoutlib, so no device is needed.
+    testOptions {
+      screenshotTests {
+        create("screenshotTest") {
+          engineVersion = libs.versions.screenshot.get()
+          targetVariants.add("debug")
+          dependencies {
+            implementation(libs.screenshot.validation.api)
+          }
+        }
       }
     }
 }
