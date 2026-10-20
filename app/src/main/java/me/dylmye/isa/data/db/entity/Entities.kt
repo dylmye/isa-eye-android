@@ -161,6 +161,38 @@ data class RulesetExceptionEntity(
 )
 
 /**
+ * A monthly contribution recorded automatically for one account in one tax year. It starts on
+ * [firstCreditDate] and ends with the tax year; [appliedThroughDate] is the last credit already
+ * added to that year's total, which is what lets a late app start catch up without double-counting.
+ */
+@Entity(
+  tableName = "autoContributions",
+  primaryKeys = ["productId", "rulesetId"],
+  foreignKeys = [
+    ForeignKey(
+      entity = ProductEntity::class,
+      parentColumns = ["_id"],
+      childColumns = ["productId"],
+      onDelete = ForeignKey.CASCADE,
+    ),
+    ForeignKey(
+      entity = RulesetEntity::class,
+      parentColumns = ["_id"],
+      childColumns = ["rulesetId"],
+      onDelete = ForeignKey.RESTRICT,
+    ),
+  ],
+  indices = [Index("rulesetId")],
+)
+data class AutoContributionEntity(
+  val productId: String,
+  val rulesetId: String,
+  val monthlyPence: Long,
+  val firstCreditDate: String,
+  val appliedThroughDate: String?,
+)
+
+/**
  * A tax year's savings goal, in pence. Unlike the tables above this one has no TinyBase counterpart:
  * it is user data the app keeps for itself, so its key is the tax year rather than a row id.
  */

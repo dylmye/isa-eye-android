@@ -19,11 +19,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.dylmye.isa.ui.formatGbp
+import me.dylmye.isa.ui.icons.autoRenew
 import me.dylmye.isa.ui.icons.balance
 import me.dylmye.isa.ui.icons.deleteForever
 import me.dylmye.isa.ui.icons.trendingDown
@@ -77,28 +80,52 @@ internal fun ContributionsCard(uiState: AccountDetailUiState, modifier: Modifier
 }
 
 /**
- * Actions for the selected account: recording this year's contributions, and deleting the account.
+ * Actions for the selected account: recording this year's contributions, setting up or changing an
+ * auto-contribution, and deleting the account.
+ *
+ * The card has no visible heading. "Actions" is kept as its accessibility description instead, so a
+ * screen reader still announces the group while the card itself stays as tight as the buttons allow.
  */
 @Composable
 internal fun ActionsCard(
   modifier: Modifier = Modifier,
+  autoContributionEnabled: Boolean = false,
+  hasAutoContribution: Boolean = false,
   onUpdateContributions: () -> Unit = {},
+  onSetUpAutoContribution: () -> Unit = {},
   onDeleteAccount: () -> Unit = {},
 ) {
-  Card(modifier = modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
+  Card(
+    modifier = modifier.fillMaxWidth().semantics { contentDescription = "Actions" },
+    shape = MaterialTheme.shapes.large,
+  ) {
     Column(
       modifier = Modifier.padding(16.dp),
       verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-      Text(
-        text = "Actions",
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
       Button(onClick = onUpdateContributions, modifier = Modifier.fillMaxWidth()) {
         Icon(balance, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
         Spacer(Modifier.size(ButtonDefaults.IconSpacing))
         Text("Update contributions")
+      }
+      Button(
+        onClick = onSetUpAutoContribution,
+        enabled = autoContributionEnabled,
+        modifier = Modifier.fillMaxWidth(),
+      ) {
+        Icon(
+          autoRenew,
+          contentDescription = null,
+          modifier = Modifier.size(ButtonDefaults.IconSize),
+        )
+        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+        Text(
+          if (hasAutoContribution) {
+            "Update auto-contribution amount"
+          } else {
+            "Set up auto-contribution"
+          },
+        )
       }
       Button(
         onClick = onDeleteAccount,

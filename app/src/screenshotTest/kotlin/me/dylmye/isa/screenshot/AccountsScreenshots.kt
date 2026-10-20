@@ -66,6 +66,25 @@ fun AccountDetailScreenshot() {
       onBack = {},
       onEdit = {},
       onUpdateContributions = {},
+      onSetUpAutoContribution = {},
+    )
+  }
+}
+
+/** A current-year account with no schedule yet, so the card invites one. */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@PreviewTest
+@ScreenPreviews
+@Composable
+fun AccountDetailNoAutoContributionScreenshot() {
+  ISAEyeTheme(dynamicColor = false) {
+    AccountDetailContent(
+      uiState = PreviewAccountDetail.copy(hasAutoContribution = false),
+      showBackButton = paneNeedsBackButton(),
+      onBack = {},
+      onEdit = {},
+      onUpdateContributions = {},
+      onSetUpAutoContribution = {},
     )
   }
 }
@@ -87,11 +106,14 @@ fun AccountDetailEarlierYearScreenshot() {
           isLatestRuleset = false,
           trend = ContributionTrend.Down,
           lastUpdatedLabel = "4 Jan 2025",
+          isCurrentTaxYear = false,
+          hasAutoContribution = false,
         ),
       showBackButton = paneNeedsBackButton(),
       onBack = {},
       onEdit = {},
       onUpdateContributions = {},
+      onSetUpAutoContribution = {},
     )
   }
 }
@@ -145,6 +167,8 @@ private val PreviewAccountDetail =
     isLatestRuleset = true,
     trend = ContributionTrend.Up,
     lastUpdatedLabel = "3 days ago",
+    isCurrentTaxYear = true,
+    hasAutoContribution = true,
   )
 
 private val PreviewRulesetNotes =

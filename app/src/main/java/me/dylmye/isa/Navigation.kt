@@ -34,6 +34,7 @@ import me.dylmye.isa.ui.accounts.AccountDetailPlaceholder
 import me.dylmye.isa.ui.accounts.AccountDetailScreen
 import me.dylmye.isa.ui.accounts.AccountsScreen
 import me.dylmye.isa.ui.accounts.AddAccountScreen
+import me.dylmye.isa.ui.accounts.AutoContributionScreen
 import me.dylmye.isa.ui.accounts.EditAccountScreen
 import me.dylmye.isa.ui.accounts.UpdateContributionsScreen
 import me.dylmye.isa.ui.help.HelpScreen
@@ -144,6 +145,9 @@ private fun AppNavDisplay(
           onBack = { backStack.removeLast() },
           onEdit = { backStack.add(EditAccount(detail.productId)) },
           onUpdateContributions = { backStack.add(UpdateContributions(detail.productId)) },
+          onSetUpAutoContribution = {
+            backStack.addDialog(SetAutoContribution(detail.productId))
+          },
         )
       }
       entry<Insights> {
@@ -194,6 +198,14 @@ private fun EntryProviderScope<NavKey>.dialogEntries(backStack: TopLevelBackStac
   ) { update ->
     UpdateContributionsScreen(productId = update.productId, onClose = { backStack.removeLast() })
   }
+  entry<SetAutoContribution>(
+    metadata =
+      DialogSceneStrategy.dialog(
+        DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+      ),
+  ) { auto ->
+    AutoContributionScreen(productId = auto.productId, onClose = { backStack.removeLast() })
+  }
   entry<SetGoal>(
     metadata =
       DialogSceneStrategy.dialog(
@@ -216,5 +228,8 @@ private fun TopLevelBackStack<NavKey>.addDialog(key: NavKey) {
  * True for the keys that [dialogEntries] presents as a dialog. Kept next to it so that adding a
  * dialog there is a reminder to extend this.
  */
-private fun NavKey.isDialog(): Boolean =
-  this is AddAccount || this is EditAccount || this is UpdateContributions || this is SetGoal
+private fun NavKey.isDialog(): Boolean = this is AddAccount ||
+  this is EditAccount ||
+  this is UpdateContributions ||
+  this is SetAutoContribution ||
+  this is SetGoal

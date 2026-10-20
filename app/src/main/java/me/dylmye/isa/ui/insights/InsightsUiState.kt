@@ -5,11 +5,11 @@ import me.dylmye.isa.data.db.entity.AnnualBalanceEntity
 import me.dylmye.isa.data.db.entity.GoalEntity
 import me.dylmye.isa.data.db.entity.ProductTypeEntity
 import me.dylmye.isa.data.db.entity.RulesetEntity
+import me.dylmye.isa.time.daysBetween
+import me.dylmye.isa.time.isoDate
+import me.dylmye.isa.time.isoDatePlusMonths
+import me.dylmye.isa.time.monthsBetweenCeiling
 import me.dylmye.isa.ui.ceilToPounds
-import me.dylmye.isa.ui.daysBetween
-import me.dylmye.isa.ui.isoDate
-import me.dylmye.isa.ui.isoDatePlusMonths
-import me.dylmye.isa.ui.monthsBetweenCeiling
 
 /** How far through the tax year it is: the countdown card colours these green, amber and red. */
 enum class TaxYearStage {

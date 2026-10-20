@@ -11,6 +11,9 @@ interface RulesetDao {
   @Query("SELECT * FROM rulesets ORDER BY startDate")
   fun observeAll(): Flow<List<RulesetEntity>>
 
+  @Query("SELECT * FROM rulesets ORDER BY startDate")
+  suspend fun getAll(): List<RulesetEntity>
+
   @Upsert
   suspend fun upsertAll(rulesets: List<RulesetEntity>)
 }

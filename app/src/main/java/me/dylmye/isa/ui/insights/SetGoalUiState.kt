@@ -2,8 +2,8 @@ package me.dylmye.isa.ui.insights
 
 import me.dylmye.isa.data.db.entity.GoalEntity
 import me.dylmye.isa.data.db.entity.RulesetEntity
+import me.dylmye.isa.time.isoDate
 import me.dylmye.isa.ui.formatGbp
-import me.dylmye.isa.ui.isoDate
 import me.dylmye.isa.ui.parsePoundsToPence
 import me.dylmye.isa.ui.penceToPoundsInput
 

@@ -11,32 +11,46 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import me.dylmye.isa.IsaEyeApplication
 import me.dylmye.isa.data.AccountRepository
+import me.dylmye.isa.data.AutoContributionRepository
 import me.dylmye.isa.data.UserPreferences
+import me.dylmye.isa.data.db.entity.AutoContributionEntity
+import me.dylmye.isa.data.db.entity.RulesetEntity
 
 /**
  * Loads the selected account and its contributions for the detail pane. The tax year comes from the
  * same preference the accounts list is scoped to, so the pane stays in step as the year changes.
  */
 class AccountDetailViewModel(
-  repository: AccountRepository,
+  accountRepository: AccountRepository,
+  autoContributionRepository: AutoContributionRepository,
   userPreferences: UserPreferences,
   productId: String,
 ) : ViewModel() {
+  /** Rulesets and this account's schedule, combined to keep the form's flow count down. */
+  private val scheduleData =
+    combine(
+      accountRepository.observeRulesets(),
+      autoContributionRepository.observeForProduct(productId),
+    ) { rulesets, schedules ->
+      ScheduleData(rulesets, schedules)
+    }
+
   val uiState: StateFlow<AccountDetailUiState> =
     combine(
-      repository.observeProduct(productId),
-      repository.observeProductTypes(),
-      repository.observeBalances(productId),
-      repository.observeRulesets(),
+      accountRepository.observeProduct(productId),
+      accountRepository.observeProductTypes(),
+      accountRepository.observeBalances(productId),
+      scheduleData,
       userPreferences.currentRulesetId,
-    ) { product, productTypes, balances, rulesets, selectedId ->
+    ) { product, productTypes, balances, data, selectedId ->
       resolveAccountDetail(
-        product,
-        productTypes,
-        balances,
-        rulesets.map { it.id },
-        selectedId,
-        System.currentTimeMillis(),
+        product = product,
+        productTypes = productTypes,
+        balances = balances,
+        rulesets = data.rulesets,
+        selectedId = selectedId,
+        autoContributions = data.schedules,
+        nowMillis = System.currentTimeMillis(),
       )
     }
       .stateIn(
@@ -53,6 +67,7 @@ class AccountDetailViewModel(
         val application = this[APPLICATION_KEY] as IsaEyeApplication
         AccountDetailViewModel(
           application.accountRepository,
+          application.autoContributionRepository,
           application.userPreferences,
           productId,
         )
@@ -60,3 +75,8 @@ class AccountDetailViewModel(
     }
   }
 }
+
+private data class ScheduleData(
+  val rulesets: List<RulesetEntity>,
+  val schedules: List<AutoContributionEntity>,
+)

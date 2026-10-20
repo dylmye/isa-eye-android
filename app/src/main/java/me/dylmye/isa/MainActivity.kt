@@ -14,9 +14,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
 import me.dylmye.isa.theme.ISAEyeTheme
 
 class MainActivity : ComponentActivity() {
@@ -51,6 +54,20 @@ class MainActivity : ComponentActivity() {
           )
         }
       }
+    }
+  }
+
+  /**
+   * Catches up any auto-contribution credits that came due while the app was not running. It runs on
+   * every foregrounding rather than on a timer: the app has to be running to write them, and this is
+   * the one moment it certainly is.
+   */
+  override fun onStart() {
+    super.onStart()
+    lifecycleScope.launch(Dispatchers.IO) {
+      (application as IsaEyeApplication)
+        .autoContributionRepository
+        .applyDue(System.currentTimeMillis())
     }
   }
 

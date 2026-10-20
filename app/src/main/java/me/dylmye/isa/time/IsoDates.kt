@@ -1,4 +1,4 @@
-package me.dylmye.isa.ui
+package me.dylmye.isa.time
 
 import java.text.ParsePosition
 import java.text.SimpleDateFormat
@@ -21,6 +21,11 @@ internal const val DAY_MILLIS = 24 * 60 * 60 * 1000L
 internal fun isoDate(unixMillis: Long): String =
   SimpleDateFormat(ISO_DATE, Locale.UK).apply { timeZone = UkZone }.format(Date(unixMillis))
 
+/** [iso] as "1 November 2026" in the UK zone, or null when it cannot be read. */
+internal fun formatLongDate(iso: String): String? = parseIsoDate(iso)?.let { date ->
+  SimpleDateFormat("d MMMM yyyy", Locale.UK).apply { timeZone = UkZone }.format(date)
+}
+
 /**
  * Whole calendar days from [fromIso] to [toIso], or null when either cannot be read. Both ends sit at
  * midday so a daylight-saving change inside the span cannot shift the count.
@@ -36,6 +41,17 @@ internal fun daysBetween(fromIso: String, toIso: String): Int? {
 internal fun isoDatePlusMonths(iso: String, months: Int): String? {
   val date = parseIsoDate(iso) ?: return null
   return isoDate(calendar(date.time).apply { add(Calendar.MONTH, months) }.timeInMillis)
+}
+
+/** The first day of the month after [iso], or null when it cannot be read. */
+internal fun firstOfNextMonth(iso: String): String? {
+  val date = parseIsoDate(iso) ?: return null
+  return isoDate(
+    calendar(date.time).apply {
+      set(Calendar.DAY_OF_MONTH, 1)
+      add(Calendar.MONTH, 1)
+    }.timeInMillis,
+  )
 }
 
 /**

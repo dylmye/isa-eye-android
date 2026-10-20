@@ -19,4 +19,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable data class UpdateContributions(val productId: String) : NavKey
 
+@Serializable data class SetAutoContribution(val productId: String) : NavKey
+
 @Serializable data object SetGoal : NavKey

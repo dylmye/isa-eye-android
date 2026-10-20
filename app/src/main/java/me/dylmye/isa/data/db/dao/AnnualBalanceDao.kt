@@ -14,6 +14,9 @@ interface AnnualBalanceDao {
   @Query("SELECT * FROM annualBalances")
   fun observeAll(): Flow<List<AnnualBalanceEntity>>
 
+  @Query("SELECT * FROM annualBalances")
+  suspend fun getAll(): List<AnnualBalanceEntity>
+
   @Upsert
   suspend fun upsertAll(balances: List<AnnualBalanceEntity>)
 

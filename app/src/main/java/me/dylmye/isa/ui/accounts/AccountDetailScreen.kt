@@ -44,6 +44,7 @@ fun AccountDetailScreen(
   onBack: () -> Unit,
   onEdit: () -> Unit,
   onUpdateContributions: () -> Unit,
+  onSetUpAutoContribution: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val viewModel: AccountDetailViewModel =
@@ -62,6 +63,7 @@ fun AccountDetailScreen(
     onBack = onBack,
     onEdit = onEdit,
     onUpdateContributions = onUpdateContributions,
+    onSetUpAutoContribution = onSetUpAutoContribution,
     modifier = modifier,
   )
 }
@@ -78,6 +80,7 @@ fun AccountDetailContent(
   onBack: () -> Unit,
   onEdit: () -> Unit,
   onUpdateContributions: () -> Unit,
+  onSetUpAutoContribution: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -115,6 +118,7 @@ fun AccountDetailContent(
       contentPadding = contentPadding,
       scrollBehavior = scrollBehavior,
       onUpdateContributions = onUpdateContributions,
+      onSetUpAutoContribution = onSetUpAutoContribution,
     )
   }
 }
@@ -126,6 +130,7 @@ private fun AccountDetailGrid(
   contentPadding: PaddingValues,
   scrollBehavior: TopAppBarScrollBehavior,
   onUpdateContributions: () -> Unit,
+  onSetUpAutoContribution: () -> Unit,
 ) {
   LazyVerticalGrid(
     columns = GridCells.Adaptive(minSize = 320.dp),
@@ -139,7 +144,14 @@ private fun AccountDetailGrid(
     item(key = "contributions", span = { GridItemSpan((maxLineSpan - 1).coerceAtLeast(1)) }) {
       ContributionsCard(uiState)
     }
-    item(key = "actions") { ActionsCard(onUpdateContributions = onUpdateContributions) }
+    item(key = "actions") {
+      ActionsCard(
+        autoContributionEnabled = uiState.isCurrentTaxYear,
+        hasAutoContribution = uiState.hasAutoContribution,
+        onUpdateContributions = onUpdateContributions,
+        onSetUpAutoContribution = onSetUpAutoContribution,
+      )
+    }
     val description = uiState.longDescription
     if (!description.isNullOrBlank()) {
       item(key = "info", span = { GridItemSpan(maxLineSpan) }) {
@@ -184,11 +196,14 @@ private fun AccountDetailContentPreview() {
           isLatestRuleset = true,
           trend = ContributionTrend.Up,
           lastUpdatedLabel = "3 days ago",
+          isCurrentTaxYear = true,
+          hasAutoContribution = true,
         ),
       showBackButton = true,
       onBack = {},
       onEdit = {},
       onUpdateContributions = {},
+      onSetUpAutoContribution = {},
     )
   }
 }
@@ -212,6 +227,7 @@ private fun AccountDetailContentEarlierYearPreview() {
       onBack = {},
       onEdit = {},
       onUpdateContributions = {},
+      onSetUpAutoContribution = {},
     )
   }
 }
