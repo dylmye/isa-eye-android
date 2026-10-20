@@ -40,3 +40,6 @@ internal fun penceToPoundsInput(pence: Long): String {
   if (remainder == 0L) return pounds.toString()
   return "$pounds.${remainder.toString().padStart(2, '0')}"
 }
+
+/** [pence] rounded up to the next whole pound, so a suggested saving never falls short. */
+internal fun ceilToPounds(pence: Long): Long = ((pence + 99) / 100) * 100

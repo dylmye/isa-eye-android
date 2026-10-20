@@ -2,11 +2,14 @@ package me.dylmye.isa.ui.insights
 
 import me.dylmye.isa.data.db.dao.AccountSummary
 import me.dylmye.isa.data.db.entity.AnnualBalanceEntity
+import me.dylmye.isa.data.db.entity.GoalEntity
 import me.dylmye.isa.data.db.entity.ProductTypeEntity
 import me.dylmye.isa.data.db.entity.RulesetEntity
+import me.dylmye.isa.ui.ceilToPounds
 import me.dylmye.isa.ui.daysBetween
 import me.dylmye.isa.ui.isoDate
 import me.dylmye.isa.ui.isoDatePlusMonths
+import me.dylmye.isa.ui.monthsBetweenCeiling
 
 /** How far through the tax year it is: the countdown card colours these green, amber and red. */
 enum class TaxYearStage {
@@ -40,9 +43,38 @@ data class YearShare(
 )
 
 /**
+ * This year's goal and where the recorded contributions stand against it, for the goal card and the
+ * monthly figure that would clear what is left.
+ */
+data class GoalProgress(
+  val targetPence: Long,
+  val contributedPence: Long,
+  val monthsRemaining: Int,
+  val monthlySuggestionPence: Long,
+) {
+  /** What is still to be saved, or zero once the goal is passed. */
+  val remainingPence: Long
+    get() = (targetPence - contributedPence).coerceAtLeast(0L)
+
+  /** How full the progress bar is, capped at one so an overshoot still draws as complete. */
+  val fraction: Float
+    get() = if (targetPence <=
+      0L
+    ) {
+      0f
+    } else {
+      (contributedPence.toFloat() / targetPence).coerceIn(0f, 1f)
+    }
+
+  val isMet: Boolean
+    get() = contributedPence >= targetPence
+}
+
+/**
  * Immutable snapshot of the insights tab, which always describes today's tax year rather than the one
- * the accounts view is scoped to. The countdown is the only card that survives an empty year: both
- * donuts need a contribution recorded this year, and the bar chart needs at least one year with one.
+ * the accounts view is scoped to. The countdown and the goal are the cards that survive an empty
+ * year: both donuts need a contribution recorded this year, and the bar chart needs at least one year
+ * with one.
  */
 data class InsightsUiState(
   val ruleset: String? = null,
@@ -52,18 +84,21 @@ data class InsightsUiState(
   val accountShares: List<AccountShare> = emptyList(),
   val typeShares: List<TypeShare> = emptyList(),
   val yearShares: List<YearShare> = emptyList(),
+  val goal: GoalProgress? = null,
 )
 
 /**
- * Builds the insights state from every [accounts] row, [productTypes], every [balances] row and the
- * [rulesets], read against [nowMillis]. The tax year comes from the ruleset dates rather than the
- * accounts view's selection, so the tab always reports current performance.
+ * Builds the insights state from every [accounts] row, [productTypes], every [balances] row, the
+ * [rulesets] and the [goals] set for them, read against [nowMillis]. The tax year comes from the
+ * ruleset dates rather than the accounts view's selection, so the tab always reports current
+ * performance.
  */
 internal fun resolveInsights(
   accounts: List<AccountSummary>,
   productTypes: List<ProductTypeEntity>,
   balances: List<AnnualBalanceEntity>,
   rulesets: List<RulesetEntity>,
+  goals: List<GoalEntity>,
   nowMillis: Long,
 ): InsightsUiState {
   val today = isoDate(nowMillis)
@@ -71,15 +106,17 @@ internal fun resolveInsights(
   val recorded = balances.filter { it.deductedFromAllowancePence > 0 }
   val thisYear = recorded.filter { it.rulesetId == current?.id }
   val accountShares = accountShares(thisYear, accounts)
+  val currentYearTotal = accountShares.sumOf { it.pence }
   val yearShares = yearShares(recorded, accounts, productTypes, rulesets)
   return InsightsUiState(
     ruleset = current?.id,
     daysRemaining = current?.let { daysBetween(today, it.endDate) },
     stage = current?.let { stageOf(it.startDate, today) },
-    currentYearTotalPence = accountShares.sumOf { it.pence },
+    currentYearTotalPence = currentYearTotal,
     accountShares = accountShares,
     typeShares = typeShares(thisYear, accounts, productTypes),
     yearShares = yearShares,
+    goal = goalProgress(current, currentYearTotal, goals, today),
   )
 }
 
@@ -160,4 +197,29 @@ private fun yearShares(
         byType = byType,
       )
     }
+}
+
+/** This year's goal, if one is set, with the monthly saving that would clear what is left. */
+private fun goalProgress(
+  ruleset: RulesetEntity?,
+  contributedPence: Long,
+  goals: List<GoalEntity>,
+  todayIso: String,
+): GoalProgress? {
+  val target = ruleset?.let { year -> goals.firstOrNull { it.rulesetId == year.id }?.targetPence }
+  if (ruleset == null || target == null) return null
+  // The last day of the year still leaves one month to save in, so the count never reaches zero.
+  val months = monthsBetweenCeiling(todayIso, ruleset.endDate)?.coerceAtLeast(1) ?: 1
+  return GoalProgress(
+    targetPence = target,
+    contributedPence = contributedPence,
+    monthsRemaining = months,
+    monthlySuggestionPence = monthlySavingPence(target - contributedPence, months),
+  )
+}
+
+/** What to put aside each month to clear [remainingPence] over [months], rounded up to the pound. */
+internal fun monthlySavingPence(remainingPence: Long, months: Int): Long {
+  if (remainingPence <= 0L || months <= 0) return 0L
+  return ceilToPounds((remainingPence + months - 1) / months)
 }

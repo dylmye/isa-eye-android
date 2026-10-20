@@ -7,9 +7,9 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
- * Room entities mirroring the TinyBase table schema. Primary keys map to TinyBase's row-id column
- * (`_id`); cell columns keep the same names. Money is stored as integer pence ([Long]) rather than
- * TinyBase's strings.
+ * Room entities mirroring the TinyBase table schema, plus the app's own tables that have no
+ * counterpart there. Mirrored primary keys map to TinyBase's row-id column (`_id`); cell columns
+ * keep the same names. Money is stored as integer pence ([Long]) rather than TinyBase's strings.
  *
  * Referential actions encode ownership: rows a table *owns* cascade on delete, while user data that
  * merely references seeded reference data is restricted so reference-data cleanup can never silently
@@ -158,6 +158,27 @@ data class RulesetExceptionEntity(
   val notes: String?,
   @ColumnInfo(defaultValue = "1")
   val includedInShared: Boolean = true,
+)
+
+/**
+ * A tax year's savings goal, in pence. Unlike the tables above this one has no TinyBase counterpart:
+ * it is user data the app keeps for itself, so its key is the tax year rather than a row id.
+ */
+@Entity(
+  tableName = "goals",
+  foreignKeys = [
+    ForeignKey(
+      entity = RulesetEntity::class,
+      parentColumns = ["_id"],
+      childColumns = ["rulesetId"],
+      onDelete = ForeignKey.RESTRICT,
+    ),
+  ],
+  indices = [Index("rulesetId")],
+)
+data class GoalEntity(
+  @PrimaryKey val rulesetId: String,
+  val targetPence: Long,
 )
 
 /** Single-row bookkeeping for the reference-data seed version currently applied. */

@@ -23,12 +23,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
 
-/** Stateful entry point: owns the insights ViewModel, which reports today's tax year. */
+/** Stateful entry point: owns the insights ViewModel and hoists its state into [InsightsContent]. */
 @Composable
-fun InsightsScreen(modifier: Modifier = Modifier) {
+fun InsightsScreen(onEditGoal: () -> Unit, modifier: Modifier = Modifier) {
   val viewModel: InsightsViewModel = viewModel(factory = InsightsViewModel.factory())
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-  InsightsContent(uiState = uiState, modifier = modifier)
+  InsightsContent(uiState = uiState, onEditGoal = onEditGoal, modifier = modifier)
 }
 
 /**
@@ -40,11 +40,15 @@ fun InsightsScreen(modifier: Modifier = Modifier) {
  * bar's actions here, so its title only repeated what the tab said. The status bar inset that bar
  * used to carry is applied by the scaffold instead.
  *
- * Only the countdown is unconditional: both donuts describe this year and need a contribution in it,
- * while the bar chart covers every year and needs just one of them.
+ * Only the countdown and the goal are unconditional: both donuts describe this year and need a
+ * contribution in it, while the bar chart covers every year and needs just one of them.
  */
 @Composable
-fun InsightsContent(uiState: InsightsUiState, modifier: Modifier = Modifier) {
+fun InsightsContent(
+  uiState: InsightsUiState,
+  onEditGoal: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
   Scaffold(modifier = modifier, contentWindowInsets = WindowInsets.statusBars) { innerPadding ->
     BoxWithConstraints(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
       val columns = (maxWidth / MIN_CARD_WIDTH).toInt().coerceIn(1, MAX_COLUMNS)
@@ -68,6 +72,11 @@ fun InsightsContent(uiState: InsightsUiState, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(CARD_GAP),
       ) {
         item(key = "countdown", span = { GridItemSpan(maxLineSpan) }) { CountdownCard(uiState) }
+        if (uiState.ruleset != null) {
+          item(key = "goal", span = { GridItemSpan(maxLineSpan) }) {
+            GoalCard(uiState = uiState, onEdit = onEditGoal)
+          }
+        }
         if (uiState.accountShares.isNotEmpty()) {
           item(key = "accounts", span = { GridItemSpan(1) }) { AccountDonutCard(uiState) }
           item(key = "types", span = { GridItemSpan(1) }) { ProductTypeDonutCard(uiState) }
@@ -92,7 +101,7 @@ private const val MAX_COLUMNS = 3
 @FormFactorPreviews
 @Composable
 private fun InsightsContentPreview() {
-  ISAEyeTheme { InsightsContent(uiState = PreviewInsights) }
+  ISAEyeTheme { InsightsContent(uiState = PreviewInsights, onEditGoal = {}) }
 }
 
 private val PreviewInsights =
@@ -129,5 +138,12 @@ private val PreviewInsights =
               TypeShare("CASH", "Cash ISA", "#2E7D32", 40_000),
             ),
         ),
+      ),
+    goal =
+      GoalProgress(
+        targetPence = 2_000_000,
+        contributedPence = 165_000,
+        monthsRemaining = 6,
+        monthlySuggestionPence = 305_900,
       ),
   )

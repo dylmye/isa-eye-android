@@ -2,10 +2,12 @@ package me.dylmye.isa.ui.insights
 
 import me.dylmye.isa.data.db.dao.AccountSummary
 import me.dylmye.isa.data.db.entity.AnnualBalanceEntity
+import me.dylmye.isa.data.db.entity.GoalEntity
 import me.dylmye.isa.data.db.entity.ProductTypeEntity
 import me.dylmye.isa.data.db.entity.RulesetEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -128,6 +130,86 @@ class InsightsUiStateTest {
   }
 
   @Test
+  fun resolveInsights_reportsNoGoalUntilOneIsSet() {
+    val state = resolve(listOf(balance("2026/2027", "a1", 165_000)))
+
+    assertNull(state.goal)
+  }
+
+  @Test
+  fun resolveInsights_measuresTheYearAgainstItsGoal() {
+    val state =
+      resolve(
+        listOf(balance("2026/2027", "a1", 165_000)),
+        goals = listOf(goal("2026/2027", 2_000_000)),
+      )
+
+    val goal = requireNotNull(state.goal)
+    assertEquals(2_000_000L, goal.targetPence)
+    assertEquals(165_000L, goal.contributedPence)
+    assertEquals(1_835_000L, goal.remainingPence)
+    assertEquals(0.0825f, goal.fraction, 0.0001f)
+    assertEquals(false, goal.isMet)
+    assertEquals(6, goal.monthsRemaining)
+    assertEquals(305_900L, goal.monthlySuggestionPence)
+  }
+
+  @Test
+  fun resolveInsights_marksTheGoalMetOnceTheTargetIsReached() {
+    val state =
+      resolve(
+        listOf(balance("2026/2027", "a1", 2_500_000)),
+        goals = listOf(goal("2026/2027", 2_000_000)),
+      )
+
+    val goal = requireNotNull(state.goal)
+    assertTrue(goal.isMet)
+    assertEquals(0L, goal.remainingPence)
+    assertEquals(1f, goal.fraction, 0f)
+    assertEquals(0L, goal.monthlySuggestionPence)
+  }
+
+  @Test
+  fun resolveInsights_showsAGoalBeforeAnythingIsContributed() {
+    val state = resolve(emptyList(), goals = listOf(goal("2026/2027", 2_000_000)))
+
+    val goal = requireNotNull(state.goal)
+    assertEquals(0L, goal.contributedPence)
+    assertEquals(2_000_000L, goal.remainingPence)
+    assertEquals(0f, goal.fraction, 0f)
+  }
+
+  @Test
+  fun resolveInsights_ignoresAGoalFromAnotherYear() {
+    val state =
+      resolve(
+        listOf(balance("2026/2027", "a1", 165_000)),
+        goals = listOf(goal("2025/2026", 1_000_000)),
+      )
+
+    assertNull(state.goal)
+  }
+
+  @Test
+  fun resolveInsights_reportsNoGoalWithoutARulesetForToday() {
+    val state =
+      resolve(
+        emptyList(),
+        goals = listOf(goal("2026/2027", 2_000_000)),
+        nowMillis = at("2030-01-01 12:00"),
+      )
+
+    assertNull(state.goal)
+  }
+
+  @Test
+  fun monthlySavingPence_splitsWhatIsLeftAndRoundsUpToThePound() {
+    assertEquals(305_900L, monthlySavingPence(1_835_000, 6))
+    assertEquals(0L, monthlySavingPence(0, 6))
+    assertEquals(0L, monthlySavingPence(1_000, 0))
+  }
+
+  @Test
   fun shortRulesetLabel_trimsEachYearToItsLastTwoDigits() {
     assertEquals("26/27", shortRulesetLabel("2026/2027"))
     assertEquals("17/18", shortRulesetLabel("2017/2018"))
@@ -161,8 +243,11 @@ class InsightsUiStateTest {
     assertEquals("£2k", axisMoney(2000.0))
   }
 
-  private fun resolve(balances: List<AnnualBalanceEntity>, nowMillis: Long = now) =
-    resolveInsights(accounts, productTypes, balances, rulesets, nowMillis)
+  private fun resolve(
+    balances: List<AnnualBalanceEntity>,
+    goals: List<GoalEntity> = emptyList(),
+    nowMillis: Long = now,
+  ) = resolveInsights(accounts, productTypes, balances, rulesets, goals, nowMillis)
 
   private fun yearShare(rulesetId: String, totalPence: Long, byType: Map<String, Long>) = YearShare(
     rulesetId = rulesetId,
@@ -197,6 +282,9 @@ class InsightsUiStateTest {
     endDate = endDate,
     notes = null,
   )
+
+  private fun goal(rulesetId: String, targetPence: Long) =
+    GoalEntity(rulesetId = rulesetId, targetPence = targetPence)
 
   private fun productType(id: String, name: String, colour: String = "#2E7D32") = ProductTypeEntity(
     id = id,

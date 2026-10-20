@@ -3,16 +3,21 @@ package me.dylmye.isa.ui.insights
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -36,6 +41,7 @@ import com.patrykandpatrick.vico.compose.common.component.ShapeComponent
 import com.patrykandpatrick.vico.compose.common.component.rememberLineComponent
 import com.patrykandpatrick.vico.compose.common.component.rememberTextComponent
 import com.patrykandpatrick.vico.compose.common.rememberHorizontalLegend
+import me.dylmye.isa.ui.formatGbp
 import me.dylmye.isa.ui.toTint
 
 /**
@@ -68,6 +74,80 @@ internal fun CountdownCard(uiState: InsightsUiState, modifier: Modifier = Modifi
         color = stage.content(),
       )
     }
+  }
+}
+
+/**
+ * This year's goal: how much of it has been recorded, and what to put aside each month to reach it.
+ * The card also stands in for the goal being unset, because this tab is where one is chosen.
+ */
+@Composable
+internal fun GoalCard(uiState: InsightsUiState, onEdit: () -> Unit, modifier: Modifier = Modifier) {
+  val ruleset = uiState.ruleset ?: return
+  InsightsCard(
+    title = "This year's goal",
+    modifier = modifier,
+    action = {
+      TextButton(onClick = onEdit) { Text(if (uiState.goal == null) "Set goal" else "Edit") }
+    },
+  ) {
+    val goal = uiState.goal
+    if (goal == null) {
+      Text(
+        text = "Set a goal for $ruleset and the app will work out what to save each month.",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    } else {
+      GoalProgressSection(goal)
+    }
+  }
+}
+
+/** The progress bar, the figure against the target, and what is left to do. */
+@Composable
+private fun GoalProgressSection(goal: GoalProgress) {
+  LinearProgressIndicator(
+    progress = { goal.fraction },
+    modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape),
+    // The default stop marker sits at the end of the track, which at a low percentage looks like
+    // progress already made. A plain bar leaves the fill as the only thing to read.
+    gapSize = 0.dp,
+    drawStopIndicator = {},
+  )
+  Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+    Text(
+      text = "${formatGbp(goal.contributedPence)} of ${formatGbp(goal.targetPence)}",
+      style = MaterialTheme.typography.titleMedium,
+    )
+    Text(
+      text = percentOf(goal.contributedPence.coerceAtMost(goal.targetPence), goal.targetPence),
+      style = MaterialTheme.typography.bodyMedium,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+  }
+  Text(
+    text = goalSupporting(goal),
+    style = MaterialTheme.typography.bodyMedium,
+    color = MaterialTheme.colorScheme.onSurfaceVariant,
+  )
+}
+
+/** What is left, and either the monthly amount that clears it or the news that the goal is met. */
+private fun goalSupporting(goal: GoalProgress): String = when {
+  goal.isMet -> {
+    "You've hit this year's goal."
+  }
+
+  goal.monthsRemaining <= 1 -> {
+    "${formatGbp(goal.remainingPence)} to go. Save " +
+      "${formatGbp(goal.monthlySuggestionPence)} this month."
+  }
+
+  else -> {
+    "${formatGbp(goal.remainingPence)} to go. Save " +
+      "${formatGbp(goal.monthlySuggestionPence)} a month for the next " +
+      "${goal.monthsRemaining} months."
   }
 }
 
@@ -182,11 +262,12 @@ internal fun YearBarCard(uiState: InsightsUiState, modifier: Modifier = Modifier
   }
 }
 
-/** Shared card chrome: a title above whatever the chart needs. */
+/** Shared card chrome: a title, an optional action opposite it, then whatever the chart needs. */
 @Composable
 private fun InsightsCard(
   title: String,
   modifier: Modifier = Modifier,
+  action: (@Composable () -> Unit)? = null,
   content: @Composable () -> Unit,
 ) {
   Card(modifier = modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
@@ -194,7 +275,10 @@ private fun InsightsCard(
       modifier = Modifier.padding(16.dp),
       verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-      Text(title, style = MaterialTheme.typography.titleMedium)
+      Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+        action?.invoke()
+      }
       content()
     }
   }

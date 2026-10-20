@@ -2,6 +2,7 @@ package me.dylmye.isa
 
 import android.app.Application
 import me.dylmye.isa.data.AccountRepository
+import me.dylmye.isa.data.GoalRepository
 import me.dylmye.isa.data.UserPreferences
 import me.dylmye.isa.data.db.IsaDatabase
 
@@ -10,6 +11,8 @@ class IsaEyeApplication : Application() {
   val database: IsaDatabase by lazy { IsaDatabase.build(this) }
 
   val accountRepository: AccountRepository by lazy { AccountRepository(database) }
+
+  val goalRepository: GoalRepository by lazy { GoalRepository(database) }
 
   val userPreferences: UserPreferences by lazy { UserPreferences(this) }
 }

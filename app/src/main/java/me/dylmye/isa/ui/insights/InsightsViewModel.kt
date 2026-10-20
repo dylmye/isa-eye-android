@@ -11,21 +11,24 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import me.dylmye.isa.IsaEyeApplication
 import me.dylmye.isa.data.AccountRepository
+import me.dylmye.isa.data.GoalRepository
 
 /**
- * Builds the insights tab from every account, product type, contribution and ruleset. It reads no
- * user preference: the tab always reports today's tax year, never the one the accounts view is
- * scoped to, because money can only go into the year that is running.
+ * Builds the insights tab from every account, product type, contribution, ruleset and goal. It
+ * reads no user preference: the tab always reports today's tax year, never the one the accounts view
+ * is scoped to, because money can only go into the year that is running.
  */
-class InsightsViewModel(repository: AccountRepository) : ViewModel() {
+class InsightsViewModel(accountRepository: AccountRepository, goalRepository: GoalRepository) :
+  ViewModel() {
   val uiState: StateFlow<InsightsUiState> =
     combine(
-      repository.observeAccounts(),
-      repository.observeProductTypes(),
-      repository.observeBalances(),
-      repository.observeRulesets(),
-    ) { accounts, productTypes, balances, rulesets ->
-      resolveInsights(accounts, productTypes, balances, rulesets, System.currentTimeMillis())
+      accountRepository.observeAccounts(),
+      accountRepository.observeProductTypes(),
+      accountRepository.observeBalances(),
+      accountRepository.observeRulesets(),
+      goalRepository.observeGoals(),
+    ) { accounts, productTypes, balances, rulesets, goals ->
+      resolveInsights(accounts, productTypes, balances, rulesets, goals, System.currentTimeMillis())
     }
       .stateIn(
         viewModelScope,
@@ -39,7 +42,7 @@ class InsightsViewModel(repository: AccountRepository) : ViewModel() {
     fun factory() = viewModelFactory {
       initializer {
         val application = this[APPLICATION_KEY] as IsaEyeApplication
-        InsightsViewModel(application.accountRepository)
+        InsightsViewModel(application.accountRepository, application.goalRepository)
       }
     }
   }

@@ -1,6 +1,7 @@
 package me.dylmye.isa.ui
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -64,6 +65,36 @@ class DatesTest {
   @Test
   fun formatLastUpdated_showsADateWithoutATime() {
     assertEquals("4 Jan 2025", formatLastUpdated(at("2025-01-04 23:30"), now))
+  }
+
+  @Test
+  fun monthsBetweenCeiling_countsAPartMonthAsAWholeOne() {
+    assertEquals(6, monthsBetweenCeiling("2026-10-18", "2027-04-05"))
+  }
+
+  @Test
+  fun monthsBetweenCeiling_countsAWholeTaxYearAsTwelve() {
+    assertEquals(12, monthsBetweenCeiling("2026-04-06", "2027-04-05"))
+  }
+
+  @Test
+  fun monthsBetweenCeiling_isZeroOnTheEndDateItself() {
+    assertEquals(0, monthsBetweenCeiling("2027-04-05", "2027-04-05"))
+  }
+
+  @Test
+  fun monthsBetweenCeiling_countsTheLastFewDaysAsOneMonth() {
+    assertEquals(1, monthsBetweenCeiling("2027-04-01", "2027-04-05"))
+  }
+
+  @Test
+  fun monthsBetweenCeiling_handlesAMonthShorterThanTheStartingDay() {
+    assertEquals(1, monthsBetweenCeiling("2027-01-31", "2027-02-28"))
+  }
+
+  @Test
+  fun monthsBetweenCeiling_isNullForAnUnreadableDate() {
+    assertNull(monthsBetweenCeiling("not a date", "2027-04-05"))
   }
 }
 

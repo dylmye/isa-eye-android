@@ -42,4 +42,13 @@ class MoneyTest {
     assertEquals(125_050L, parsePoundsToPence(penceToPoundsInput(125_050)))
     assertEquals(0L, parsePoundsToPence(penceToPoundsInput(-500)))
   }
+
+  @Test
+  fun ceilToPounds_roundsUpSoASavingNeverFallsShort() {
+    assertEquals(0L, ceilToPounds(0))
+    assertEquals(100L, ceilToPounds(1))
+    assertEquals(100L, ceilToPounds(100))
+    assertEquals(200L, ceilToPounds(101))
+    assertEquals(261_400L, ceilToPounds(261_334))
+  }
 }

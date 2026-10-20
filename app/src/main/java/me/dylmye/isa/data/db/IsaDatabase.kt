@@ -1,10 +1,12 @@
 package me.dylmye.isa.data.db
 
 import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import me.dylmye.isa.data.db.dao.AnnualBalanceDao
+import me.dylmye.isa.data.db.dao.GoalDao
 import me.dylmye.isa.data.db.dao.ProductDao
 import me.dylmye.isa.data.db.dao.ProductTypeDao
 import me.dylmye.isa.data.db.dao.ProviderAliasDao
@@ -12,6 +14,7 @@ import me.dylmye.isa.data.db.dao.ProviderDao
 import me.dylmye.isa.data.db.dao.RulesetDao
 import me.dylmye.isa.data.db.dao.RulesetExceptionDao
 import me.dylmye.isa.data.db.entity.AnnualBalanceEntity
+import me.dylmye.isa.data.db.entity.GoalEntity
 import me.dylmye.isa.data.db.entity.ProductEntity
 import me.dylmye.isa.data.db.entity.ProductTypeEntity
 import me.dylmye.isa.data.db.entity.ProviderAliasEntity
@@ -29,10 +32,12 @@ import me.dylmye.isa.data.db.entity.SeedStateEntity
     ProductEntity::class,
     AnnualBalanceEntity::class,
     RulesetExceptionEntity::class,
+    GoalEntity::class,
     SeedStateEntity::class,
   ],
-  version = 2,
+  version = 3,
   exportSchema = true,
+  autoMigrations = [AutoMigration(from = 2, to = 3)],
 )
 abstract class IsaDatabase : RoomDatabase() {
   abstract fun providerDao(): ProviderDao
@@ -49,14 +54,17 @@ abstract class IsaDatabase : RoomDatabase() {
 
   abstract fun rulesetExceptionDao(): RulesetExceptionDao
 
+  abstract fun goalDao(): GoalDao
+
   companion object {
     const val NAME = "isa-eye.db"
 
     fun build(context: Context): IsaDatabase {
       val applicationContext = context.applicationContext
       return Room.databaseBuilder(applicationContext, IsaDatabase::class.java, NAME)
-        // The colour column arrived before anything shipped, so there is no upgrade path to write
-        // and none is wanted: an older database is dropped and recreated rather than migrated.
+        // v2 shipped in the first release and v3 adds the goals table, which the auto-migration
+        // above covers. The fallback remains only for v1 databases from before that release: there
+        // is no upgrade path from them and none is wanted, so they are dropped and recreated.
         .fallbackToDestructiveMigration(dropAllTables = true)
         .addCallback(SeedData(applicationContext).callback)
         .build()

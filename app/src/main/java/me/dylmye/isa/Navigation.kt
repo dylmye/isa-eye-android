@@ -40,6 +40,7 @@ import me.dylmye.isa.ui.help.HelpScreen
 import me.dylmye.isa.ui.help.HelpTopicPlaceholder
 import me.dylmye.isa.ui.help.HelpTopicScreen
 import me.dylmye.isa.ui.insights.InsightsScreen
+import me.dylmye.isa.ui.insights.SetGoalScreen
 import me.dylmye.isa.ui.icons.add as AddIcon
 import me.dylmye.isa.ui.icons.financeMode as InsightsIcon
 import me.dylmye.isa.ui.icons.help as HelpIcon
@@ -67,11 +68,9 @@ private const val HELP_SCENE_KEY = "help"
 @Composable
 fun MainNavigation(startTab: NavKey = Accounts, addAccountShortcut: Flow<Unit> = emptyFlow()) {
   val backStack = remember { TopLevelBackStack<NavKey>(startTab) }
-  // The add button and the shortcut share one action, so neither can open the form on top of a
-  // dialog that is already showing.
-  val openAddAccount = {
-    if (backStack.backStack.lastOrNull()?.isDialog() != true) backStack.add(AddAccount)
-  }
+  // The add button, the shortcut and the goal card share one guard, so none of them can open a
+  // dialog on top of a dialog that is already showing.
+  val openAddAccount = { backStack.addDialog(AddAccount) }
   LaunchedEffect(Unit) { addAccountShortcut.collect { openAddAccount() } }
 
   val windowAdaptiveInfo = currentWindowAdaptiveInfoV2()
@@ -147,7 +146,9 @@ private fun AppNavDisplay(
           onUpdateContributions = { backStack.add(UpdateContributions(detail.productId)) },
         )
       }
-      entry<Insights> { InsightsScreen() }
+      entry<Insights> {
+        InsightsScreen(onEditGoal = { backStack.addDialog(SetGoal) })
+      }
       entry<Help>(
         metadata =
           ListDetailSceneStrategy.listPane(
@@ -193,6 +194,22 @@ private fun EntryProviderScope<NavKey>.dialogEntries(backStack: TopLevelBackStac
   ) { update ->
     UpdateContributionsScreen(productId = update.productId, onClose = { backStack.removeLast() })
   }
+  entry<SetGoal>(
+    metadata =
+      DialogSceneStrategy.dialog(
+        DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+      ),
+  ) {
+    SetGoalScreen(onClose = { backStack.removeLast() })
+  }
+}
+
+/**
+ * Opens [key] as a dialog unless one is already showing, so a button tapped twice cannot stack two
+ * of them.
+ */
+private fun TopLevelBackStack<NavKey>.addDialog(key: NavKey) {
+  if (backStack.lastOrNull()?.isDialog() != true) add(key)
 }
 
 /**
@@ -200,4 +217,4 @@ private fun EntryProviderScope<NavKey>.dialogEntries(backStack: TopLevelBackStac
  * dialog there is a reminder to extend this.
  */
 private fun NavKey.isDialog(): Boolean =
-  this is AddAccount || this is EditAccount || this is UpdateContributions
+  this is AddAccount || this is EditAccount || this is UpdateContributions || this is SetGoal
