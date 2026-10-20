@@ -72,10 +72,10 @@ kotlin {
 }
 
 // The screenshot suite renders every preview in one JVM and keeps the images alive until they are
-// written, so the 512 MB a test worker gets by default runs out once the suite grows past a couple
-// of hundred previews.
+// written, so the 512 MB a test worker gets by default runs out long before the suite does. At a
+// couple of hundred previews 2 GB is already marginal, so this leaves room for the suite to grow.
 tasks.withType<Test>().configureEach {
-  maxHeapSize = "2g"
+  maxHeapSize = "3g"
 }
 
 detekt {
