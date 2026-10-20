@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import me.dylmye.isa.IsaEyeApplication
@@ -51,11 +50,6 @@ class AccountsViewModel(
         productTypes = allowance.productTypes,
       )
     }
-      .onEach { state ->
-        // Remember that accounts exist so the next launch can open on Insights. This also heals
-        // installs that predate the preference, and restored backups.
-        if (state.accounts.isNotEmpty()) userPreferences.hasAccount = true
-      }
       .stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),

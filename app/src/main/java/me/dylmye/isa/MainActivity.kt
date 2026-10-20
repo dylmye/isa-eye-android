@@ -41,7 +41,7 @@ class MainActivity : ComponentActivity() {
       window.isNavigationBarContrastEnforced = false
     }
     // Read synchronously so the right tab shows on the first frame, with no database round trip.
-    val hasAccount = (application as IsaEyeApplication).userPreferences.hasAccount
+    val hasLaunched = (application as IsaEyeApplication).userPreferences.hasLaunched
     setContent {
       ISAEyeTheme {
         Surface(
@@ -49,7 +49,7 @@ class MainActivity : ComponentActivity() {
           color = MaterialTheme.colorScheme.background,
         ) {
           MainNavigation(
-            startTab = launchTab(hasAccount),
+            startTab = launchTab(hasLaunched),
             addAccountShortcut = addAccountShortcut,
           )
         }
@@ -68,6 +68,17 @@ class MainActivity : ComponentActivity() {
       (application as IsaEyeApplication)
         .autoContributionRepository
         .applyDue(System.currentTimeMillis())
+    }
+  }
+
+  /**
+   * Records that the app has been used, so Help only opens on the first launch. A configuration
+   * change recreates the activity without the user leaving it, so that does not count as a launch.
+   */
+  override fun onStop() {
+    super.onStop()
+    if (!isChangingConfigurations) {
+      (application as IsaEyeApplication).userPreferences.hasLaunched = true
     }
   }
 

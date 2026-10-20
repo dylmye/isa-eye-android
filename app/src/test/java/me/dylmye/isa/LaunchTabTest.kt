@@ -5,8 +5,8 @@ import org.junit.Test
 
 class LaunchTabTest {
   @Test
-  fun launchTab_opensHelpUntilAnAccountExistsThenInsights() {
-    assertEquals(Insights, launchTab(hasAccount = true))
-    assertEquals(Help, launchTab(hasAccount = false))
+  fun launchTab_opensHelpOnTheFirstLaunchAndInsightsAfterwards() {
+    assertEquals(Insights, launchTab(hasLaunched = true))
+    assertEquals(Help, launchTab(hasLaunched = false))
   }
 }

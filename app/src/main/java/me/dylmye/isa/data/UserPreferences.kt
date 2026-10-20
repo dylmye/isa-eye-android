@@ -15,10 +15,13 @@ import kotlinx.coroutines.flow.asStateFlow
 class UserPreferences(context: Context) {
   private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-  /** Whether the user has at least one account, so the app can open on the Insights tab. */
-  var hasAccount: Boolean
-    get() = prefs.getBoolean(KEY_HAS_ACCOUNT, false)
-    set(value) = prefs.edit { putBoolean(KEY_HAS_ACCOUNT, value) }
+  /**
+   * Whether the app has been opened before. It only gates the launch tab: Help introduces the app
+   * on the first launch, and every later launch opens Insights whatever accounts exist by then.
+   */
+  var hasLaunched: Boolean
+    get() = prefs.getBoolean(KEY_HAS_LAUNCHED, prefs.getBoolean(KEY_LEGACY_HAS_ACCOUNT, false))
+    set(value) = prefs.edit { putBoolean(KEY_HAS_LAUNCHED, value) }
 
   private val _currentRulesetId = MutableStateFlow(prefs.getString(KEY_CURRENT_RULESET, null))
 
@@ -33,7 +36,13 @@ class UserPreferences(context: Context) {
 
   private companion object {
     const val PREFS_NAME = "isa_eye_preferences"
-    const val KEY_HAS_ACCOUNT = "has_account"
+    const val KEY_HAS_LAUNCHED = "has_launched"
+
+    /**
+     * Written by earlier builds to mean "an account exists". Reading it as well keeps an existing
+     * install from being sent back to Help once.
+     */
+    const val KEY_LEGACY_HAS_ACCOUNT = "has_account"
     const val KEY_CURRENT_RULESET = "current_ruleset"
   }
 }
