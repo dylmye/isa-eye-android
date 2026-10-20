@@ -30,6 +30,9 @@ interface ProductDao {
   @Upsert
   suspend fun upsert(product: ProductEntity)
 
+  @Query("DELETE FROM products WHERE _id = :id")
+  suspend fun delete(id: String)
+
   @Upsert
   suspend fun upsertAll(products: List<ProductEntity>)
 }

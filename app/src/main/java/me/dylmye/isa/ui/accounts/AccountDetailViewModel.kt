@@ -5,10 +5,14 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import me.dylmye.isa.IsaEyeApplication
 import me.dylmye.isa.data.AccountRepository
 import me.dylmye.isa.data.AutoContributionRepository
@@ -21,11 +25,16 @@ import me.dylmye.isa.data.db.entity.RulesetEntity
  * same preference the accounts list is scoped to, so the pane stays in step as the year changes.
  */
 class AccountDetailViewModel(
-  accountRepository: AccountRepository,
+  private val accountRepository: AccountRepository,
   autoContributionRepository: AutoContributionRepository,
   userPreferences: UserPreferences,
-  productId: String,
+  private val productId: String,
 ) : ViewModel() {
+  private val deletedEvents = Channel<AccountDetailEvent>(Channel.BUFFERED)
+
+  /** One-off events, e.g. the account was deleted and the pane should close. */
+  val events: Flow<AccountDetailEvent> = deletedEvents.receiveAsFlow()
+
   /** Rulesets and this account's schedule, combined to keep the form's flow count down. */
   private val scheduleData =
     combine(
@@ -59,6 +68,14 @@ class AccountDetailViewModel(
         AccountDetailUiState(),
       )
 
+  /** Removes the account. Its recorded contributions and schedule cascade with it. */
+  fun delete() {
+    viewModelScope.launch {
+      accountRepository.deleteProduct(productId)
+      deletedEvents.send(AccountDetailEvent.Deleted)
+    }
+  }
+
   companion object {
     private const val STOP_TIMEOUT_MILLIS = 5_000L
 
@@ -80,3 +97,7 @@ private data class ScheduleData(
   val rulesets: List<RulesetEntity>,
   val schedules: List<AutoContributionEntity>,
 )
+
+sealed interface AccountDetailEvent {
+  data object Deleted : AccountDetailEvent
+}

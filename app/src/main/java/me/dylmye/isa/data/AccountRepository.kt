@@ -40,10 +40,12 @@ class AccountRepository(private val database: IsaDatabase) {
 
   fun observeProductTypes(): Flow<List<ProductTypeEntity>> = database.productTypeDao().observeAll()
 
-  /** The name of the product type [id], used to detect account names derived from the type. */
-  suspend fun productTypeName(id: String): String? = database.productTypeDao().getName(id)
-
   suspend fun upsertProduct(product: ProductEntity) = database.productDao().upsert(product)
+
+  /** Deletes [productId]; its recorded contributions and auto-contribution schedule cascade with it. */
+  suspend fun deleteProduct(productId: String) {
+    database.productDao().delete(productId)
+  }
 
   /** Records [balance] for its tax year, replacing any figure already stored for that year. */
   suspend fun upsertBalance(balance: AnnualBalanceEntity) {

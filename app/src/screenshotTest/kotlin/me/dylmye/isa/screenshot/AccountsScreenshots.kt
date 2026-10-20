@@ -67,6 +67,7 @@ fun AccountDetailScreenshot() {
       onEdit = {},
       onUpdateContributions = {},
       onSetUpAutoContribution = {},
+      onDeleteAccount = {},
     )
   }
 }
@@ -85,6 +86,7 @@ fun AccountDetailNoAutoContributionScreenshot() {
       onEdit = {},
       onUpdateContributions = {},
       onSetUpAutoContribution = {},
+      onDeleteAccount = {},
     )
   }
 }
@@ -114,6 +116,7 @@ fun AccountDetailEarlierYearScreenshot() {
       onEdit = {},
       onUpdateContributions = {},
       onSetUpAutoContribution = {},
+      onDeleteAccount = {},
     )
   }
 }

@@ -8,12 +8,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -21,8 +24,12 @@ import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -50,6 +57,18 @@ fun AccountDetailScreen(
   val viewModel: AccountDetailViewModel =
     viewModel(factory = AccountDetailViewModel.factory(productId))
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  var confirmDelete by rememberSaveable { mutableStateOf(false) }
+
+  // Deleting removes the pane's subject, so it leaves the back stack rather than rendering an
+  // account that no longer exists.
+  LaunchedEffect(viewModel) {
+    viewModel.events.collect { event ->
+      when (event) {
+        AccountDetailEvent.Deleted -> onBack()
+      }
+    }
+  }
+
   // A pane that has the list beside it needs no way back; a lone one does. This asks the same
   // question of the same directive that the list-detail scene strategy is built with.
   val windowAdaptiveInfo = currentWindowAdaptiveInfoV2()
@@ -64,7 +83,42 @@ fun AccountDetailScreen(
     onEdit = onEdit,
     onUpdateContributions = onUpdateContributions,
     onSetUpAutoContribution = onSetUpAutoContribution,
+    onDeleteAccount = { confirmDelete = true },
     modifier = modifier,
+  )
+  if (confirmDelete) {
+    DeleteAccountDialog(
+      accountName = uiState.name.orEmpty(),
+      onConfirm = {
+        confirmDelete = false
+        viewModel.delete()
+      },
+      onDismiss = { confirmDelete = false },
+    )
+  }
+}
+
+/** Confirms the one action in the app that cannot be undone. */
+@Composable
+private fun DeleteAccountDialog(
+  accountName: String,
+  onConfirm: () -> Unit,
+  onDismiss: () -> Unit,
+) {
+  val name = accountName.ifBlank { "this account" }
+  AlertDialog(
+    onDismissRequest = onDismiss,
+    title = { Text("Delete this account?") },
+    text = { Text("This removes $name and everything recorded against it. It can't be undone.") },
+    confirmButton = {
+      TextButton(
+        onClick = onConfirm,
+        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+      ) {
+        Text("Delete")
+      }
+    },
+    dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
   )
 }
 
@@ -81,6 +135,7 @@ fun AccountDetailContent(
   onEdit: () -> Unit,
   onUpdateContributions: () -> Unit,
   onSetUpAutoContribution: () -> Unit,
+  onDeleteAccount: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -119,6 +174,7 @@ fun AccountDetailContent(
       scrollBehavior = scrollBehavior,
       onUpdateContributions = onUpdateContributions,
       onSetUpAutoContribution = onSetUpAutoContribution,
+      onDeleteAccount = onDeleteAccount,
     )
   }
 }
@@ -131,6 +187,7 @@ private fun AccountDetailGrid(
   scrollBehavior: TopAppBarScrollBehavior,
   onUpdateContributions: () -> Unit,
   onSetUpAutoContribution: () -> Unit,
+  onDeleteAccount: () -> Unit,
 ) {
   LazyVerticalGrid(
     columns = GridCells.Adaptive(minSize = 320.dp),
@@ -150,6 +207,7 @@ private fun AccountDetailGrid(
         hasAutoContribution = uiState.hasAutoContribution,
         onUpdateContributions = onUpdateContributions,
         onSetUpAutoContribution = onSetUpAutoContribution,
+        onDeleteAccount = onDeleteAccount,
       )
     }
     val description = uiState.longDescription
@@ -204,6 +262,7 @@ private fun AccountDetailContentPreview() {
       onEdit = {},
       onUpdateContributions = {},
       onSetUpAutoContribution = {},
+      onDeleteAccount = {},
     )
   }
 }
@@ -228,6 +287,7 @@ private fun AccountDetailContentEarlierYearPreview() {
       onEdit = {},
       onUpdateContributions = {},
       onSetUpAutoContribution = {},
+      onDeleteAccount = {},
     )
   }
 }

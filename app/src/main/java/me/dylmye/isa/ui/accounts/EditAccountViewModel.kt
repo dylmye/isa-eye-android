@@ -74,7 +74,12 @@ class EditAccountViewModel(
       product = loaded
       // friendlyName stores the display name, so a nickname is only present when it differs from
       // the product type name.
-      val typeName = repository.productTypeName(loaded.productTypeId)
+      val typeName =
+        repository
+          .observeProductTypes()
+          .first()
+          .firstOrNull { it.id == loaded.productTypeId }
+          ?.name
       draft.value =
         EditAccountDraft(
           nickname = loaded.friendlyName.takeIf { it != typeName }.orEmpty(),
