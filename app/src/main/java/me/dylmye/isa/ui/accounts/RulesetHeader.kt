@@ -50,7 +50,7 @@ fun RulesetHeader(
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-      Text(text = label, style = MaterialTheme.typography.titleMedium)
+      Text(text = label, style = MaterialTheme.typography.titleLarge)
       // Icon-only, so it carries a hover label as well as its content description.
       TooltipBox(
         positionProvider =
