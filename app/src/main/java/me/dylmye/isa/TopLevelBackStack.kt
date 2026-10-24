@@ -27,6 +27,16 @@ class TopLevelBackStack<T : NavKey>(startKey: T) {
     } else {
       topLevelStacks.apply { remove(key)?.let { put(key, it) } }
     }
+    select(key)
+  }
+
+  /** Opens [key]'s tab at its own root, dropping anything that was stacked above it. */
+  fun resetTopLevel(key: T) {
+    topLevelStacks[key] = mutableStateListOf(key)
+    select(key)
+  }
+
+  private fun select(key: T) {
     topLevelKey = key
     updateBackStack()
   }

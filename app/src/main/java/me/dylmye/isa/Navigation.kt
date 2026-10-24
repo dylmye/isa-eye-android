@@ -67,12 +67,28 @@ private const val HELP_SCENE_KEY = "help"
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
-fun MainNavigation(startTab: NavKey = Accounts, addAccountShortcut: Flow<Unit> = emptyFlow()) {
+fun MainNavigation(
+  startTab: NavKey = Accounts,
+  addAccountShortcut: Flow<Unit> = emptyFlow(),
+  screenRequests: Flow<NavKey> = emptyFlow(),
+) {
   val backStack = remember { TopLevelBackStack<NavKey>(startTab) }
   // The add button, the shortcut and the goal card share one guard, so none of them can open a
   // dialog on top of a dialog that is already showing.
   val openAddAccount = { backStack.addDialog(AddAccount) }
   LaunchedEffect(Unit) { addAccountShortcut.collect { openAddAccount() } }
+  // A tapped reminder opens its screen at the top: a detail page is pushed over the accounts list,
+  // and a tab drops any detail page that was left open on it.
+  LaunchedEffect(Unit) {
+    screenRequests.collect { key ->
+      if (key is AccountDetail) {
+        backStack.resetTopLevel(Accounts)
+        backStack.add(key)
+      } else {
+        backStack.resetTopLevel(key)
+      }
+    }
+  }
 
   val windowAdaptiveInfo = currentWindowAdaptiveInfoV2()
   val directive = remember(windowAdaptiveInfo) {

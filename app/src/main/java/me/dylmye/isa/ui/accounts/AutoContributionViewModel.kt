@@ -89,7 +89,7 @@ class AutoContributionViewModel(
     draft.update { it.copy(isSaving = true) }
     viewModelScope.launch {
       autoContributionRepository.clear(productId, rulesetId)
-      savedEvents.send(AutoContributionEvent.Saved)
+      savedEvents.send(AutoContributionEvent.Removed)
     }
   }
 
@@ -115,5 +115,9 @@ private data class AutoContributionData(
 )
 
 sealed interface AutoContributionEvent {
+  /** A schedule was saved, so the monthly reminder is now worth asking about. */
   data object Saved : AutoContributionEvent
+
+  /** The schedule was turned off. */
+  data object Removed : AutoContributionEvent
 }

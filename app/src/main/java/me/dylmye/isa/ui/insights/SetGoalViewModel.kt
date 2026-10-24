@@ -69,7 +69,7 @@ class SetGoalViewModel(
     draft.update { it.copy(isSaving = true) }
     viewModelScope.launch {
       goalRepository.clearGoal(rulesetId)
-      savedEvents.send(SetGoalEvent.Saved)
+      savedEvents.send(SetGoalEvent.Removed)
     }
   }
 
@@ -86,5 +86,9 @@ class SetGoalViewModel(
 }
 
 sealed interface SetGoalEvent {
+  /** A goal was saved, so the monthly reminder is now worth asking about. */
   data object Saved : SetGoalEvent
+
+  /** The goal was cleared. */
+  data object Removed : SetGoalEvent
 }

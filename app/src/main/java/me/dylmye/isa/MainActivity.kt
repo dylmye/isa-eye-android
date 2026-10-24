@@ -1,5 +1,6 @@
 package me.dylmye.isa
 
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
@@ -15,11 +16,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation3.runtime.NavKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import me.dylmye.isa.notifications.ReminderTarget
+import me.dylmye.isa.notifications.reminderTarget
 import me.dylmye.isa.theme.ISAEyeTheme
 
 class MainActivity : ComponentActivity() {
@@ -32,6 +36,15 @@ class MainActivity : ComponentActivity() {
   /** The add-account shortcut's requests, for the Compose tree to collect. */
   val addAccountShortcut: Flow<Unit> = addAccountRequests.receiveAsFlow()
 
+  /**
+   * Screens asked for by a notification tap. Navigation belongs to the Compose tree, so the tap is
+   * forwarded there rather than acted on here, whether the app was running or started by the tap.
+   */
+  private val screenRequests = Channel<NavKey>(Channel.CONFLATED)
+
+  /** The notification screens for the Compose tree to collect. */
+  val requestedScreens: Flow<NavKey> = screenRequests.receiveAsFlow()
+
   override fun onCreate(savedInstanceState: Bundle?) {
     installSplashScreen()
     super.onCreate(savedInstanceState)
@@ -42,6 +55,16 @@ class MainActivity : ComponentActivity() {
     }
     // Read synchronously so the right tab shows on the first frame, with no database round trip.
     val hasLaunched = (application as IsaEyeApplication).userPreferences.hasLaunched
+    // A notification can start the app cold as well as foreground it, so its screen wins over the
+    // usual launch tab when one is there. A detail page needs the list behind it, so a cold start
+    // opens Accounts and pushes the account once the tree is running, exactly as a row tap would.
+    val requested = intent.notificationScreen()
+    val startTab = when (requested) {
+      is AccountDetail -> Accounts
+      null -> launchTab(hasLaunched)
+      else -> requested
+    }
+    if (requested is AccountDetail) openScreen(requested)
     setContent {
       ISAEyeTheme {
         Surface(
@@ -49,12 +72,39 @@ class MainActivity : ComponentActivity() {
           color = MaterialTheme.colorScheme.background,
         ) {
           MainNavigation(
-            startTab = launchTab(hasLaunched),
+            startTab = startTab,
             addAccountShortcut = addAccountShortcut,
+            screenRequests = requestedScreens,
           )
         }
       }
     }
+  }
+
+  /** A notification tapped with the app already open switches screen without rebuilding it. */
+  override fun onNewIntent(intent: Intent) {
+    super.onNewIntent(intent)
+    setIntent(intent)
+    intent.notificationScreen()?.let(::openScreen)
+  }
+
+  /**
+   * Forwards a screen to the Compose tree. A detail page follows the accounts tab's tax year, and a
+   * contribution reminder is about this year, so any older year being browsed is dropped first.
+   */
+  private fun openScreen(screen: NavKey) {
+    if (screen is AccountDetail) {
+      (application as IsaEyeApplication).userPreferences.setCurrentRulesetId(null)
+    }
+    screenRequests.trySend(screen)
+  }
+
+  /** Maps a reminder's target to the screen it opens. */
+  private fun Intent.notificationScreen(): NavKey? = when (val target = reminderTarget(this)) {
+    ReminderTarget.Accounts -> Accounts
+    is ReminderTarget.AccountDetails -> AccountDetail(target.productId)
+    ReminderTarget.Insights -> Insights
+    null -> null
   }
 
   /**

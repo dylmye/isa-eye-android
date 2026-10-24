@@ -159,6 +159,10 @@ dependencies {
   implementation(libs.androidx.room.ktx)
   ksp(libs.androidx.room.compiler)
 
+  // Background reminder checks. WorkManager schedules through the platform JobScheduler and has no
+  // Play Services dependency, so it stays compatible with an F-Droid build.
+  implementation(libs.androidx.work.runtime.ktx)
+
   // Images
   implementation(libs.coil.compose)
   implementation(libs.coil.network.okhttp)

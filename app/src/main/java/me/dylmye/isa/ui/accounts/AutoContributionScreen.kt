@@ -28,6 +28,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import me.dylmye.isa.notifications.rememberNotificationPermissionRequest
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.time.formatLongDate
 import me.dylmye.isa.ui.FormFactorPreviews
@@ -39,12 +40,14 @@ fun AutoContributionScreen(productId: String, onClose: () -> Unit, modifier: Mod
   val viewModel: AutoContributionViewModel =
     viewModel(factory = AutoContributionViewModel.factory(productId))
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  val requestNotifications = rememberNotificationPermissionRequest()
 
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
-      when (event) {
-        AutoContributionEvent.Saved -> onClose()
-      }
+      // Turning a schedule off is not a moment to ask; saving one is, because it is what the
+      // monthly reminder is for.
+      if (event == AutoContributionEvent.Saved) requestNotifications()
+      onClose()
     }
   }
 

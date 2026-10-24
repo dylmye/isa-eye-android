@@ -54,4 +54,17 @@ class TopLevelBackStackTest {
     assertEquals(listOf(TabA), backStack.backStack.toList())
     assertEquals(TabA, backStack.topLevelKey)
   }
+
+  @Test
+  fun resetTopLevel_dropsAnythingStackedOnTheTab() {
+    val backStack = TopLevelBackStack<NavKey>(TabA)
+    backStack.add(Detail("1"))
+    backStack.addTopLevel(TabB)
+    backStack.add(Detail("2"))
+
+    backStack.resetTopLevel(TabB)
+
+    assertEquals(TabB, backStack.topLevelKey)
+    assertEquals(listOf(TabA, Detail("1"), TabB), backStack.backStack.toList())
+  }
 }
