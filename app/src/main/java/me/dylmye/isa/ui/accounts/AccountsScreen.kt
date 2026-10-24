@@ -212,14 +212,16 @@ private fun AccountsList(
       // The lifted row is drawn at its real place through the offset, so animating its placement
       // as well would move it twice.
       val placement = if (dragging) Modifier else Modifier.animateItem()
+      // Build the TalkBack actions here, never inside the semantics block below: reading the
+      // reorder state in there registers the row's semantics for invalidation on every list
+      // change, and recalculating them while the row is leaving the list can crash with
+      // "visitAncestors called on an unattached node".
+      val actions = moveActions(index, reorder.items.size, reorder::move)
       AccountRow(
         account = account,
         dragging = dragging,
         onClick = { onAccountClick(account.productId) },
-        modifier =
-          placement.semantics {
-            customActions = moveActions(index, reorder.items.size, reorder::move)
-          },
+        modifier = placement.semantics { customActions = actions },
         dragModifier = reorder.dragModifier(account.productId),
       )
     }
