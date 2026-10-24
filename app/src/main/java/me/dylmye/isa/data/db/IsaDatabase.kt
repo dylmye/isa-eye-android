@@ -5,6 +5,7 @@ import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import me.dylmye.isa.data.db.dao.AccountOrderDao
 import me.dylmye.isa.data.db.dao.AnnualBalanceDao
 import me.dylmye.isa.data.db.dao.AutoContributionDao
 import me.dylmye.isa.data.db.dao.GoalDao
@@ -14,6 +15,7 @@ import me.dylmye.isa.data.db.dao.ProviderAliasDao
 import me.dylmye.isa.data.db.dao.ProviderDao
 import me.dylmye.isa.data.db.dao.RulesetDao
 import me.dylmye.isa.data.db.dao.RulesetExceptionDao
+import me.dylmye.isa.data.db.entity.AccountOrderEntity
 import me.dylmye.isa.data.db.entity.AnnualBalanceEntity
 import me.dylmye.isa.data.db.entity.AutoContributionEntity
 import me.dylmye.isa.data.db.entity.GoalEntity
@@ -35,12 +37,17 @@ import me.dylmye.isa.data.db.entity.SeedStateEntity
     AnnualBalanceEntity::class,
     AutoContributionEntity::class,
     RulesetExceptionEntity::class,
+    AccountOrderEntity::class,
     GoalEntity::class,
     SeedStateEntity::class,
   ],
-  version = 4,
+  version = 5,
   exportSchema = true,
-  autoMigrations = [AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4)],
+  autoMigrations = [
+    AutoMigration(from = 2, to = 3),
+    AutoMigration(from = 3, to = 4),
+    AutoMigration(from = 4, to = 5),
+  ],
 )
 abstract class IsaDatabase : RoomDatabase() {
   abstract fun providerDao(): ProviderDao
@@ -60,6 +67,8 @@ abstract class IsaDatabase : RoomDatabase() {
   abstract fun rulesetExceptionDao(): RulesetExceptionDao
 
   abstract fun goalDao(): GoalDao
+
+  abstract fun accountOrderDao(): AccountOrderDao
 
   companion object {
     const val NAME = "isa-eye.db"

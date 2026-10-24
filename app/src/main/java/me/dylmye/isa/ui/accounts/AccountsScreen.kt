@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,8 +28,11 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -37,6 +40,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
@@ -48,6 +54,7 @@ import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
 import me.dylmye.isa.ui.components.ProviderAvatar
 import me.dylmye.isa.ui.components.containerTint
+import me.dylmye.isa.ui.components.opaqueContainerTint
 import me.dylmye.isa.ui.formatGbp
 import me.dylmye.isa.ui.toTint
 
@@ -65,6 +72,7 @@ fun AccountsScreen(onAccountClick: (String) -> Unit, modifier: Modifier = Modifi
   AccountsContent(
     uiState = uiState,
     onAccountClick = onAccountClick,
+    onReorderAccounts = viewModel::onReorderAccounts,
     onPreviousRuleset = viewModel::onPreviousRuleset,
     onNextRuleset = viewModel::onNextRuleset,
     onResetRuleset = viewModel::onResetRuleset,
@@ -90,6 +98,7 @@ fun AccountsScreen(onAccountClick: (String) -> Unit, modifier: Modifier = Modifi
 fun AccountsContent(
   uiState: AccountsUiState,
   onAccountClick: (String) -> Unit,
+  onReorderAccounts: (List<String>) -> Unit,
   onPreviousRuleset: () -> Unit,
   onNextRuleset: () -> Unit,
   onResetRuleset: () -> Unit,
@@ -137,7 +146,13 @@ fun AccountsContent(
       }
 
       else -> {
-        AccountsList(uiState.accounts, onAccountClick, scrollBehavior, contentPadding)
+        AccountsList(
+          accounts = uiState.accounts,
+          onAccountClick = onAccountClick,
+          onReorderAccounts = onReorderAccounts,
+          scrollBehavior = scrollBehavior,
+          contentPadding = contentPadding,
+        )
       }
     }
   }
@@ -174,18 +189,64 @@ private fun AccountsTopBar(remainingPence: Long?, scrollBehavior: TopAppBarScrol
 private fun AccountsList(
   accounts: List<AccountListItemUiState>,
   onAccountClick: (String) -> Unit,
+  onReorderAccounts: (List<String>) -> Unit,
   scrollBehavior: TopAppBarScrollBehavior,
   contentPadding: PaddingValues,
 ) {
+  val listState = rememberLazyListState()
+  val latestOnReorder by rememberUpdatedState(onReorderAccounts)
+  val reorder =
+    remember(listState) {
+      AccountReorderState(listState, accounts) { order -> latestOnReorder(order) }
+    }
+  // Follow the saved order, unless the user is in the middle of rearranging it.
+  LaunchedEffect(accounts) { reorder.updateItems(accounts) }
   LazyColumn(
-    state = rememberLazyListState(),
+    state = listState,
     modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     contentPadding = contentPadding,
     verticalArrangement = Arrangement.spacedBy(12.dp),
   ) {
-    items(accounts, key = { it.productId }) { account ->
-      AccountRow(account = account, onClick = { onAccountClick(account.productId) })
+    itemsIndexed(reorder.items, key = { _, account -> account.productId }) { index, account ->
+      val dragging = reorder.isDragging(account.productId)
+      // The lifted row is drawn at its real place through the offset, so animating its placement
+      // as well would move it twice.
+      val placement = if (dragging) Modifier else Modifier.animateItem()
+      AccountRow(
+        account = account,
+        dragging = dragging,
+        onClick = { onAccountClick(account.productId) },
+        modifier =
+          placement.semantics {
+            customActions = moveActions(index, reorder.items.size, reorder::move)
+          },
+        dragModifier = reorder.dragModifier(account.productId),
+      )
     }
+  }
+}
+
+/** TalkBack's stand-in for dragging: a row can be moved one place at a time. */
+private fun moveActions(
+  index: Int,
+  count: Int,
+  move: (from: Int, to: Int) -> Unit,
+): List<CustomAccessibilityAction> = buildList {
+  if (index > 0) {
+    add(
+      CustomAccessibilityAction("Move up") {
+        move(index, index - 1)
+        true
+      },
+    )
+  }
+  if (index < count - 1) {
+    add(
+      CustomAccessibilityAction("Move down") {
+        move(index, index + 1)
+        true
+      },
+    )
   }
 }
 
@@ -202,16 +263,27 @@ private fun AccountsLoading(contentPadding: PaddingValues, modifier: Modifier = 
 @Composable
 private fun AccountRow(
   account: AccountListItemUiState,
+  dragging: Boolean,
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
+  dragModifier: Modifier = Modifier,
 ) {
   val tint = account.providerColour.toTint()
+  // A lifted card turns opaque and casts a shadow, so the cards it passes over cannot show through
+  // it and mix their colours with its own.
+  val container =
+    if (dragging) {
+      tint.opaqueContainerTint(MaterialTheme.colorScheme.background)
+    } else {
+      tint.containerTint()
+    }
   Surface(
     onClick = onClick,
     shape = MaterialTheme.shapes.large,
-    color = tint.containerTint(),
+    color = container,
     contentColor = MaterialTheme.colorScheme.onSurface,
-    modifier = modifier.fillMaxWidth(),
+    shadowElevation = if (dragging) 6.dp else 0.dp,
+    modifier = modifier.fillMaxWidth().then(dragModifier),
   ) {
     ListItem(
       headlineContent = { Text(account.name) },
@@ -266,6 +338,7 @@ private fun AccountsContentPreview() {
     AccountsContent(
       uiState = PreviewAccountsUiState,
       onAccountClick = {},
+      onReorderAccounts = {},
       onPreviousRuleset = {},
       onNextRuleset = {},
       onResetRuleset = {},
@@ -281,6 +354,7 @@ private fun AccountsEmptyPreview() {
     AccountsContent(
       uiState = AccountsUiState(ruleset = RulesetState(current = "2026/2027", canGoBack = true)),
       onAccountClick = {},
+      onReorderAccounts = {},
       onPreviousRuleset = {},
       onNextRuleset = {},
       onResetRuleset = {},

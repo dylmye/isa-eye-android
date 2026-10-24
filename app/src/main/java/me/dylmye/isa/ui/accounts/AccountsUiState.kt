@@ -1,6 +1,7 @@
 package me.dylmye.isa.ui.accounts
 
 import me.dylmye.isa.data.db.dao.AccountSummary
+import me.dylmye.isa.data.db.entity.AccountOrderEntity
 import me.dylmye.isa.data.db.entity.AnnualBalanceEntity
 import me.dylmye.isa.data.db.entity.ProductTypeEntity
 import me.dylmye.isa.data.db.entity.RulesetEntity
@@ -59,7 +60,8 @@ internal fun AccountSummary.toListItemUiState(contributionsPence: Long): Account
  * and the [selectedId]. Accounts not open in the selected year are dropped, and each remaining row
  * shows the contribution recorded for that year. [AccountsUiState.hasAccounts] counts every account,
  * so the empty state can tell "no accounts" apart from "none open this year". The selected year's
- * notes are resolved from [exceptions] and the [productTypes] that name them.
+ * notes are resolved from [exceptions] and the [productTypes] that name them, and [orders] puts the
+ * accounts in the order the user dragged them into.
  */
 internal fun resolveAccountsUiState(
   accounts: List<AccountSummary>,
@@ -68,17 +70,19 @@ internal fun resolveAccountsUiState(
   selectedId: String?,
   exceptions: List<RulesetExceptionEntity> = emptyList(),
   productTypes: List<ProductTypeEntity> = emptyList(),
+  orders: List<AccountOrderEntity> = emptyList(),
 ): AccountsUiState {
   val selection = resolveRuleset(rulesets.map { it.id }, selectedId)
   val currentRuleset = selection.current.orEmpty()
   val recorded =
     balances.associate { (it.productId to it.rulesetId) to it.deductedFromAllowancePence }
-  val items =
+  val open =
     accounts
       .filter { isOpenDuringRuleset(currentRuleset, it.startTaxYear, it.endTaxYear) }
       .map { account ->
         account.toListItemUiState(recorded[account.productId to currentRuleset] ?: 0L)
       }
+  val items = orderAccountsForRuleset(open, orders, currentRuleset)
   return AccountsUiState(
     accounts = items,
     ruleset = selection,
@@ -86,6 +90,24 @@ internal fun resolveAccountsUiState(
     notes = resolveRulesetNotes(selection.current, rulesets, exceptions, productTypes),
     hasAccounts = accounts.isNotEmpty(),
     isLoading = false,
+  )
+}
+
+/**
+ * Puts [accounts] in the order saved for [rulesetId]. Accounts with no saved place — a freshly
+ * added account, or a year nobody has reordered yet — follow the placed ones in name order, so an
+ * addition joins at the bottom without disturbing the rest.
+ */
+internal fun orderAccountsForRuleset(
+  accounts: List<AccountListItemUiState>,
+  orders: List<AccountOrderEntity>,
+  rulesetId: String,
+): List<AccountListItemUiState> {
+  val positions =
+    orders.filter { it.rulesetId == rulesetId }.associate { it.productId to it.position }
+  return accounts.sortedWith(
+    compareBy<AccountListItemUiState> { positions[it.productId] ?: Int.MAX_VALUE }
+      .thenBy { it.name },
   )
 }
 

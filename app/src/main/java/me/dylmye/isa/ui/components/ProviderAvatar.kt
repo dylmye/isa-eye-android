@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
@@ -69,3 +70,10 @@ private fun Color.onColor(): Color = if (luminance() > 0.5f) Color.Black else Co
  * cards) so they read as belonging to the same provider as the avatar.
  */
 fun Color.containerTint(alpha: Float = 0.18f): Color = copy(alpha = alpha)
+
+/**
+ * [containerTint] with its transparency resolved against [background], so a surface painted with
+ * it hides whatever lies underneath. Used while a card is lifted out of the list: a translucent
+ * card would let the cards it passes over show through and mix with its colour.
+ */
+fun Color.opaqueContainerTint(background: Color): Color = containerTint().compositeOver(background)

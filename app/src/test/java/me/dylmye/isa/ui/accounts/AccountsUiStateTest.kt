@@ -1,6 +1,7 @@
 package me.dylmye.isa.ui.accounts
 
 import me.dylmye.isa.data.db.dao.AccountSummary
+import me.dylmye.isa.data.db.entity.AccountOrderEntity
 import me.dylmye.isa.data.db.entity.AnnualBalanceEntity
 import me.dylmye.isa.data.db.entity.RulesetEntity
 import org.junit.Assert.assertEquals
@@ -65,6 +66,54 @@ class AccountsUiStateTest {
 
     assertEquals(listOf("p2"), state.accounts.map { it.productId })
     assertTrue(state.hasAccounts)
+  }
+
+  @Test
+  fun resolveAccountsUiState_usesTheSavedOrderForTheYear() {
+    val state =
+      resolveAccountsUiState(
+        accounts = listOf(summary("p1", name = "Alpha"), summary("p2", name = "Bravo")),
+        balances = emptyList(),
+        rulesets = rulesets(),
+        selectedId = "2026/2027",
+        orders = listOf(order("2026/2027", "p2", 0), order("2026/2027", "p1", 1)),
+      )
+
+    assertEquals(listOf("p2", "p1"), state.accounts.map { it.productId })
+  }
+
+  @Test
+  fun resolveAccountsUiState_putsAccountsWithoutAPlaceAfterTheSavedOnes() {
+    val state =
+      resolveAccountsUiState(
+        accounts =
+          listOf(
+            summary("p1", name = "Alpha"),
+            summary("p2", name = "Bravo"),
+            summary("p3", name = "Charlie"),
+          ),
+        balances = emptyList(),
+        rulesets = rulesets(),
+        selectedId = "2026/2027",
+        // Alpha was added after Bravo and Charlie were placed, so it belongs at the bottom.
+        orders = listOf(order("2026/2027", "p2", 0), order("2026/2027", "p3", 1)),
+      )
+
+    assertEquals(listOf("p2", "p3", "p1"), state.accounts.map { it.productId })
+  }
+
+  @Test
+  fun resolveAccountsUiState_ignoresAnotherYearsOrder() {
+    val state =
+      resolveAccountsUiState(
+        accounts = listOf(summary("p1", name = "Alpha"), summary("p2", name = "Bravo")),
+        balances = emptyList(),
+        rulesets = rulesets(),
+        selectedId = "2026/2027",
+        orders = listOf(order("2025/2026", "p2", 0), order("2025/2026", "p1", 1)),
+      )
+
+    assertEquals(listOf("p1", "p2"), state.accounts.map { it.productId })
   }
 
   @Test
@@ -157,17 +206,21 @@ class AccountsUiStateTest {
     RulesetEntity("2026/2027", 2_000_000, "2026-04-06", "2027-04-05", null),
   )
 
-  private fun summary(id: String, endTaxYear: String? = null) = AccountSummary(
-    productId = id,
-    friendlyName = "Cash ISA",
-    productTypeId = "CASH",
-    startTaxYear = "2020/2021",
-    endTaxYear = endTaxYear,
-    providerId = "lloyds",
-    providerName = "Lloyds Bank",
-    providerColour = "#006A4D",
-    providerIconUrl = "https://example.com/lloyds.svg",
-  )
+  private fun summary(id: String, endTaxYear: String? = null, name: String = "Cash ISA") =
+    AccountSummary(
+      productId = id,
+      friendlyName = name,
+      productTypeId = "CASH",
+      startTaxYear = "2020/2021",
+      endTaxYear = endTaxYear,
+      providerId = "lloyds",
+      providerName = "Lloyds Bank",
+      providerColour = "#006A4D",
+      providerIconUrl = "https://example.com/lloyds.svg",
+    )
+
+  private fun order(rulesetId: String, productId: String, position: Int) =
+    AccountOrderEntity(rulesetId = rulesetId, productId = productId, position = position)
 
   private fun balance(productId: String, rulesetId: String, pence: Long) = AnnualBalanceEntity(
     productId = productId,

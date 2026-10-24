@@ -26,6 +26,7 @@ fun AccountsScreenshot() {
     AccountsContent(
       uiState = PreviewAccounts,
       onAccountClick = {},
+      onReorderAccounts = {},
       onPreviousRuleset = {},
       onNextRuleset = {},
       onResetRuleset = {},
@@ -43,6 +44,7 @@ fun AccountsEmptyScreenshot() {
     AccountsContent(
       uiState = AccountsUiState(ruleset = RulesetState(current = "2026/2027", canGoBack = true)),
       onAccountClick = {},
+      onReorderAccounts = {},
       onPreviousRuleset = {},
       onNextRuleset = {},
       onResetRuleset = {},

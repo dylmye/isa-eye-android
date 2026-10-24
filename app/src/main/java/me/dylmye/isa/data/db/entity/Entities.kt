@@ -193,6 +193,33 @@ data class AutoContributionEntity(
 )
 
 /**
+ * Where one account sits in one tax year's list. Rows are written only after the user reorders that
+ * year, so a year with none keeps the alphabetical default. An account with no row follows the
+ * placed ones, which is what puts a newly added account at the bottom; deleting an account
+ * cascades its places away.
+ */
+@Entity(
+  tableName = "accountOrder",
+  primaryKeys = ["rulesetId", "productId"],
+  foreignKeys = [
+    ForeignKey(
+      entity = ProductEntity::class,
+      parentColumns = ["_id"],
+      childColumns = ["productId"],
+      onDelete = ForeignKey.CASCADE,
+    ),
+    ForeignKey(
+      entity = RulesetEntity::class,
+      parentColumns = ["_id"],
+      childColumns = ["rulesetId"],
+      onDelete = ForeignKey.CASCADE,
+    ),
+  ],
+  indices = [Index("productId"), Index("rulesetId")],
+)
+data class AccountOrderEntity(val rulesetId: String, val productId: String, val position: Int)
+
+/**
  * A tax year's savings goal, in pence. Unlike the tables above this one has no TinyBase counterpart:
  * it is user data the app keeps for itself, so its key is the tax year rather than a row id.
  */
