@@ -35,8 +35,16 @@ import me.dylmye.isa.ui.icons.trendingUp
 
 /** Contributions towards the allowance for the selected year, marked against the previous year. */
 @Composable
-internal fun ContributionsCard(uiState: AccountDetailUiState, modifier: Modifier = Modifier) {
-  Card(modifier = modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
+internal fun ContributionsCard(
+  uiState: AccountDetailUiState,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  Card(
+    onClick = onClick,
+    modifier = modifier.fillMaxWidth(),
+    shape = MaterialTheme.shapes.large,
+  ) {
     Column(
       modifier = Modifier.padding(16.dp),
       verticalArrangement = Arrangement.spacedBy(4.dp),

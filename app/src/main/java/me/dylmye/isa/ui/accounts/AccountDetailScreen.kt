@@ -199,7 +199,7 @@ private fun AccountDetailGrid(
     // Contributions take every column but one, leaving room for the actions card beside them; on a
     // single-column phone the span collapses and every card is full width.
     item(key = "contributions", span = { GridItemSpan((maxLineSpan - 1).coerceAtLeast(1)) }) {
-      ContributionsCard(uiState)
+      ContributionsCard(uiState = uiState, onClick = onUpdateContributions)
     }
     item(key = "actions") {
       ActionsCard(
