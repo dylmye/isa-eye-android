@@ -30,6 +30,18 @@ class TopLevelBackStack<T : NavKey>(startKey: T) {
     select(key)
   }
 
+  /**
+   * A tab press. Another tab switches to it with whatever it had open; the tab already showing pops
+   * back to its root, so a page stacked over a list is one tap from the list again. A tab that is
+   * already at its root is left alone, so its scroll position survives.
+   */
+  fun selectTopLevel(key: T) {
+    when {
+      key != topLevelKey -> addTopLevel(key)
+      topLevelStacks[key].orEmpty().size > 1 -> resetTopLevel(key)
+    }
+  }
+
   /** Opens [key]'s tab at its own root, dropping anything that was stacked above it. */
   fun resetTopLevel(key: T) {
     topLevelStacks[key] = mutableStateListOf(key)

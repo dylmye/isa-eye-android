@@ -67,4 +67,28 @@ class TopLevelBackStackTest {
     assertEquals(TabB, backStack.topLevelKey)
     assertEquals(listOf(TabA, Detail("1"), TabB), backStack.backStack.toList())
   }
+
+  @Test
+  fun selectTopLevel_popsTheActiveTabBackToItsRoot() {
+    val backStack = TopLevelBackStack<NavKey>(TabA)
+    backStack.add(Detail("1"))
+
+    backStack.selectTopLevel(TabA)
+
+    assertEquals(TabA, backStack.topLevelKey)
+    assertEquals(listOf(TabA), backStack.backStack.toList())
+  }
+
+  @Test
+  fun selectTopLevel_switchesToAnotherTabWithItsPagesIntact() {
+    val backStack = TopLevelBackStack<NavKey>(TabA)
+    backStack.add(Detail("1"))
+    backStack.addTopLevel(TabB)
+    backStack.add(Detail("2"))
+
+    backStack.selectTopLevel(TabA)
+
+    assertEquals(TabA, backStack.topLevelKey)
+    assertEquals(listOf(TabB, Detail("2"), TabA, Detail("1")), backStack.backStack.toList())
+  }
 }

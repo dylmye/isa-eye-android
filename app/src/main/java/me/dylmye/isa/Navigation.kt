@@ -94,6 +94,9 @@ fun MainNavigation(
   val directive = remember(windowAdaptiveInfo) {
     calculatePaneScaffoldDirective(windowAdaptiveInfo).copy(horizontalPartitionSpacerSize = 0.dp)
   }
+  // A narrow window shows only the detail page, so re-tapping the tab is the way back to the list.
+  // A wider one already shows the list beside the detail, where popping it would be a surprise.
+  val singlePane = directive.maxHorizontalPartitions == 1
   val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>(directive = directive)
   val dialogStrategy = remember { DialogSceneStrategy<NavKey>() }
 
@@ -104,7 +107,13 @@ fun MainNavigation(
           icon = { Icon(tab.icon, contentDescription = null) },
           label = { Text(tab.label) },
           selected = tab.key == backStack.topLevelKey,
-          onClick = { backStack.addTopLevel(tab.key) },
+          onClick = {
+            if (singlePane) {
+              backStack.selectTopLevel(tab.key)
+            } else {
+              backStack.addTopLevel(tab.key)
+            }
+          },
         )
       }
     },
