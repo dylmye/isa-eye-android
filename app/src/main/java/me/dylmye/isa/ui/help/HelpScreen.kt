@@ -85,20 +85,21 @@ private fun HelpIntro(modifier: Modifier = Modifier) {
     modifier = modifier.fillMaxWidth().padding(top = 8.dp),
     verticalArrangement = Arrangement.spacedBy(8.dp),
   ) {
+    // Sized like the article body: this is the first thing a new user reads, not a caption.
     Text(
       text = "Keep track of your ISA contributions, across banks and years.",
-      style = MaterialTheme.typography.bodyMedium,
+      style = MaterialTheme.typography.bodyLarge,
     )
     Text(
       text =
         "Get started by adding your accounts. Then update these accounts with the amount you've " +
           "contributed to them in the current tax year (6th April to 5th April the following year).",
-      style = MaterialTheme.typography.bodyMedium,
+      style = MaterialTheme.typography.bodyLarge,
     )
     Text(
       text =
         "The information you put into ISA Eye is kept entirely private and never leaves your device.",
-      style = MaterialTheme.typography.bodyMedium,
+      style = MaterialTheme.typography.bodyLarge,
       fontWeight = FontWeight.SemiBold,
     )
   }
