@@ -1,5 +1,6 @@
 package me.dylmye.isa.ui.insights
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,32 +16,23 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
-import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
-import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModel
-import com.patrykandpatrick.vico.compose.cartesian.data.CartesianValueFormatter
 import com.patrykandpatrick.vico.compose.cartesian.data.ColumnCartesianLayerModel
-import com.patrykandpatrick.vico.compose.cartesian.layer.ColumnCartesianLayer
-import com.patrykandpatrick.vico.compose.cartesian.layer.rememberColumnCartesianLayer
-import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
-import com.patrykandpatrick.vico.compose.common.Fill
-import com.patrykandpatrick.vico.compose.common.LegendItem
-import com.patrykandpatrick.vico.compose.common.component.ShapeComponent
-import com.patrykandpatrick.vico.compose.common.component.rememberLineComponent
-import com.patrykandpatrick.vico.compose.common.component.rememberTextComponent
-import com.patrykandpatrick.vico.compose.common.rememberHorizontalLegend
 import me.dylmye.isa.ui.formatGbp
 import me.dylmye.isa.ui.toTint
 
@@ -154,19 +146,28 @@ private fun goalSupporting(goal: GoalProgress): String = when {
 /** The year's contributions split by account, in each provider's tint, with a legend naming them. */
 @Composable
 internal fun AccountDonutCard(uiState: InsightsUiState, modifier: Modifier = Modifier) {
+  var selection by remember(uiState.accountShares) { mutableStateOf<DonutSelection?>(null) }
   InsightsCard(title = "This year by account", modifier = modifier) {
-    Donut(
-      shares = uiState.accountShares.map { it.colour.toTint() to it.pence },
-      description = accountDonutDescription(uiState),
-      modifier = Modifier.fillMaxWidth().height(CHART_HEIGHT),
-    )
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-      uiState.accountShares.forEach { share ->
-        LegendRow(
-          colour = share.colour.toTint(),
-          label = share.name,
-          value = percentOf(share.pence, uiState.currentYearTotalPence),
-        )
+    // Pressing anywhere else in the card drops the tooltip; the donut consumes its own taps.
+    Column(
+      modifier = Modifier.pointerInput(Unit) { detectTapGestures { selection = null } },
+      verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+      Donut(
+        slices = uiState.accountShares.map { DonutSlice(it.colour.toTint(), it.name, it.pence) },
+        description = accountDonutDescription(uiState),
+        selection = selection,
+        onSelect = { selection = it },
+        modifier = Modifier.fillMaxWidth().height(CHART_HEIGHT),
+      )
+      Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        uiState.accountShares.forEach { share ->
+          LegendRow(
+            colour = share.colour.toTint(),
+            label = share.name,
+            value = percentOf(share.pence, uiState.currentYearTotalPence),
+          )
+        }
       }
     }
   }
@@ -175,19 +176,27 @@ internal fun AccountDonutCard(uiState: InsightsUiState, modifier: Modifier = Mod
 /** The year's contributions split by product type, with a legend naming the types on show. */
 @Composable
 internal fun ProductTypeDonutCard(uiState: InsightsUiState, modifier: Modifier = Modifier) {
+  var selection by remember(uiState.typeShares) { mutableStateOf<DonutSelection?>(null) }
   InsightsCard(title = "This year by type", modifier = modifier) {
-    Donut(
-      shares = uiState.typeShares.map { it.colour.toTint() to it.pence },
-      description = typeDonutDescription(uiState),
-      modifier = Modifier.fillMaxWidth().height(CHART_HEIGHT),
-    )
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-      uiState.typeShares.forEach { share ->
-        LegendRow(
-          colour = share.colour.toTint(),
-          label = share.name,
-          value = percentOf(share.pence, uiState.currentYearTotalPence),
-        )
+    Column(
+      modifier = Modifier.pointerInput(Unit) { detectTapGestures { selection = null } },
+      verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+      Donut(
+        slices = uiState.typeShares.map { DonutSlice(it.colour.toTint(), it.name, it.pence) },
+        description = typeDonutDescription(uiState),
+        selection = selection,
+        onSelect = { selection = it },
+        modifier = Modifier.fillMaxWidth().height(CHART_HEIGHT),
+      )
+      Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        uiState.typeShares.forEach { share ->
+          LegendRow(
+            colour = share.colour.toTint(),
+            label = share.name,
+            value = percentOf(share.pence, uiState.currentYearTotalPence),
+          )
+        }
       }
     }
   }
@@ -205,10 +214,6 @@ internal fun ProductTypeDonutCard(uiState: InsightsUiState, modifier: Modifier =
 internal fun YearBarCard(uiState: InsightsUiState, modifier: Modifier = Modifier) {
   val years = uiState.yearShares
   val types = years.flatMap { it.byType }.distinctBy { it.productTypeId }
-  val colours = types.associate { it.productTypeId to it.colour.toTint() }
-  // Read outside the chart call: the legend's item lambda is not composable, so the label component
-  // has to be built here and captured.
-  val legendLabel = rememberLegendLabelComponent()
   val model =
     CartesianChartModel(
       ColumnCartesianLayerModel.build {
@@ -217,41 +222,7 @@ internal fun YearBarCard(uiState: InsightsUiState, modifier: Modifier = Modifier
     )
   InsightsCard(title = "Contributions by year", modifier = modifier) {
     CartesianChartHost(
-      chart =
-        rememberCartesianChart(
-          rememberColumnCartesianLayer(
-            columnProvider =
-              ColumnCartesianLayer.ColumnProvider.series(
-                types.map { type ->
-                  rememberLineComponent(
-                    fill = Fill(colours.getValue(type.productTypeId)),
-                    thickness = BAR_WIDTH,
-                  )
-                },
-              ),
-            mergeMode = { ColumnCartesianLayer.MergeMode.Stacked },
-          ),
-          startAxis = VerticalAxis.rememberStart(valueFormatter = MoneyAxisFormatter),
-          bottomAxis =
-            HorizontalAxis.rememberBottom(
-              valueFormatter =
-                CartesianValueFormatter { _, x, _ -> years.getOrNull(x.toInt())?.label.orEmpty() },
-            ),
-          legend =
-            rememberHorizontalLegend(
-              items = { _ ->
-                types.forEach { type ->
-                  add(
-                    LegendItem(
-                      ShapeComponent(Fill(colours.getValue(type.productTypeId)), CircleShape),
-                      legendLabel,
-                      type.name,
-                    ),
-                  )
-                }
-              },
-            ),
-        ),
+      chart = rememberYearChart(years = years, types = types),
       model = model,
       modifier =
         Modifier.fillMaxWidth()
@@ -283,11 +254,6 @@ internal fun InsightsCard(
     }
   }
 }
-
-/** The bar chart's legend labels, matched to the surrounding type. */
-@Composable
-private fun rememberLegendLabelComponent() =
-  rememberTextComponent(TextStyle(color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp))
 
 /**
  * Traffic-light surface colours. Unlike the chart tints these need dark variants, because the whole
@@ -324,7 +290,4 @@ private fun TaxYearStage.content(): Color = if (isSystemInDarkTheme()) {
   }
 }
 
-private val MoneyAxisFormatter = CartesianValueFormatter { _, value, _ -> axisMoney(value) }
-
 private val CHART_HEIGHT = 160.dp
-private val BAR_WIDTH = 16.dp
