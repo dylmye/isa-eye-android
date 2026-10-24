@@ -20,7 +20,15 @@ private const val ALLOWANCE_MAXED_OUT = "Allowance maxed out!"
 data class AccountsUiState(
   val accounts: List<AccountListItemUiState> = emptyList(),
   val ruleset: RulesetState = RulesetState(),
+  /**
+   * The figure the hero leads with: the shared allowance, or the Junior one when that is all the
+   * selected year holds.
+   */
   val remainingPence: Long? = null,
+  /** True when [remainingPence] is the Junior allowance rather than the shared one. */
+  val heroIsJunior: Boolean = false,
+  /** Junior ISA accounts open in the selected year, each with its own allowance use. */
+  val juniorAllowances: List<JuniorAllowanceUiState> = emptyList(),
   val notes: RulesetNotesUiState = RulesetNotesUiState(),
   val hasAccounts: Boolean = false,
   val isLoading: Boolean = false,
@@ -83,10 +91,21 @@ internal fun resolveAccountsUiState(
         account.toListItemUiState(recorded[account.productId to currentRuleset] ?: 0L)
       }
   val items = orderAccountsForRuleset(open, orders, currentRuleset)
+  val allowances =
+    resolveAllowanceStanding(
+      rulesetId = currentRuleset,
+      accounts = accounts,
+      balances = balances,
+      rulesets = rulesets,
+      exceptions = exceptions,
+      productTypes = productTypes,
+    )
   return AccountsUiState(
     accounts = items,
     ruleset = selection,
-    remainingPence = remainingAllowancePence(selection.current, balances, rulesets),
+    remainingPence = allowances.headlinePence,
+    heroIsJunior = allowances.headlineIsJunior,
+    juniorAllowances = allowances.juniorAllowances,
     notes = resolveRulesetNotes(selection.current, rulesets, exceptions, productTypes),
     hasAccounts = accounts.isNotEmpty(),
     isLoading = false,
@@ -109,22 +128,6 @@ internal fun orderAccountsForRuleset(
     compareBy<AccountListItemUiState> { positions[it.productId] ?: Int.MAX_VALUE }
       .thenBy { it.name },
   )
-}
-
-/**
- * The shared allowance left for [rulesetId]: that year's shared allowance minus every contribution
- * recorded against it, matching the web. Junior ISA contributions are counted here too, which the
- * web also gets wrong — separating them out is a known follow-up.
- */
-internal fun remainingAllowancePence(
-  rulesetId: String?,
-  balances: List<AnnualBalanceEntity>,
-  rulesets: List<RulesetEntity>,
-): Long? {
-  val allowance = rulesets.firstOrNull { it.id == rulesetId }?.sharedAllowancePence ?: return null
-  val contributed =
-    balances.filter { it.rulesetId == rulesetId }.sumOf { it.deductedFromAllowancePence }
-  return allowance - contributed
 }
 
 /**

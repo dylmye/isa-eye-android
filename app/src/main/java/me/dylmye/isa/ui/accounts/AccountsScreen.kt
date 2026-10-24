@@ -45,6 +45,7 @@ import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -110,7 +111,12 @@ fun AccountsContent(
     modifier = modifier,
     topBar = {
       Column {
-        AccountsTopBar(remainingPence = uiState.remainingPence, scrollBehavior = scrollBehavior)
+        AccountsTopBar(
+          remainingPence = uiState.remainingPence,
+          heroIsJunior = uiState.heroIsJunior,
+          juniorAllowances = uiState.juniorAllowances,
+          scrollBehavior = scrollBehavior,
+        )
         if (uiState.ruleset.current != null) {
           RulesetHeader(
             state = uiState.ruleset,
@@ -161,27 +167,71 @@ fun AccountsContent(
 /** Hero app bar: the year's remaining allowance while expanded, the screen name once collapsed. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AccountsTopBar(remainingPence: Long?, scrollBehavior: TopAppBarScrollBehavior) {
+private fun AccountsTopBar(
+  remainingPence: Long?,
+  heroIsJunior: Boolean,
+  juniorAllowances: List<JuniorAllowanceUiState>,
+  scrollBehavior: TopAppBarScrollBehavior,
+) {
   val collapsed = scrollBehavior.state.collapsedFraction > 0.5f
-  val headline = allowanceHeadline(remainingPence)
+  val hero =
+    if (collapsed) {
+      null
+    } else {
+      allowanceHeadline(remainingPence)?.let { headline ->
+        HeroText(headline = headline, caption = juniorCaption(heroIsJunior, juniorAllowances))
+      }
+    }
   MediumTopAppBar(
     title = {
-      Crossfade(targetState = if (collapsed) null else headline, label = "accountsTitle") { text ->
+      Crossfade(targetState = hero, label = "accountsTitle") { text ->
         if (text == null) {
           Text("Accounts")
         } else {
-          // Fixed size on purpose: sizing to the text made short figures balloon and long ones
-          // shrink, so the header changed size whenever the amount did.
-          Text(
-            text = text,
-            maxLines = 1,
-            style = MaterialTheme.typography.displaySmall.copy(lineHeight = TextUnit.Unspecified),
-          )
+          Column {
+            // Fixed size on purpose: sizing to the text made short figures balloon and long ones
+            // shrink, so the header changed size whenever the amount did.
+            Text(
+              text = text.headline,
+              maxLines = 1,
+              style = MaterialTheme.typography.displaySmall.copy(lineHeight = TextUnit.Unspecified),
+            )
+            text.caption?.let { caption ->
+              Text(
+                text = caption,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+              )
+            }
+          }
         }
       }
     },
     scrollBehavior = scrollBehavior,
   )
+}
+
+/** What the hero says while the bar is expanded: the big figure and, optionally, a line under it. */
+private data class HeroText(val headline: String, val caption: String?)
+
+/**
+ * The Junior allowance line under the hero. When the hero is already the Junior figure the line
+ * merely names it; otherwise it totals what the year's Junior accounts have left between them.
+ */
+private fun juniorCaption(
+  heroIsJunior: Boolean,
+  allowances: List<JuniorAllowanceUiState>,
+): String? {
+  if (allowances.isEmpty()) return null
+  val label = allowances.first().typeName.ifBlank { "Junior ISA" }
+  val plural = if (allowances.size == 1) "" else "s"
+  return if (heroIsJunior) {
+    "$label allowance$plural"
+  } else {
+    "${formatGbp(allowances.sumOf { it.remainingPence })} left in $label allowance$plural"
+  }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

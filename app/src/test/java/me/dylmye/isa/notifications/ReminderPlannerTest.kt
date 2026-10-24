@@ -5,6 +5,7 @@ import me.dylmye.isa.data.db.entity.AnnualBalanceEntity
 import me.dylmye.isa.data.db.entity.AutoContributionEntity
 import me.dylmye.isa.data.db.entity.GoalEntity
 import me.dylmye.isa.data.db.entity.RulesetEntity
+import me.dylmye.isa.data.db.entity.RulesetExceptionEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -166,6 +167,24 @@ class ReminderPlannerTest {
   }
 
   @Test
+  fun planReminders_keepsJuniorContributionsOutOfTheSharedAllowance() {
+    val reminders =
+      plan(
+        now = "2027-02-04 09:00",
+        balances =
+          listOf(
+            balance("2026/2027", "a1", 1_900_000),
+            balance("2026/2027", "j1", 900_000),
+          ),
+        accounts = accounts + account("j1", "Junior ISA", typeId = "JUNIOR"),
+        exceptions = juniorException(),
+      )
+
+    // £1,000 is still left in the shared pot even though the Junior ISA is full.
+    assertEquals("allowance/2026/2027", reminders.single().key)
+  }
+
+  @Test
   fun planReminders_skipsTheAllowanceWarningOnceNothingIsLeft() {
     val reminders =
       plan(
@@ -310,12 +329,15 @@ class ReminderPlannerTest {
     goals: List<GoalEntity> = emptyList(),
     schedules: List<AutoContributionEntity> = emptyList(),
     sentKeys: Set<String> = emptySet(),
+    accounts: List<AccountSummary> = this.accounts,
+    exceptions: List<RulesetExceptionEntity> = emptyList(),
   ): List<Reminder> = planReminders(
     snapshot =
       ReminderSnapshot(
         accounts = accounts,
         balances = balances,
         rulesets = rulesets,
+        exceptions = exceptions,
         goals = goals,
         schedules = schedules,
       ),
@@ -324,16 +346,27 @@ class ReminderPlannerTest {
   )
 }
 
-private fun account(id: String, name: String) = AccountSummary(
+private fun account(id: String, name: String, typeId: String = "CASH") = AccountSummary(
   productId = id,
   friendlyName = name,
-  productTypeId = "CASH",
+  productTypeId = typeId,
   startTaxYear = "2026/2027",
   endTaxYear = null,
   providerId = "provider",
   providerName = "Bank",
   providerColour = "#006A4D",
   providerIconUrl = null,
+)
+
+private fun juniorException() = listOf(
+  RulesetExceptionEntity(
+    id = "2026/2027-JUNIOR",
+    productTypeId = "JUNIOR",
+    rulesetId = "2026/2027",
+    allowancePence = 900_000,
+    notes = null,
+    includedInShared = false,
+  ),
 )
 
 private fun balance(rulesetId: String, productId: String, pence: Long) = AnnualBalanceEntity(

@@ -5,10 +5,13 @@ import me.dylmye.isa.data.db.entity.AnnualBalanceEntity
 import me.dylmye.isa.data.db.entity.GoalEntity
 import me.dylmye.isa.data.db.entity.ProductTypeEntity
 import me.dylmye.isa.data.db.entity.RulesetEntity
+import me.dylmye.isa.data.db.entity.RulesetExceptionEntity
 import me.dylmye.isa.time.daysBetween
 import me.dylmye.isa.time.isoDate
 import me.dylmye.isa.time.isoDatePlusMonths
 import me.dylmye.isa.time.monthsBetweenCeiling
+import me.dylmye.isa.ui.accounts.JuniorAllowanceUiState
+import me.dylmye.isa.ui.accounts.resolveJuniorAllowances
 import me.dylmye.isa.ui.ceilToPounds
 
 /** How far through the tax year it is: the countdown card colours these green, amber and red. */
@@ -85,19 +88,22 @@ data class InsightsUiState(
   val typeShares: List<TypeShare> = emptyList(),
   val yearShares: List<YearShare> = emptyList(),
   val goal: GoalProgress? = null,
+  /** Junior ISA accounts open this year, each measured against its own allowance. */
+  val juniorAllowances: List<JuniorAllowanceUiState> = emptyList(),
 )
 
 /**
  * Builds the insights state from every [accounts] row, [productTypes], every [balances] row, the
- * [rulesets] and the [goals] set for them, read against [nowMillis]. The tax year comes from the
- * ruleset dates rather than the accounts view's selection, so the tab always reports current
- * performance.
+ * [rulesets] and their per-type [exceptions], and the [goals] set for them, read against
+ * [nowMillis]. The tax year comes from the ruleset dates rather than the accounts view's selection,
+ * so the tab always reports current performance.
  */
 internal fun resolveInsights(
   accounts: List<AccountSummary>,
   productTypes: List<ProductTypeEntity>,
   balances: List<AnnualBalanceEntity>,
   rulesets: List<RulesetEntity>,
+  exceptions: List<RulesetExceptionEntity>,
   goals: List<GoalEntity>,
   nowMillis: Long,
 ): InsightsUiState {
@@ -117,6 +123,8 @@ internal fun resolveInsights(
     typeShares = typeShares(thisYear, accounts, productTypes),
     yearShares = yearShares,
     goal = goalProgress(current, currentYearTotal, goals, today),
+    juniorAllowances =
+      resolveJuniorAllowances(current?.id, accounts, balances, exceptions, productTypes),
   )
 }
 

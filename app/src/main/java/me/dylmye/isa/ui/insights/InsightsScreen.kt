@@ -77,6 +77,11 @@ fun InsightsContent(
             GoalCard(uiState = uiState, onEdit = onEditGoal)
           }
         }
+        if (uiState.juniorAllowances.isNotEmpty()) {
+          item(key = "junior", span = { GridItemSpan(maxLineSpan) }) {
+            JuniorAllowanceCard(uiState)
+          }
+        }
         if (uiState.accountShares.isNotEmpty()) {
           item(key = "accounts", span = { GridItemSpan(1) }) { AccountDonutCard(uiState) }
           item(key = "types", span = { GridItemSpan(1) }) { ProductTypeDonutCard(uiState) }

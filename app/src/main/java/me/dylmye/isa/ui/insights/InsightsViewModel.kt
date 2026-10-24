@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.stateIn
 import me.dylmye.isa.IsaEyeApplication
 import me.dylmye.isa.data.AccountRepository
 import me.dylmye.isa.data.GoalRepository
+import me.dylmye.isa.data.db.entity.ProductTypeEntity
+import me.dylmye.isa.data.db.entity.RulesetExceptionEntity
 
 /**
  * Builds the insights tab from every account, product type, contribution, ruleset and goal. It
@@ -20,15 +22,32 @@ import me.dylmye.isa.data.GoalRepository
  */
 class InsightsViewModel(accountRepository: AccountRepository, goalRepository: GoalRepository) :
   ViewModel() {
+  /** The reference data the cards need to name and size a Junior allowance. */
+  private val reference =
+    combine(
+      accountRepository.observeProductTypes(),
+      accountRepository.observeRulesetExceptions(),
+    ) { productTypes, exceptions ->
+      ReferenceData(productTypes, exceptions)
+    }
+
   val uiState: StateFlow<InsightsUiState> =
     combine(
       accountRepository.observeAccounts(),
-      accountRepository.observeProductTypes(),
+      reference,
       accountRepository.observeBalances(),
       accountRepository.observeRulesets(),
       goalRepository.observeGoals(),
-    ) { accounts, productTypes, balances, rulesets, goals ->
-      resolveInsights(accounts, productTypes, balances, rulesets, goals, System.currentTimeMillis())
+    ) { accounts, data, balances, rulesets, goals ->
+      resolveInsights(
+        accounts = accounts,
+        productTypes = data.productTypes,
+        balances = balances,
+        rulesets = rulesets,
+        exceptions = data.exceptions,
+        goals = goals,
+        nowMillis = System.currentTimeMillis(),
+      )
     }
       .stateIn(
         viewModelScope,
@@ -47,3 +66,8 @@ class InsightsViewModel(accountRepository: AccountRepository, goalRepository: Go
     }
   }
 }
+
+private data class ReferenceData(
+  val productTypes: List<ProductTypeEntity>,
+  val exceptions: List<RulesetExceptionEntity>,
+)

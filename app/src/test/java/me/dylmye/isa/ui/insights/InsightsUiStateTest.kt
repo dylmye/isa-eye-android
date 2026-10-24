@@ -5,7 +5,9 @@ import me.dylmye.isa.data.db.entity.AnnualBalanceEntity
 import me.dylmye.isa.data.db.entity.GoalEntity
 import me.dylmye.isa.data.db.entity.ProductTypeEntity
 import me.dylmye.isa.data.db.entity.RulesetEntity
+import me.dylmye.isa.data.db.entity.RulesetExceptionEntity
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -203,6 +205,33 @@ class InsightsUiStateTest {
   }
 
   @Test
+  fun resolveInsights_reportsEachJuniorAccountsOwnAllowance() {
+    val state =
+      resolve(
+        balances =
+          listOf(balance("2026/2027", "a1", 125_000), balance("2026/2027", "j1", 200_000)),
+        accounts = accounts + account("j1", "Junior ISA", "JUNIOR", "#00838F"),
+        productTypes = productTypes + productType("JUNIOR", "Junior ISA", "#00838F"),
+        exceptions = listOf(juniorException()),
+      )
+
+    val allowance = state.juniorAllowances.single()
+    assertEquals("j1", allowance.productId)
+    assertEquals("Junior ISA", allowance.typeName)
+    assertEquals(900_000L, allowance.allowancePence)
+    assertEquals(200_000L, allowance.usedPence)
+    assertEquals(700_000L, allowance.remainingPence)
+    assertFalse(allowance.isUsedUp)
+  }
+
+  @Test
+  fun resolveInsights_hasNoJuniorAllowanceWhenTheYearHasNoJuniorIsa() {
+    val state = resolve(listOf(balance("2026/2027", "a1", 125_000)))
+
+    assertTrue(state.juniorAllowances.isEmpty())
+  }
+
+  @Test
   fun monthlySavingPence_splitsWhatIsLeftAndRoundsUpToThePound() {
     assertEquals(305_900L, monthlySavingPence(1_835_000, 6))
     assertEquals(0L, monthlySavingPence(0, 6))
@@ -247,7 +276,19 @@ class InsightsUiStateTest {
     balances: List<AnnualBalanceEntity>,
     goals: List<GoalEntity> = emptyList(),
     nowMillis: Long = now,
-  ) = resolveInsights(accounts, productTypes, balances, rulesets, goals, nowMillis)
+    accounts: List<AccountSummary> = this.accounts,
+    productTypes: List<ProductTypeEntity> = this.productTypes,
+    exceptions: List<RulesetExceptionEntity> = emptyList(),
+  ) = resolveInsights(accounts, productTypes, balances, rulesets, exceptions, goals, nowMillis)
+
+  private fun juniorException() = RulesetExceptionEntity(
+    id = "2026/2027-JUNIOR",
+    productTypeId = "JUNIOR",
+    rulesetId = "2026/2027",
+    allowancePence = 900_000,
+    notes = null,
+    includedInShared = false,
+  )
 
   private fun yearShare(rulesetId: String, totalPence: Long, byType: Map<String, Long>) = YearShare(
     rulesetId = rulesetId,

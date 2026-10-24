@@ -6,7 +6,7 @@ import me.dylmye.isa.data.db.entity.RulesetEntity
 import me.dylmye.isa.time.daysBetween
 import me.dylmye.isa.time.isoDate
 import me.dylmye.isa.time.monthsBetweenCeiling
-import me.dylmye.isa.ui.accounts.remainingAllowancePence
+import me.dylmye.isa.ui.accounts.resolveAllowanceStanding
 import me.dylmye.isa.ui.formatGbp
 import me.dylmye.isa.ui.insights.monthlySavingPence
 
@@ -127,7 +127,17 @@ private fun allowanceReminder(
   today: String,
 ): Reminder? {
   val days = daysBetween(today, year.endDate) ?: return null
-  val remaining = remainingAllowancePence(year.id, snapshot.balances, snapshot.rulesets)
+  // The same figure the accounts hero leads with: the shared pot, or the Junior one when that is
+  // all the year holds. Junior contributions are kept out of the shared figure.
+  val remaining =
+    resolveAllowanceStanding(
+      rulesetId = year.id,
+      accounts = snapshot.accounts,
+      balances = snapshot.balances,
+      rulesets = snapshot.rulesets,
+      exceptions = snapshot.exceptions,
+    )
+      .headlinePence
   val warn = days in 1..ALLOWANCE_WARNING_DAYS && remaining != null && remaining > 0L
   return if (warn) {
     val goalRemaining =

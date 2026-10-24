@@ -264,7 +264,7 @@ internal fun YearBarCard(uiState: InsightsUiState, modifier: Modifier = Modifier
 
 /** Shared card chrome: a title, an optional action opposite it, then whatever the chart needs. */
 @Composable
-private fun InsightsCard(
+internal fun InsightsCard(
   title: String,
   modifier: Modifier = Modifier,
   action: (@Composable () -> Unit)? = null,

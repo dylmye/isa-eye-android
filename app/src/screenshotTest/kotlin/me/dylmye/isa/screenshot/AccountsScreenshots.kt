@@ -12,6 +12,7 @@ import me.dylmye.isa.ui.accounts.AccountListItemUiState
 import me.dylmye.isa.ui.accounts.AccountsContent
 import me.dylmye.isa.ui.accounts.AccountsUiState
 import me.dylmye.isa.ui.accounts.ContributionTrend
+import me.dylmye.isa.ui.accounts.JuniorAllowanceUiState
 import me.dylmye.isa.ui.accounts.RulesetExceptionUiState
 import me.dylmye.isa.ui.accounts.RulesetNotesBody
 import me.dylmye.isa.ui.accounts.RulesetNotesUiState
@@ -25,6 +26,44 @@ fun AccountsScreenshot() {
   ISAEyeTheme(dynamicColor = false) {
     AccountsContent(
       uiState = PreviewAccounts,
+      onAccountClick = {},
+      onReorderAccounts = {},
+      onPreviousRuleset = {},
+      onNextRuleset = {},
+      onResetRuleset = {},
+      onShowNotes = {},
+    )
+  }
+}
+
+/** A Junior ISA in the year, so the hero carries its own allowance underneath. */
+@PreviewTest
+@ScreenPreviews
+@Composable
+fun AccountsJuniorScreenshot() {
+  ISAEyeTheme(dynamicColor = false) {
+    AccountsContent(
+      uiState =
+        PreviewAccounts.copy(
+          accounts =
+            PreviewAccounts.accounts.map { account ->
+              if (account.productId == "4") {
+                account.copy(contributionsPence = 120_000)
+              } else {
+                account
+              }
+            },
+          juniorAllowances =
+            listOf(
+              JuniorAllowanceUiState(
+                productId = "4",
+                accountName = "Junior ISA",
+                typeName = "Junior ISA",
+                allowancePence = 900_000,
+                usedPence = 120_000,
+              ),
+            ),
+        ),
       onAccountClick = {},
       onReorderAccounts = {},
       onPreviousRuleset = {},

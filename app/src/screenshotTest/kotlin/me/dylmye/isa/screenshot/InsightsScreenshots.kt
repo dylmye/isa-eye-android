@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.android.tools.screenshot.PreviewTest
 import me.dylmye.isa.theme.ISAEyeTheme
+import me.dylmye.isa.ui.accounts.JuniorAllowanceUiState
 import me.dylmye.isa.ui.insights.AccountShare
 import me.dylmye.isa.ui.insights.GoalProgress
 import me.dylmye.isa.ui.insights.InsightsContent
@@ -54,6 +55,31 @@ fun InsightsEmptyScreenshot() {
 fun InsightsGoalMetScreenshot() {
   ISAEyeTheme(dynamicColor = false) {
     InsightsContent(uiState = PreviewInsights.goalMet(), onEditGoal = {})
+  }
+}
+
+/** A Junior ISA open this year, so the card carries that pot as well as the goal. */
+@PreviewTest
+@ScreenPreviews
+@Composable
+fun InsightsJuniorScreenshot() {
+  ISAEyeTheme(dynamicColor = false) {
+    InsightsContent(
+      uiState =
+        PreviewInsights.copy(
+          juniorAllowances =
+            listOf(
+              JuniorAllowanceUiState(
+                productId = "j1",
+                accountName = "Junior ISA",
+                typeName = "Junior ISA",
+                allowancePence = 900_000,
+                usedPence = 120_000,
+              ),
+            ),
+        ),
+      onEditGoal = {},
+    )
   }
 }
 

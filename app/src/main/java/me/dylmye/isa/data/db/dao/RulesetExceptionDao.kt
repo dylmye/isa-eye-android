@@ -14,6 +14,9 @@ interface RulesetExceptionDao {
   @Query("SELECT * FROM rulesetExceptions")
   fun observeAll(): Flow<List<RulesetExceptionEntity>>
 
+  @Query("SELECT * FROM rulesetExceptions")
+  suspend fun getAll(): List<RulesetExceptionEntity>
+
   @Upsert
   suspend fun upsertAll(exceptions: List<RulesetExceptionEntity>)
 }

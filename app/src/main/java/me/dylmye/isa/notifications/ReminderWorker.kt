@@ -30,6 +30,7 @@ private suspend fun loadSnapshot(database: IsaDatabase): ReminderSnapshot = Remi
   accounts = database.productDao().getSummaries(),
   balances = database.annualBalanceDao().getAll(),
   rulesets = database.rulesetDao().getAll(),
+  exceptions = database.rulesetExceptionDao().getAll(),
   goals = database.goalDao().getAll(),
   schedules = database.autoContributionDao().getAll(),
 )

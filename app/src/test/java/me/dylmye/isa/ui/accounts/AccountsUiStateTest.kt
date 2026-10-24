@@ -3,7 +3,9 @@ package me.dylmye.isa.ui.accounts
 import me.dylmye.isa.data.db.dao.AccountSummary
 import me.dylmye.isa.data.db.entity.AccountOrderEntity
 import me.dylmye.isa.data.db.entity.AnnualBalanceEntity
+import me.dylmye.isa.data.db.entity.ProductTypeEntity
 import me.dylmye.isa.data.db.entity.RulesetEntity
+import me.dylmye.isa.data.db.entity.RulesetExceptionEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -125,9 +127,94 @@ class AccountsUiStateTest {
   }
 
   @Test
-  fun remainingAllowancePence_returnsNullForAnUnknownYear() {
-    assertNull(remainingAllowancePence("1999/2000", emptyList(), rulesets()))
-    assertNull(remainingAllowancePence(null, emptyList(), rulesets()))
+  fun remainingSharedAllowancePence_returnsNullForAnUnknownYear() {
+    assertNull(
+      remainingSharedAllowancePence("1999/2000", emptyList(), emptyList(), rulesets(), emptyList()),
+    )
+    assertNull(
+      remainingSharedAllowancePence(null, emptyList(), emptyList(), rulesets(), emptyList()),
+    )
+  }
+
+  @Test
+  fun remainingSharedAllowancePence_keepsJuniorContributionsOutOfTheSharedPot() {
+    val remaining =
+      remainingSharedAllowancePence(
+        rulesetId = "2026/2027",
+        accounts = listOf(summary("p1"), summary("p2", typeId = "JUNIOR")),
+        balances =
+          listOf(balance("p1", "2026/2027", 1_500_000), balance("p2", "2026/2027", 500_000)),
+        rulesets = rulesets(),
+        exceptions = juniorException(),
+      )
+
+    // £20,000 shared less the £15,000 in the Cash ISA; the Junior £5,000 has its own pot.
+    assertEquals(500_000L, remaining)
+  }
+
+  @Test
+  fun resolveAccountsUiState_measuresEachJuniorAccountAgainstItsOwnAllowance() {
+    val state =
+      resolveAccountsUiState(
+        accounts =
+          listOf(
+            summary("p1", name = "Child one", typeId = "JUNIOR"),
+            summary("p2", name = "Child two", typeId = "JUNIOR"),
+          ),
+        balances =
+          listOf(
+            balance("p1", "2026/2027", 200_000),
+            balance("p2", "2026/2027", 950_000),
+          ),
+        rulesets = rulesets(),
+        selectedId = "2026/2027",
+        exceptions = juniorException(),
+        productTypes = listOf(juniorType()),
+      )
+
+    val allowances = state.juniorAllowances
+    assertEquals(listOf("p1", "p2"), allowances.map { it.productId })
+    assertEquals(listOf(700_000L, 0L), allowances.map { it.remainingPence })
+    assertEquals(1f, allowances.last().fraction, 0f)
+    assertTrue(allowances.last().isUsedUp)
+    // The shared pot is not the user's to spend, so the Junior allowance leads instead.
+    assertEquals(700_000L, state.remainingPence)
+    assertTrue(state.heroIsJunior)
+  }
+
+  @Test
+  fun resolveAccountsUiState_keepsTheSharedHeroWhenAnAdultIsaIsOpen() {
+    val state =
+      resolveAccountsUiState(
+        accounts = listOf(summary("p1"), summary("p2", typeId = "JUNIOR")),
+        balances =
+          listOf(balance("p1", "2026/2027", 1_500_000), balance("p2", "2026/2027", 500_000)),
+        rulesets = rulesets(),
+        selectedId = "2026/2027",
+        exceptions = juniorException(),
+        productTypes = listOf(juniorType()),
+      )
+
+    assertEquals(500_000L, state.remainingPence)
+    assertFalse(state.heroIsJunior)
+    assertEquals(400_000L, state.juniorAllowances.single().remainingPence)
+  }
+
+  @Test
+  fun resolveAccountsUiState_hasNoJuniorAllowancesWithoutAJuniorAccount() {
+    val state =
+      resolveAccountsUiState(
+        accounts = listOf(summary("p1")),
+        balances = listOf(balance("p1", "2026/2027", 1_500_000)),
+        rulesets = rulesets(),
+        selectedId = "2026/2027",
+        exceptions = juniorException(),
+        productTypes = listOf(juniorType()),
+      )
+
+    assertTrue(state.juniorAllowances.isEmpty())
+    assertFalse(state.heroIsJunior)
+    assertEquals(500_000L, state.remainingPence)
   }
 
   @Test
@@ -206,18 +293,43 @@ class AccountsUiStateTest {
     RulesetEntity("2026/2027", 2_000_000, "2026-04-06", "2027-04-05", null),
   )
 
-  private fun summary(id: String, endTaxYear: String? = null, name: String = "Cash ISA") =
-    AccountSummary(
-      productId = id,
-      friendlyName = name,
-      productTypeId = "CASH",
-      startTaxYear = "2020/2021",
-      endTaxYear = endTaxYear,
-      providerId = "lloyds",
-      providerName = "Lloyds Bank",
-      providerColour = "#006A4D",
-      providerIconUrl = "https://example.com/lloyds.svg",
-    )
+  private fun summary(
+    id: String,
+    endTaxYear: String? = null,
+    name: String = "Cash ISA",
+    typeId: String = "CASH",
+  ) = AccountSummary(
+    productId = id,
+    friendlyName = name,
+    productTypeId = typeId,
+    startTaxYear = "2020/2021",
+    endTaxYear = endTaxYear,
+    providerId = "lloyds",
+    providerName = "Lloyds Bank",
+    providerColour = "#006A4D",
+    providerIconUrl = "https://example.com/lloyds.svg",
+  )
+
+  private fun juniorException() = listOf(
+    RulesetExceptionEntity(
+      id = "2026/2027-JUNIOR",
+      productTypeId = "JUNIOR",
+      rulesetId = "2026/2027",
+      allowancePence = 900_000,
+      notes = null,
+      includedInShared = false,
+    ),
+  )
+
+  private fun juniorType() = ProductTypeEntity(
+    id = "JUNIOR",
+    name = "Junior ISA",
+    introducedWithRuleset = "2011/2012",
+    removedWithRuleset = null,
+    shortDescription = "",
+    longDescription = "",
+    colour = "#00838F",
+  )
 
   private fun order(rulesetId: String, productId: String, position: Int) =
     AccountOrderEntity(rulesetId = rulesetId, productId = productId, position = position)
