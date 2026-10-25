@@ -164,6 +164,8 @@ data class RulesetExceptionEntity(
  * A monthly contribution recorded automatically for one account in one tax year. It starts on
  * [firstCreditDate] and ends with the tax year; [appliedThroughDate] is the last credit already
  * added to that year's total, which is what lets a late app start catch up without double-counting.
+ * [lastCreditPence] is what that credit actually added, so it can be taken back out exactly even if
+ * the monthly amount has changed since.
  */
 @Entity(
   tableName = "autoContributions",
@@ -190,6 +192,7 @@ data class AutoContributionEntity(
   val monthlyPence: Long,
   val firstCreditDate: String,
   val appliedThroughDate: String?,
+  val lastCreditPence: Long? = null,
 )
 
 /**

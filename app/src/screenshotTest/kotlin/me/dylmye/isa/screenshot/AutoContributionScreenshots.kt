@@ -22,6 +22,7 @@ fun AutoContributionScreenshot() {
       uiState = PreviewAutoContribution,
       onAmountChange = {},
       onSave = {},
+      onUndoLastCredit = {},
       onRemove = {},
       onClose = {},
     )
@@ -35,9 +36,16 @@ fun AutoContributionScreenshot() {
 fun AutoContributionEmptyScreenshot() {
   ISAEyeTheme(dynamicColor = false) {
     AutoContributionContent(
-      uiState = PreviewAutoContribution.copy(input = "", savedMonthlyPence = null),
+      uiState =
+        PreviewAutoContribution.copy(
+          input = "",
+          savedMonthlyPence = null,
+          appliedThroughDate = null,
+          lastCreditPence = null,
+        ),
       onAmountChange = {},
       onSave = {},
+      onUndoLastCredit = {},
       onRemove = {},
       onClose = {},
     )
@@ -52,5 +60,7 @@ private val PreviewAutoContribution =
     firstCreditDate = "2026-11-01",
     lastCreditDate = "2027-04-01",
     credits = 6,
+    appliedThroughDate = "2026-11-01",
+    lastCreditPence = 50_000,
     isLoading = false,
   )

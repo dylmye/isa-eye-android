@@ -15,6 +15,16 @@ internal sealed interface ReminderTarget {
 }
 
 /**
+ * What a reminder's Undo action takes back: the month starting [monthDate] in [rulesetId], for the
+ * accounts whose credit for that month is in the books.
+ */
+internal data class ReminderUndo(
+  val rulesetId: String,
+  val monthDate: String,
+  val productIds: List<String>,
+)
+
+/**
  * A reminder that is due today and has not been posted. [key] records that it has been sent, so a
  * reminder about a month or a tax year never fires twice; [id] is the system notification id, so a
  * later reminder of the same type replaces the one it supersedes.
@@ -26,6 +36,7 @@ internal data class Reminder(
   val text: String,
   val lines: List<String> = emptyList(),
   val target: ReminderTarget,
+  val undo: ReminderUndo? = null,
 )
 
 /** The extra on a notification's intent that says which screen opening it should land on. */

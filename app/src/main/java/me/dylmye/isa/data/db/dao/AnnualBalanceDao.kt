@@ -17,6 +17,9 @@ interface AnnualBalanceDao {
   @Query("SELECT * FROM annualBalances")
   suspend fun getAll(): List<AnnualBalanceEntity>
 
+  @Query("SELECT * FROM annualBalances WHERE productId = :productId AND rulesetId = :rulesetId")
+  suspend fun find(productId: String, rulesetId: String): AnnualBalanceEntity?
+
   @Upsert
   suspend fun upsertAll(balances: List<AnnualBalanceEntity>)
 

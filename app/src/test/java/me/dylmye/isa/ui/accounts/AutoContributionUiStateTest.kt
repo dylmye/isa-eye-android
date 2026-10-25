@@ -113,20 +113,51 @@ class AutoContributionUiStateTest {
     assertTrue(resolve(schedules = listOf(schedule())).canRemove)
   }
 
+  @Test
+  fun resolveAutoContribution_reportsTheLastCreditAndOffersToUndoIt() {
+    val state =
+      resolve(
+        schedules =
+          listOf(schedule(appliedThrough = "2026-11-01", lastCreditPence = 50_000)),
+      )
+
+    assertEquals("2026-11-01", state.appliedThroughDate)
+    assertEquals(50_000L, state.lastCreditPence)
+    assertTrue(state.canUndoLastCredit)
+  }
+
+  @Test
+  fun canUndoLastCredit_isFalseWithoutACreditOrWhileSaving() {
+    assertFalse(resolve(schedules = listOf(schedule())).canUndoLastCredit)
+    assertFalse(
+      resolve(
+        schedules =
+          listOf(schedule(appliedThrough = "2026-11-01", lastCreditPence = 50_000)),
+        draft = AutoContributionDraft(isSaving = true),
+      )
+        .canUndoLastCredit,
+    )
+  }
+
   private fun resolve(
     schedules: List<AutoContributionEntity> = emptyList(),
     nowMillis: Long = now,
     draft: AutoContributionDraft = AutoContributionDraft(),
   ) = resolveAutoContribution(rulesets, schedules, nowMillis, draft)
 
-  private fun schedule(monthlyPence: Long = 50_000, first: String = "2026-11-01") =
-    AutoContributionEntity(
-      productId = "p1",
-      rulesetId = "2026/2027",
-      monthlyPence = monthlyPence,
-      firstCreditDate = first,
-      appliedThroughDate = null,
-    )
+  private fun schedule(
+    monthlyPence: Long = 50_000,
+    first: String = "2026-11-01",
+    appliedThrough: String? = null,
+    lastCreditPence: Long? = null,
+  ) = AutoContributionEntity(
+    productId = "p1",
+    rulesetId = "2026/2027",
+    monthlyPence = monthlyPence,
+    firstCreditDate = first,
+    appliedThroughDate = appliedThrough,
+    lastCreditPence = lastCreditPence,
+  )
 
   private fun ruleset(id: String, startDate: String, endDate: String) = RulesetEntity(
     id = id,

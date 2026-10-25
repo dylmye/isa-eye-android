@@ -93,6 +93,17 @@ class AutoContributionViewModel(
     }
   }
 
+  /**
+   * Takes the last credit back out of the year. The dialog stays open, so the state it reports can
+   * show the credit gone and the action disappear.
+   */
+  fun undoLastCredit() {
+    val state = uiState.value
+    val rulesetId = state.ruleset ?: return
+    if (!state.canUndoLastCredit) return
+    viewModelScope.launch { autoContributionRepository.undoLastCredit(productId, rulesetId) }
+  }
+
   companion object {
     private const val STOP_TIMEOUT_MILLIS = 5_000L
 

@@ -55,6 +55,7 @@ fun AutoContributionScreen(productId: String, onClose: () -> Unit, modifier: Mod
     uiState = uiState,
     onAmountChange = viewModel::onAmountChange,
     onSave = viewModel::save,
+    onUndoLastCredit = viewModel::undoLastCredit,
     onRemove = viewModel::remove,
     onClose = onClose,
     modifier = modifier,
@@ -71,6 +72,7 @@ fun AutoContributionContent(
   uiState: AutoContributionUiState,
   onAmountChange: (String) -> Unit,
   onSave: () -> Unit,
+  onUndoLastCredit: () -> Unit,
   onRemove: () -> Unit,
   onClose: () -> Unit,
   modifier: Modifier = Modifier,
@@ -96,6 +98,7 @@ fun AutoContributionContent(
           uiState = uiState,
           onAmountChange = onAmountChange,
           onSave = onSave,
+          onUndoLastCredit = onUndoLastCredit,
           onRemove = onRemove,
           onClose = onClose,
         )
@@ -109,6 +112,7 @@ private fun AutoContributionDialog(
   uiState: AutoContributionUiState,
   onAmountChange: (String) -> Unit,
   onSave: () -> Unit,
+  onUndoLastCredit: () -> Unit,
   onRemove: () -> Unit,
   onClose: () -> Unit,
 ) {
@@ -138,9 +142,17 @@ private fun AutoContributionDialog(
       modifier = Modifier.fillMaxWidth(),
     )
     ScheduleLines(uiState)
-    // Low stakes and reversible, so turning it off needs no confirmation of its own.
-    if (uiState.canRemove) {
-      TextButton(onClick = onRemove) { Text("Turn off") }
+    LastCreditLine(uiState)
+    if (uiState.canUndoLastCredit || uiState.canRemove) {
+      Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (uiState.canUndoLastCredit) {
+          TextButton(onClick = onUndoLastCredit) { Text("Undo last credit") }
+        }
+        // Low stakes and reversible, so turning it off needs no confirmation of its own.
+        if (uiState.canRemove) {
+          TextButton(onClick = onRemove) { Text("Turn off") }
+        }
+      }
     }
     Row(
       modifier = Modifier.fillMaxWidth(),
@@ -152,6 +164,19 @@ private fun AutoContributionDialog(
       }
     }
   }
+}
+
+/** The last credit that landed, so the undo action next to it has something to point at. */
+@Composable
+private fun LastCreditLine(uiState: AutoContributionUiState) {
+  val credit = uiState.lastCreditPence
+  val date = uiState.appliedThroughDate
+  if (credit == null || date == null) return
+  Text(
+    text = "Last credit: ${formatGbp(credit)} on ${formatLongDate(date)}.",
+    style = MaterialTheme.typography.bodyMedium,
+    color = MaterialTheme.colorScheme.onSurfaceVariant,
+  )
 }
 
 /** What the schedule would do: how many credits, how much, and when they start and end. */
@@ -203,6 +228,7 @@ private fun AutoContributionContentPreview() {
       uiState = PreviewAutoContribution,
       onAmountChange = {},
       onSave = {},
+      onUndoLastCredit = {},
       onRemove = {},
       onClose = {},
     )
@@ -217,6 +243,8 @@ private val PreviewAutoContribution =
     firstCreditDate = "2026-11-01",
     lastCreditDate = "2027-04-01",
     credits = 6,
+    appliedThroughDate = "2026-11-01",
+    lastCreditPence = 50_000,
     isLoading = false,
   )
 

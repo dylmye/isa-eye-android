@@ -50,50 +50,52 @@ private fun monthlyReminder(
   return if (schedules.isEmpty()) {
     goalReminder(snapshot, year, today, month)
   } else {
-    autoContributionReminder(snapshot, schedules, month)
+    autoContributionReminder(snapshot, schedules, month, year.id)
   }
 }
 
-/** One notification naming every contribution due today, rather than one notification per account. */
+/** One notification confirming what the worker recorded today, rather than one per account. */
 private fun autoContributionReminder(
   snapshot: ReminderSnapshot,
   schedules: List<AutoContributionEntity>,
   month: String,
+  rulesetId: String,
 ): Reminder? {
-  val payable =
+  val monthDate = "$month-$FIRST_OF_MONTH"
+  // The worker records before planning, so a schedule whose last credit is this month is what the
+  // receipt is about. One that starts next month has nothing to report yet.
+  val recorded =
     schedules.mapNotNull { schedule ->
+      if (schedule.appliedThroughDate != monthDate) return@mapNotNull null
       val account = snapshot.accounts.firstOrNull { it.productId == schedule.productId }
       account?.let { schedule to it }
     }
-  return if (payable.isEmpty()) {
-    null
-  } else {
-    val total = payable.sumOf { it.first.monthlyPence }
-    val single = payable.singleOrNull()
-    Reminder(
-      id = AUTO_CONTRIBUTION_ID,
-      key = "auto/$month",
-      title = "Remember to save",
-      text =
-        if (single == null) {
-          "Tracking ${formatGbp(total)} across ${payable.size} accounts"
-        } else {
-          "Tracking ${formatGbp(total)} in your ${single.second.friendlyName} account"
-        },
-      // A single account needs no itemised list; the body already names it.
-      lines =
-        if (single == null) {
-          payable.map { (schedule, account) ->
-            "${account.friendlyName}: +${formatGbp(schedule.monthlyPence)}"
-          }
-        } else {
-          emptyList()
-        },
-      target =
-        single?.let { ReminderTarget.AccountDetails(it.second.productId) }
-          ?: ReminderTarget.Accounts,
-    )
-  }
+  if (recorded.isEmpty()) return null
+  val total = recorded.sumOf { it.first.monthlyPence }
+  val single = recorded.singleOrNull()
+  return Reminder(
+    id = AUTO_CONTRIBUTION_ID,
+    key = "auto/$month",
+    title = if (single == null) "Contributions recorded" else "Contribution recorded",
+    text =
+      if (single == null) {
+        "${formatGbp(total)} across ${recorded.size} accounts."
+      } else {
+        "${formatGbp(total)} in your ${single.second.friendlyName} account."
+      },
+    // A single account needs no itemised list; the body already names it.
+    lines =
+      if (single == null) {
+        recorded.map { (schedule, account) ->
+          "${account.friendlyName}: +${formatGbp(schedule.monthlyPence)}"
+        }
+      } else {
+        emptyList()
+      },
+    target =
+      single?.let { ReminderTarget.AccountDetails(it.second.productId) } ?: ReminderTarget.Accounts,
+    undo = ReminderUndo(rulesetId, monthDate, recorded.map { (_, account) -> account.productId }),
+  )
 }
 
 /** What to put aside to clear the year's goal, only planned when nothing is auto-contributed. */
@@ -230,6 +232,9 @@ private const val CELEBRATION_MINIMUM_PENCE = 5_000L
 
 /** `yyyy-MM` is the first seven characters of an ISO date. */
 private const val MONTH_LENGTH = 7
+
+/** Credit dates are always the first of the month. */
+private const val FIRST_OF_MONTH = "01"
 
 /** One id per reminder type, so a newer reminder of that type replaces the older one. */
 private const val AUTO_CONTRIBUTION_ID = 1

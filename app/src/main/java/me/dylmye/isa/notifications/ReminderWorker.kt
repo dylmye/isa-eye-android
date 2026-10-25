@@ -14,10 +14,14 @@ class ReminderWorker(appContext: Context, params: WorkerParameters) :
     ReminderScheduler.ensureScheduled(applicationContext)
     val application = applicationContext as? IsaEyeApplication ?: return Result.success()
     val store = ReminderStore(applicationContext)
+    val now = System.currentTimeMillis()
+    // Record whatever has come due before planning, so a notification about a contribution always
+    // refers to a credit that is already in the books, and its Undo has something to take back.
+    application.autoContributionRepository.applyDue(now)
     val due =
       planReminders(
         snapshot = loadSnapshot(application.database),
-        nowMillis = System.currentTimeMillis(),
+        nowMillis = now,
         sentKeys = store.sentKeys(),
       )
     store.markSent(ReminderNotifier.post(applicationContext, due).map { it.key })

@@ -37,6 +37,7 @@ internal object ReminderNotifier {
    * can still send them while they are current.
    */
   fun post(context: Context, reminders: List<Reminder>): List<Reminder> {
+    // Lint reads the permission check inline, so it cannot be pulled into a helper.
     val permitted =
       Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
         ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
@@ -88,6 +89,87 @@ internal object ReminderNotifier {
     if (lines.isNotEmpty()) {
       builder.setStyle(NotificationCompat.BigTextStyle().bigText(lines.joinToString("\n")))
     }
+    if (undo != null) {
+      builder.addAction(
+        NotificationCompat.Action.Builder(
+          R.drawable.ic_notification,
+          UNDO_LABEL,
+          undoIntent(context, undo),
+        ).build(),
+      )
+    }
     return builder.build()
   }
+
+  /**
+   * The Undo action's intent: a broadcast, so taking the month back out never opens the app. The
+   * request code is the reminder's id, so a newer month's action replaces the older one instead of
+   * stacking up.
+   */
+  private fun undoIntent(context: Context, undo: ReminderUndo): PendingIntent {
+    val intent =
+      Intent(context, UndoAutoContributionReceiver::class.java).apply {
+        putExtra(EXTRA_UNDO_RULESET_ID, undo.rulesetId)
+        putExtra(EXTRA_UNDO_MONTH_DATE, undo.monthDate)
+        putStringArrayListExtra(EXTRA_UNDO_PRODUCT_IDS, ArrayList(undo.productIds))
+        putExtra(EXTRA_UNDO_NOTIFICATION_ID, AUTO_CONTRIBUTION_NOTIFICATION_ID)
+      }
+    return PendingIntent.getBroadcast(
+      context,
+      AUTO_CONTRIBUTION_NOTIFICATION_ID,
+      intent,
+      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+    )
+  }
+
+  /**
+   * Replaces the reminder with a short confirmation after its Undo action. A toast cannot do this
+   * job: the system suppresses toasts from a background app, and the action runs while the shade is
+   * over whatever the user was doing.
+   */
+  fun confirmUndo(context: Context, notificationId: Int, undone: Boolean) {
+    val permitted =
+      Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+        ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
+        PackageManager.PERMISSION_GRANTED
+    val manager = NotificationManagerCompat.from(context)
+    if (!permitted || !canPost(context, manager)) return
+    val openApp =
+      PendingIntent.getActivity(
+        context,
+        0,
+        Intent(context, MainActivity::class.java).apply {
+          putReminderTarget(ReminderTarget.Accounts)
+          flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        },
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+      )
+    val confirmation =
+      NotificationCompat.Builder(context, CHANNEL_ID)
+        .setSmallIcon(R.drawable.ic_notification)
+        .setContentTitle(if (undone) "Contribution undone" else "Nothing to undo")
+        .setContentText(
+          if (undone) {
+            "This month's contribution is no longer counted."
+          } else {
+            "There was no credit left to take back out."
+          },
+        )
+        .setContentIntent(openApp)
+        .setAutoCancel(true)
+        // It replaces the reminder it came from, so it must not alert a second time, and it goes
+        // away on its own once it has been read.
+        .setOnlyAlertOnce(true)
+        .setTimeoutAfter(CONFIRMATION_MILLIS)
+        .build()
+    manager.notify(notificationId, confirmation)
+  }
+
+  /** The monthly reminder's notification id, so the action can replace it afterwards. */
+  private const val AUTO_CONTRIBUTION_NOTIFICATION_ID = 1
+
+  private const val UNDO_LABEL = "Undo"
+
+  /** How long the undo confirmation stays in the shade. */
+  private const val CONFIRMATION_MILLIS = 5_000L
 }

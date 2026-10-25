@@ -24,6 +24,10 @@ data class AutoContributionUiState(
   val firstCreditDate: String? = null,
   val lastCreditDate: String? = null,
   val credits: Int = 0,
+  /** The date of the last credit already in the year's total, if any. */
+  val appliedThroughDate: String? = null,
+  /** What that last credit added, or null once it has been taken back out. */
+  val lastCreditPence: Long? = null,
   val isLoading: Boolean = true,
   val isSaving: Boolean = false,
 )
@@ -50,6 +54,10 @@ val AutoContributionUiState.canSave: Boolean
 /** Turning the schedule off is only offered once one is saved. */
 val AutoContributionUiState.canRemove: Boolean
   get() = !isSaving && savedMonthlyPence != null
+
+/** Undoing is offered while the last credit is still part of the year's total. */
+val AutoContributionUiState.canUndoLastCredit: Boolean
+  get() = !isSaving && lastCreditPence != null
 
 /**
  * Resolves the form from the [rulesets], the account's existing [schedules] and the [draft], read
@@ -79,6 +87,8 @@ internal fun resolveAutoContribution(
     firstCreditDate = first,
     lastCreditDate = credits.lastOrNull(),
     credits = credits.size,
+    appliedThroughDate = existing?.appliedThroughDate,
+    lastCreditPence = existing?.lastCreditPence,
     isLoading = false,
     isSaving = draft.isSaving,
   )

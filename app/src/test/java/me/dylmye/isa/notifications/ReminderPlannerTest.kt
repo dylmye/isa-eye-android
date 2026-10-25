@@ -28,8 +28,8 @@ class ReminderPlannerTest {
       plan(now = "2026-11-01 09:00", schedules = listOf(schedule("a1", 20_000)))
 
     val reminder = reminders.single()
-    assertEquals("Remember to save", reminder.title)
-    assertEquals("Tracking £200.00 in your Cash ISA account", reminder.text)
+    assertEquals("Contribution recorded", reminder.title)
+    assertEquals("£200.00 in your Cash ISA account.", reminder.text)
     assertEquals(ReminderTarget.AccountDetails("a1"), reminder.target)
     assertTrue(reminder.lines.isEmpty())
     assertEquals("auto/2026-11", reminder.key)
@@ -44,13 +44,58 @@ class ReminderPlannerTest {
       )
 
     val reminder = reminders.single()
-    assertEquals("Remember to save", reminder.title)
-    assertEquals("Tracking £500.00 across 2 accounts", reminder.text)
+    assertEquals("Contributions recorded", reminder.title)
+    assertEquals("£500.00 across 2 accounts.", reminder.text)
     assertEquals(
       listOf("Cash ISA: +£200.00", "Stocks & Shares ISA: +£300.00"),
       reminder.lines,
     )
     assertEquals(ReminderTarget.Accounts, reminder.target)
+  }
+
+  @Test
+  fun planReminders_offersToUndoEveryContributionRecordedThisMonth() {
+    val reminders =
+      plan(
+        now = "2026-11-01 09:00",
+        schedules = listOf(schedule("a1", 20_000), schedule("a2", 30_000)),
+      )
+
+    assertEquals(
+      ReminderUndo(
+        rulesetId = "2026/2027",
+        monthDate = "2026-11-01",
+        productIds = listOf("a1", "a2"),
+      ),
+      reminders.single().undo,
+    )
+  }
+
+  @Test
+  fun planReminders_reportsOnlyWhatWasRecordedThisMonth() {
+    val reminders =
+      plan(
+        now = "2026-11-01 09:00",
+        schedules =
+          listOf(
+            schedule("a1", 20_000),
+            schedule("a2", 30_000, first = "2026-12-01", appliedThrough = null),
+          ),
+      )
+
+    assertEquals(listOf("a1"), reminders.single().undo?.productIds)
+    assertEquals("£200.00 in your Cash ISA account.", reminders.single().text)
+  }
+
+  @Test
+  fun planReminders_hasNoReceiptBeforeTheFirstCredit() {
+    val reminders =
+      plan(
+        now = "2026-11-01 09:00",
+        schedules = listOf(schedule("a1", 20_000, first = "2026-12-01", appliedThrough = null)),
+      )
+
+    assertTrue(reminders.isEmpty())
   }
 
   @Test
@@ -387,12 +432,18 @@ private fun ruleset(id: String, startDate: String, endDate: String) = RulesetEnt
   notes = null,
 )
 
-private fun schedule(productId: String, monthlyPence: Long) = AutoContributionEntity(
+private fun schedule(
+  productId: String,
+  monthlyPence: Long,
+  first: String = "2026-04-06",
+  appliedThrough: String? = "2026-11-01",
+) = AutoContributionEntity(
   productId = productId,
   rulesetId = "2026/2027",
   monthlyPence = monthlyPence,
-  firstCreditDate = "2026-04-06",
-  appliedThroughDate = null,
+  firstCreditDate = first,
+  appliedThroughDate = appliedThrough,
+  lastCreditPence = appliedThrough?.let { monthlyPence },
 )
 
 private val ukZone: TimeZone = TimeZone.getTimeZone("Europe/London")
