@@ -47,6 +47,47 @@ git config core.hooksPath .githooks
 
 These are also set up as tasks in VS Code.
 
+### Release signing
+
+Google Play manages the app signing key, but the uploaded `.aab` still has to be signed with a
+developer-held **upload key**. Keep the upload key and its passwords in a password manager or CI
+secrets, never in the repository.
+
+Generate the upload key (this path is outside the repo):
+
+```sh
+mkdir -p ~/.android-keystores
+keytool -genkeypair -v \
+  -keystore ~/.android-keystores/isa-eye-upload.jks \
+  -storetype PKCS12 \
+  -alias isa-eye-upload \
+  -keyalg RSA -keysize 4096 -validity 10000
+```
+
+Create `keystore.properties` in the repository root (it is gitignored):
+
+```properties
+storeFile=/home/<you>/.android-keystores/isa-eye-upload.jks
+storePassword=<password>
+keyAlias=isa-eye-upload
+keyPassword=<password>
+```
+
+Alternatively, set `ISA_EYE_KEYSTORE_FILE`, `ISA_EYE_KEYSTORE_PASSWORD`, `ISA_EYE_KEY_ALIAS` and
+`ISA_EYE_KEY_PASSWORD` in the environment (the CI path). With neither present, release builds are
+unsigned, which is fine for contributors.
+
+```sh
+# Play artifact: signed with the upload key, then re-signed by Play App Signing
+./gradlew :app:bundleRelease
+
+# Locally signed APK, if needed
+./gradlew :app:assembleRelease
+```
+
+The AAB is written to `app/build/outputs/bundle/release/app-release.aab`. If the upload key is lost
+or compromised, Play Console can reset it; the Google-held app signing key is unaffected.
+
 ### Screenshot tests
 
 The UI is covered by [Compose Preview Screenshot Testing](https://developer.android.com/studio/preview/compose-screenshot-testing-with-testsuites),

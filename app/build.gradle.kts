@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.compose.compiler)
@@ -6,6 +8,28 @@ plugins {
   alias(libs.plugins.detekt)
   alias(libs.plugins.ktlint)
 }
+
+// Release signing is configured from keystore.properties (gitignored) or environment variables.
+// Contributors without either still get an unsigned release build.
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties =
+  Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+      keystorePropertiesFile.inputStream().use { load(it) }
+    }
+  }
+
+fun signingValue(environmentVariable: String, property: String): String? =
+  System.getenv(environmentVariable)?.takeIf { it.isNotBlank() }
+    ?: keystoreProperties.getProperty(property)?.takeIf { it.isNotBlank() }
+
+val releaseStoreFile = signingValue("ISA_EYE_KEYSTORE_FILE", "storeFile")
+val releaseStorePassword = signingValue("ISA_EYE_KEYSTORE_PASSWORD", "storePassword")
+val releaseKeyAlias = signingValue("ISA_EYE_KEY_ALIAS", "keyAlias")
+val releaseKeyPassword = signingValue("ISA_EYE_KEY_PASSWORD", "keyPassword")
+val hasReleaseSigning =
+  listOf(releaseStoreFile, releaseStorePassword, releaseKeyAlias, releaseKeyPassword)
+    .all { it != null }
 
 android {
     namespace = "me.dylmye.isa"
@@ -18,8 +42,22 @@ android {
         versionName = "1.0.0"
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = rootProject.file(releaseStoreFile!!)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
