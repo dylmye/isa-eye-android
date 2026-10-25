@@ -57,6 +57,10 @@ class MainActivity : ComponentActivity() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
       window.isNavigationBarContrastEnforced = false
     }
+    // Keep balances out of the recents screenshot without disabling screenshots entirely.
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      setRecentsScreenshotEnabled(false)
+    }
     // Read synchronously so the right tab shows on the first frame, with no database round trip.
     val hasLaunched = (application as IsaEyeApplication).userPreferences.hasLaunched
     // A notification can start the app cold as well as foreground it, so its screen wins over the

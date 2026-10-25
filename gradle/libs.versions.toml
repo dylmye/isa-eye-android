@@ -1,6 +1,7 @@
 [versions]
 androidGradlePlugin = "9.4.1"
 androidxCore = "1.19.1"
+androidxDocumentFile = "1.1.0"
 androidxCoreSplashscreen = "1.2.0"
 androidxLifecycle = "2.11.0"
 androidxActivity = "1.13.0"
@@ -20,6 +21,7 @@ lifecycleViewmodelNav3 = "2.11.0"
 detekt = "2.0.0-alpha.6"
 ktlint = "14.2.0"
 room = "2.8.5"
+sqlcipher = "4.19.1"
 ksp = "2.3.12"
 screenshot = "0.0.1-alpha16"
 vico = "3.3.1"
@@ -28,6 +30,7 @@ work = "2.12.0"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidxCore" }
+androidx-documentfile = { module = "androidx.documentfile:documentfile", version.ref = "androidxDocumentFile" }
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "androidxCoreSplashscreen" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivity" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "androidxComposeBom" }
@@ -55,6 +58,7 @@ detekt-rules-ktlint-wrapper = { module = "dev.detekt:detekt-rules-ktlint-wrapper
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+sqlcipher-android = { module = "net.zetetic:sqlcipher-android", version.ref = "sqlcipher" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }

@@ -86,6 +86,9 @@ internal object ReminderNotifier {
         .setContentIntent(contentIntent)
         .setAutoCancel(true)
         .setCategory(NotificationCompat.CATEGORY_REMINDER)
+        // The lock screen gets a generic public version; amounts and account names stay private.
+        .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+        .setPublicVersion(publicVersion(context, "You have a reminder"))
     if (lines.isNotEmpty()) {
       builder.setStyle(NotificationCompat.BigTextStyle().bigText(lines.joinToString("\n")))
     }
@@ -161,12 +164,38 @@ internal object ReminderNotifier {
         // away on its own once it has been read.
         .setOnlyAlertOnce(true)
         .setTimeoutAfter(CONFIRMATION_MILLIS)
+        .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+        .setPublicVersion(publicVersion(context, "ISA Eye"))
         .build()
     manager.notify(notificationId, confirmation)
   }
 
+  /** The lock-screen-safe version of a notification; it never contains amounts or account names. */
+  private fun publicVersion(context: Context, text: String): Notification {
+    val openApp =
+      PendingIntent.getActivity(
+        context,
+        PUBLIC_NOTIFICATION_ID,
+        Intent(context, MainActivity::class.java).apply {
+          flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        },
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+      )
+    return NotificationCompat.Builder(context, CHANNEL_ID)
+      .setSmallIcon(R.drawable.ic_notification)
+      .setContentTitle("ISA Eye")
+      .setContentText(text)
+      .setContentIntent(openApp)
+      .setAutoCancel(true)
+      .setCategory(NotificationCompat.CATEGORY_REMINDER)
+      .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+      .build()
+  }
+
   /** The monthly reminder's notification id, so the action can replace it afterwards. */
   private const val AUTO_CONTRIBUTION_NOTIFICATION_ID = 1
+
+  private const val PUBLIC_NOTIFICATION_ID = 2
 
   private const val UNDO_LABEL = "Undo"
 

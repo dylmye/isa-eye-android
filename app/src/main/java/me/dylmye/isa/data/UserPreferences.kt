@@ -34,6 +34,23 @@ class UserPreferences(context: Context) {
     _currentRulesetId.value = id
   }
 
+  /**
+   * The SAF tree URI the user chose for backup files. Null until the first export or import, which
+   * is when the app asks the user to choose a folder.
+   */
+  var backupFolderUri: String?
+    get() = prefs.getString(KEY_BACKUP_FOLDER_URI, null)
+    set(value) =
+      prefs.edit {
+        if (value ==
+          null
+        ) {
+          remove(KEY_BACKUP_FOLDER_URI)
+        } else {
+          putString(KEY_BACKUP_FOLDER_URI, value)
+        }
+      }
+
   private companion object {
     const val PREFS_NAME = "isa_eye_preferences"
     const val KEY_HAS_LAUNCHED = "has_launched"
@@ -44,5 +61,6 @@ class UserPreferences(context: Context) {
      */
     const val KEY_LEGACY_HAS_ACCOUNT = "has_account"
     const val KEY_CURRENT_RULESET = "current_ruleset"
+    const val KEY_BACKUP_FOLDER_URI = "backup_folder_uri"
   }
 }

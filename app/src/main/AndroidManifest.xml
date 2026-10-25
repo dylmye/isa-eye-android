@@ -5,14 +5,15 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:appCategory="productivity"
         tools:targetApi="26"
         android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
+        android:fullBackupContent="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:name=".IsaEyeApplication"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:windowSoftInputMode="adjustResize"
@@ -29,7 +30,7 @@
         </activity>
         <receiver
             android:name=".widgets.AllowanceWidgetReceiver"
-            android:exported="true"
+            android:exported="false"
             android:label="@string/widget_allowance_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -40,7 +41,7 @@
         </receiver>
         <receiver
             android:name=".widgets.JuniorAllowanceWidgetReceiver"
-            android:exported="true"
+            android:exported="false"
             android:label="@string/widget_junior_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -51,7 +52,7 @@
         </receiver>
         <receiver
             android:name=".widgets.TaxYearWidgetReceiver"
-            android:exported="true"
+            android:exported="false"
             android:label="@string/widget_tax_year_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -62,7 +63,7 @@
         </receiver>
         <receiver
             android:name=".widgets.GoalWidgetReceiver"
-            android:exported="true"
+            android:exported="false"
             android:label="@string/widget_goal_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

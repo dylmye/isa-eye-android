@@ -1,10 +1,14 @@
 package me.dylmye.isa
 
 import android.app.Application
+import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
 import androidx.core.content.ContextCompat
+import coil3.ImageLoader
+import coil3.SingletonImageLoader
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -13,6 +17,7 @@ import me.dylmye.isa.data.AccountOrderRepository
 import me.dylmye.isa.data.AccountRepository
 import me.dylmye.isa.data.AutoContributionRepository
 import me.dylmye.isa.data.GoalRepository
+import me.dylmye.isa.data.ProviderIconPolicy
 import me.dylmye.isa.data.UserPreferences
 import me.dylmye.isa.data.db.IsaDatabase
 import me.dylmye.isa.notifications.ReminderNotifier
@@ -21,11 +26,22 @@ import me.dylmye.isa.widgets.WidgetRefreshScheduler
 import me.dylmye.isa.widgets.WidgetThemeReceiver
 import me.dylmye.isa.widgets.WidgetThemeScheduler
 import me.dylmye.isa.widgets.WidgetUpdater
+import okhttp3.OkHttpClient
 
 /** Holds the process-wide database and repositories (manual DI, no framework). */
 class IsaEyeApplication : Application() {
   override fun onCreate() {
     super.onCreate()
+    // Coil is the app's only network client. Pinning it to the provider-icon host keeps a tampered
+    // database or seed URL from turning image loading into an exfiltration path.
+    val imageHttpClient = OkHttpClient.Builder().addInterceptor(ProviderIconPolicy).build()
+    SingletonImageLoader.setSafe { context ->
+      ImageLoader.Builder(context)
+        .components {
+          add(OkHttpNetworkFetcherFactory(callFactory = { imageHttpClient }))
+        }
+        .build()
+    }
     // Register the channel at start-up so it is listed in the system's notification settings, and
     // book the next check even if the last one never ran (an update, a force-stop, a reboot).
     ReminderNotifier.createChannel(this)
@@ -55,16 +71,46 @@ class IsaEyeApplication : Application() {
     applicationScope.launch { WidgetUpdater.updateAll(this@IsaEyeApplication) }
   }
 
-  val database: IsaDatabase by lazy { IsaDatabase.build(this) }
+  /**
+   * Everything that holds a database instance. Replaced wholesale after an import swaps the
+   * database file, so no repository keeps a closed connection alive.
+   */
+  private class Container(context: Context) {
+    val database = IsaDatabase.build(context)
+    val accountRepository = AccountRepository(database)
+    val accountOrderRepository = AccountOrderRepository(database)
+    val goalRepository = GoalRepository(database)
+    val autoContributionRepository = AutoContributionRepository(database)
+  }
 
-  val accountRepository: AccountRepository by lazy { AccountRepository(database) }
+  @Volatile private var container: Container? = null
 
-  val accountOrderRepository: AccountOrderRepository by lazy { AccountOrderRepository(database) }
+  private fun container(): Container =
+    container ?: synchronized(this) { container ?: Container(this).also { container = it } }
 
-  val goalRepository: GoalRepository by lazy { GoalRepository(database) }
+  val database: IsaDatabase
+    get() = container().database
 
-  val autoContributionRepository: AutoContributionRepository by lazy {
-    AutoContributionRepository(database)
+  val accountRepository: AccountRepository
+    get() = container().accountRepository
+
+  val accountOrderRepository: AccountOrderRepository
+    get() = container().accountOrderRepository
+
+  val goalRepository: GoalRepository
+    get() = container().goalRepository
+
+  val autoContributionRepository: AutoContributionRepository
+    get() = container().autoContributionRepository
+
+  /**
+   * Closes the current database so an import can replace its file. The next access to [database]
+   * builds a new container, and the caller recreates the activity so ViewModels rebind to it.
+   */
+  @Synchronized
+  fun closeDatabaseForImport() {
+    container?.database?.close()
+    container = null
   }
 
   val userPreferences: UserPreferences by lazy { UserPreferences(this) }

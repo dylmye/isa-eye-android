@@ -14,8 +14,8 @@ android {
         applicationId = "me.dylmye.isa"
         minSdk = 24
         targetSdk = 37
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "1.0.0"
     }
 
     buildTypes {
@@ -110,6 +110,7 @@ dependencies {
 
   // Core Android dependencies
   implementation(libs.androidx.core.ktx)
+  implementation(libs.androidx.documentfile)
   implementation(libs.androidx.core.splashscreen)
   implementation(libs.androidx.lifecycle.runtime.ktx)
   implementation(libs.androidx.activity.compose)
@@ -159,9 +160,10 @@ dependencies {
   implementation(libs.androidx.navigation3.runtime)
   implementation(libs.androidx.lifecycle.viewmodel.navigation3)
 
-  // Room (SQLite persistence)
+  // Room (SQLite persistence) + SQLCipher encryption at rest
   implementation(libs.androidx.room.runtime)
   implementation(libs.androidx.room.ktx)
+  implementation(libs.sqlcipher.android)
   ksp(libs.androidx.room.compiler)
 
   // Background reminder checks. WorkManager schedules through the platform JobScheduler and has no

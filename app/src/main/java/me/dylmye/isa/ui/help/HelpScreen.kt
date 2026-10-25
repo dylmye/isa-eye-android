@@ -15,6 +15,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -41,6 +42,7 @@ import me.dylmye.isa.ui.FINANCIAL_DISCLAIMER
 import me.dylmye.isa.ui.FormFactorPreviews
 import me.dylmye.isa.ui.components.containerTint
 import me.dylmye.isa.ui.icons.chevronForward
+import me.dylmye.isa.ui.icons.downloadForOffline
 
 private const val AUTHOR_URL = "https://dylmye.me"
 private const val SOURCE_URL = "https://github.com/dylmye/isa-eye-android"
@@ -51,7 +53,11 @@ private const val SOURCE_URL = "https://github.com/dylmye/isa-eye-android"
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HelpScreen(onTopicClick: (String) -> Unit, modifier: Modifier = Modifier) {
+fun HelpScreen(
+  onTopicClick: (String) -> Unit,
+  onBackupClick: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
   val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
   Scaffold(
     modifier =
@@ -61,6 +67,14 @@ fun HelpScreen(onTopicClick: (String) -> Unit, modifier: Modifier = Modifier) {
     topBar = {
       TopAppBar(
         title = { Text("Help", modifier = Modifier.semantics { heading() }) },
+        actions = {
+          IconButton(onClick = onBackupClick) {
+            Icon(
+              imageVector = downloadForOffline,
+              contentDescription = "Backup and restore",
+            )
+          }
+        },
         scrollBehavior = scrollBehavior,
       )
     },
@@ -109,7 +123,8 @@ private fun HelpIntro(modifier: Modifier = Modifier) {
     )
     Text(
       text =
-        "The information you put into ISA Eye is kept entirely private and never leaves your device.",
+        "Your accounts and balances are encrypted on this device. Use the backup button at the " +
+          "top of this page to export a copy you can keep or move to another device.",
       style = MaterialTheme.typography.bodyLarge,
       fontWeight = FontWeight.SemiBold,
     )
@@ -202,5 +217,5 @@ private fun attribution(): AnnotatedString {
 @FormFactorPreviews
 @Composable
 private fun HelpScreenPreview() {
-  ISAEyeTheme { HelpScreen(onTopicClick = {}) }
+  ISAEyeTheme { HelpScreen(onTopicClick = {}, onBackupClick = {}) }
 }

@@ -1,5 +1,6 @@
 package me.dylmye.isa
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -39,6 +40,7 @@ import me.dylmye.isa.ui.accounts.AddAccountScreen
 import me.dylmye.isa.ui.accounts.AutoContributionScreen
 import me.dylmye.isa.ui.accounts.EditAccountScreen
 import me.dylmye.isa.ui.accounts.UpdateContributionsScreen
+import me.dylmye.isa.ui.backup.BackupRestoreDialog
 import me.dylmye.isa.ui.help.HelpScreen
 import me.dylmye.isa.ui.help.HelpTopicPlaceholder
 import me.dylmye.isa.ui.help.HelpTopicScreen
@@ -190,7 +192,10 @@ private fun AppNavDisplay(
             detailPlaceholder = { HelpTopicPlaceholder() },
           ),
       ) {
-        HelpScreen(onTopicClick = { id -> backStack.add(HelpTopicPage(id)) })
+        HelpScreen(
+          onTopicClick = { id -> backStack.add(HelpTopicPage(id)) },
+          onBackupClick = { backStack.addDialog(BackupRestore) },
+        )
       }
       entry<HelpTopicPage>(
         metadata = ListDetailSceneStrategy.detailPane(sceneKey = HELP_SCENE_KEY),
@@ -244,6 +249,26 @@ private fun EntryProviderScope<NavKey>.dialogEntries(backStack: TopLevelBackStac
   ) {
     SetGoalScreen(onClose = { backStack.removeLast() })
   }
+  entry<BackupRestore>(
+    metadata =
+      DialogSceneStrategy.dialog(
+        DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+      ),
+  ) {
+    val activity = LocalActivity.current
+    BackupRestoreDialog(
+      onClose = { backStack.removeLast() },
+      // An import swaps the database file. Rebuilding the activity rebinds every ViewModel to the
+      // application's new database container.
+      onImported = {
+        if (activity != null) {
+          activity.recreate()
+        } else {
+          backStack.removeLast()
+        }
+      },
+    )
+  }
 }
 
 /**
@@ -262,4 +287,5 @@ private fun NavKey.isDialog(): Boolean = this is AddAccount ||
   this is EditAccount ||
   this is UpdateContributions ||
   this is SetAutoContribution ||
-  this is SetGoal
+  this is SetGoal ||
+  this is BackupRestore

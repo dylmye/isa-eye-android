@@ -11,7 +11,7 @@ import me.dylmye.isa.ui.help.HelpTopicScreen
 @ScreenPreviews
 @Composable
 fun HelpScreenScreenshot() {
-  ISAEyeTheme(dynamicColor = false) { HelpScreen(onTopicClick = {}) }
+  ISAEyeTheme(dynamicColor = false) { HelpScreen(onTopicClick = {}, onBackupClick = {}) }
 }
 
 /** The longest article, which covers headings, bullets, links and a callout. */

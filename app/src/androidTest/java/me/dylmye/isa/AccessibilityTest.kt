@@ -139,7 +139,7 @@ class AccessibilityTest {
   @Test
   fun screenTitles_areHeadings() {
     composeTestRule.setContent {
-      ISAEyeTheme(dynamicColor = false) { HelpScreen(onTopicClick = {}) }
+      ISAEyeTheme(dynamicColor = false) { HelpScreen(onTopicClick = {}, onBackupClick = {}) }
     }
 
     composeTestRule.onNodeWithText("Help").assert(heading)
