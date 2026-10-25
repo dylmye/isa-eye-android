@@ -2,4 +2,17 @@
 <resources>
     <color name="ic_launcher_background">#0F1F19</color>
     <color name="splash_background">#0F1F19</color>
+
+    <!-- Widget tax-year traffic lights, with night variants in values-night. -->
+    <color name="widget_stage_early">#1B5E20</color>
+    <color name="widget_stage_mid">#E65100</color>
+    <color name="widget_stage_late">#B71C1C</color>
+
+    <!-- Static widget-picker previews, which have no theme of their own. -->
+    <color name="widget_preview_background">#FFFBFE</color>
+    <color name="widget_preview_primary">#1C1B1F</color>
+    <color name="widget_preview_secondary">#49454F</color>
+    <color name="widget_preview_accent">#6750A4</color>
+    <color name="widget_preview_stage">#FFF3E0</color>
+    <color name="widget_preview_stage_text">#8A5A00</color>
 </resources>

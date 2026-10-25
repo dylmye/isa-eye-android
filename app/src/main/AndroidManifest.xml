@@ -28,6 +28,54 @@
             </intent-filter>
         </activity>
         <receiver
+            android:name=".widgets.AllowanceWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_allowance_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/allowance_widget_info" />
+        </receiver>
+        <receiver
+            android:name=".widgets.JuniorAllowanceWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_junior_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/junior_widget_info" />
+        </receiver>
+        <receiver
+            android:name=".widgets.TaxYearWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_tax_year_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/tax_year_widget_info" />
+        </receiver>
+        <receiver
+            android:name=".widgets.GoalWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_goal_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/goal_widget_info" />
+        </receiver>
+        <service
+            android:name=".widgets.WidgetThemeJobService"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+        <receiver
             android:name=".notifications.UndoAutoContributionReceiver"
             android:exported="false" />
     </application>

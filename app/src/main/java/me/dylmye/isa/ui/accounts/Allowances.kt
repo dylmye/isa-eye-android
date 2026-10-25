@@ -31,6 +31,10 @@ data class JuniorAllowanceUiState(
     } else {
       (usedPence.toFloat() / allowancePence).coerceIn(0f, 1f)
     }
+
+  /** How much of the allowance is left, for a battery that drains as the child saves. */
+  val remainingFraction: Float
+    get() = 1f - fraction
 }
 
 /**
@@ -42,6 +46,12 @@ internal data class AllowanceStanding(
   val headlinePence: Long?,
   val headlineIsJunior: Boolean,
   val juniorAllowances: List<JuniorAllowanceUiState>,
+  /** The year's shared allowance, before any contributions. */
+  val sharedAllowancePence: Long? = null,
+  /** What the shared allowance has left, even in a year that only holds Junior accounts. */
+  val sharedRemainingPence: Long? = null,
+  /** Whether any account open in the year draws on the shared allowance. */
+  val hasSharedAccounts: Boolean = false,
 )
 
 /**
@@ -70,6 +80,9 @@ internal fun resolveAllowanceStanding(
     headlinePence = if (juniorOnly) juniors.sumOf { it.remainingPence } else shared,
     headlineIsJunior = juniorOnly,
     juniorAllowances = juniors,
+    sharedAllowancePence = rulesets.firstOrNull { it.id == rulesetId }?.sharedAllowancePence,
+    sharedRemainingPence = shared,
+    hasSharedAccounts = hasSharedAccounts,
   )
 }
 

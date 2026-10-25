@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.dylmye.isa.IsaEyeApplication
+import me.dylmye.isa.widgets.WidgetUpdater
 
 /**
  * Takes the month's contribution back out when the reminder's Undo action is used. It runs from the
@@ -33,6 +34,7 @@ class UndoAutoContributionReceiver : BroadcastReceiver() {
             monthDate = monthDate,
             nowMillis = System.currentTimeMillis(),
           )
+        WidgetUpdater.updateAll(context)
         withContext(Dispatchers.Main) {
           // The notification is the reliable confirmation; the toast is a bonus that only survives
           // while the app itself is in front.

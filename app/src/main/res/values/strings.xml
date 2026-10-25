@@ -1,4 +1,14 @@
 <resources>
     <string name="app_name">ISA Eye</string>
     <string name="shortcut_add_account">Add account</string>
+
+    <!-- Home screen widget picker entries. -->
+    <string name="widget_allowance_label">ISA allowance</string>
+    <string name="widget_allowance_description">What is left of this year\'s shared ISA allowance.</string>
+    <string name="widget_junior_label">Junior ISA allowance</string>
+    <string name="widget_junior_description">What is left of each child\'s Junior ISA allowance.</string>
+    <string name="widget_tax_year_label">Tax year</string>
+    <string name="widget_tax_year_description">How much of the tax year is left, with a year-in-pixels countdown.</string>
+    <string name="widget_goal_label">Savings goal</string>
+    <string name="widget_goal_description">Progress towards this year\'s savings goal.</string>
 </resources>

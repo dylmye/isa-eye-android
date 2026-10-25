@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Darker surfaces need the lighter end of the traffic-light scale to stay legible. -->
+    <color name="widget_stage_early">#A5D6A7</color>
+    <color name="widget_stage_mid">#FFCC80</color>
+    <color name="widget_stage_late">#EF9A9A</color>
+</resources>

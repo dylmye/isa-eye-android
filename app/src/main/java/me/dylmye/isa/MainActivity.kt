@@ -25,6 +25,10 @@ import kotlinx.coroutines.launch
 import me.dylmye.isa.notifications.ReminderTarget
 import me.dylmye.isa.notifications.reminderTarget
 import me.dylmye.isa.theme.ISAEyeTheme
+import me.dylmye.isa.widgets.EXTRA_WIDGET_TAB
+import me.dylmye.isa.widgets.WidgetPreviews
+import me.dylmye.isa.widgets.WidgetTab
+import me.dylmye.isa.widgets.WidgetUpdater
 
 class MainActivity : ComponentActivity() {
   /**
@@ -59,10 +63,12 @@ class MainActivity : ComponentActivity() {
     // usual launch tab when one is there. A detail page needs the list behind it, so a cold start
     // opens Accounts and pushes the account once the tree is running, exactly as a row tap would.
     val requested = intent.notificationScreen()
-    val startTab = when (requested) {
-      is AccountDetail -> Accounts
-      null -> launchTab(hasLaunched)
-      else -> requested
+    val requestedWidget = if (requested == null) intent.widgetScreen() else null
+    val startTab = when {
+      requested is AccountDetail -> Accounts
+      requested != null -> requested
+      requestedWidget != null -> requestedWidget
+      else -> launchTab(hasLaunched)
     }
     if (requested is AccountDetail) openScreen(requested)
     setContent {
@@ -85,7 +91,7 @@ class MainActivity : ComponentActivity() {
   override fun onNewIntent(intent: Intent) {
     super.onNewIntent(intent)
     setIntent(intent)
-    intent.notificationScreen()?.let(::openScreen)
+    (intent.notificationScreen() ?: intent.widgetScreen())?.let(::openScreen)
   }
 
   /**
@@ -107,6 +113,13 @@ class MainActivity : ComponentActivity() {
     null -> null
   }
 
+  /** Maps a widget tap to the tab it is about. */
+  private fun Intent.widgetScreen(): NavKey? = when (getStringExtra(EXTRA_WIDGET_TAB)) {
+    WidgetTab.Accounts.extra -> Accounts
+    WidgetTab.Insights.extra -> Insights
+    else -> null
+  }
+
   /**
    * Catches up any auto-contribution credits that came due while the app was not running. It runs on
    * every foregrounding rather than on a timer: the app has to be running to write them, and this is
@@ -118,6 +131,8 @@ class MainActivity : ComponentActivity() {
       (application as IsaEyeApplication)
         .autoContributionRepository
         .applyDue(System.currentTimeMillis())
+      // A credit may have landed while the app was closed, and the widget should show it.
+      WidgetUpdater.updateAll(this@MainActivity)
     }
   }
 
@@ -129,6 +144,12 @@ class MainActivity : ComponentActivity() {
     super.onStop()
     if (!isChangingConfigurations) {
       (application as IsaEyeApplication).userPreferences.hasLaunched = true
+      // The widgets are about to be visible again, and anything edited in this session has only
+      // just been saved. Refresh them as the app leaves the foreground.
+      lifecycleScope.launch(Dispatchers.IO) {
+        WidgetUpdater.updateAll(this@MainActivity)
+        WidgetPreviews.publishNext(this@MainActivity)
+      }
     }
   }
 

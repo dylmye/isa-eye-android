@@ -132,6 +132,11 @@ dependencies {
 
   // Charts
   implementation(libs.vico.compose.m3)
+
+  // Home screen widgets. Glance renders RemoteViews from Compose-like code and needs no Play
+  // Services, so it stays compatible with an F-Droid build.
+  implementation(libs.androidx.glance.appwidget)
+  implementation(libs.androidx.glance.material3)
   // Tooling
   debugImplementation(libs.androidx.compose.ui.tooling)
   // Instrumented tests
