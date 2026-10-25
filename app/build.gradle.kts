@@ -38,8 +38,8 @@ android {
         applicationId = "me.dylmye.isa"
         minSdk = 24
         targetSdk = 37
-        versionCode = 2
-        versionName = "1.0.0"
+        versionCode = 14
+        versionName = "2.0.0"
     }
 
     signingConfigs {
