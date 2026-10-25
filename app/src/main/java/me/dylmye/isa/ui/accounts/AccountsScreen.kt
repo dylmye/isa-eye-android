@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -41,8 +40,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -53,6 +57,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.window.core.layout.WindowSizeClass
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
+import me.dylmye.isa.ui.components.LoadingIndicator
 import me.dylmye.isa.ui.components.ProviderAvatar
 import me.dylmye.isa.ui.components.containerTint
 import me.dylmye.isa.ui.components.opaqueContainerTint
@@ -108,7 +113,10 @@ fun AccountsContent(
 ) {
   val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
   Scaffold(
-    modifier = modifier,
+    modifier =
+      modifier.semantics {
+        paneTitle = "Accounts"
+      },
     topBar = {
       Column {
         AccountsTopBar(
@@ -186,9 +194,9 @@ private fun AccountsTopBar(
     title = {
       Crossfade(targetState = hero, label = "accountsTitle") { text ->
         if (text == null) {
-          Text("Accounts")
+          Text("Accounts", modifier = Modifier.semantics { heading() })
         } else {
-          Column {
+          Column(modifier = Modifier.semantics(mergeDescendants = true) {}) {
             // Fixed size on purpose: sizing to the text made short figures balloon and long ones
             // shrink, so the header changed size whenever the amount did.
             Text(
@@ -267,11 +275,18 @@ private fun AccountsList(
       // change, and recalculating them while the row is leaving the list can crash with
       // "visitAncestors called on an unattached node".
       val actions = moveActions(index, reorder.items.size, reorder::move)
+      val position = "${index + 1} of ${reorder.items.size}"
       AccountRow(
         account = account,
         dragging = dragging,
         onClick = { onAccountClick(account.productId) },
-        modifier = placement.semantics { customActions = actions },
+        modifier =
+          placement.semantics {
+            contentDescription = "${account.name}, ${account.providerName}, " +
+              "${formatGbp(account.contributionsPence)} contributed"
+            customActions = actions
+            stateDescription = position
+          },
         dragModifier = reorder.dragModifier(account.productId),
       )
     }
@@ -308,7 +323,7 @@ private fun AccountsLoading(contentPadding: PaddingValues, modifier: Modifier = 
     modifier = modifier.fillMaxSize().padding(contentPadding),
     contentAlignment = Alignment.Center,
   ) {
-    CircularProgressIndicator()
+    LoadingIndicator(label = "Loading accounts")
   }
 }
 
@@ -338,6 +353,9 @@ private fun AccountRow(
     modifier = modifier.fillMaxWidth().then(dragModifier),
   ) {
     ListItem(
+      // The row's own semantics above carry its name, provider, amount and reorder actions, so
+      // the visible text underneath is hidden to avoid repeating it.
+      modifier = Modifier.clearAndSetSemantics {},
       headlineContent = { Text(account.name) },
       supportingContent = { Text(account.providerName) },
       leadingContent = {
@@ -345,6 +363,8 @@ private fun AccountRow(
           provider = account.providerName,
           tint = tint,
           iconUrl = account.providerIconUrl,
+          // The provider is already named beside the avatar, so it is decorative here.
+          modifier = Modifier.clearAndSetSemantics {},
         )
       },
       trailingContent = {
@@ -372,7 +392,11 @@ private fun AccountsEmpty(hasAccounts: Boolean, ruleset: String?, modifier: Modi
       horizontalAlignment = Alignment.CenterHorizontally,
       verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-      Text("Nothing to see here", style = MaterialTheme.typography.titleMedium)
+      Text(
+        "Nothing to see here",
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.semantics { heading() },
+      )
       Text(
         text = message,
         style = MaterialTheme.typography.bodyMedium,

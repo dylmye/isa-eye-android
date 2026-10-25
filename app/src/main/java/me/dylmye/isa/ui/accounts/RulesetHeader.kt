@@ -17,6 +17,8 @@ import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
@@ -50,27 +52,31 @@ fun RulesetHeader(
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-      Text(text = label, style = MaterialTheme.typography.titleLarge)
+      Text(
+        text = label,
+        style = MaterialTheme.typography.titleLarge,
+        modifier = Modifier.semantics { heading() },
+      )
       // Icon-only, so it carries a hover label as well as its content description.
       TooltipBox(
         positionProvider =
           TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-        tooltip = { PlainTooltip { Text("Allowances for $label") } },
+        tooltip = { PlainTooltip { Text("Allowances for the $label tax year") } },
         state = rememberTooltipState(),
       ) {
         IconButton(onClick = onShowNotes) {
-          Icon(quickReference, contentDescription = "Allowances for $label")
+          Icon(quickReference, contentDescription = "Allowances for the $label tax year")
         }
       }
     }
     IconButton(onClick = onPrevious, enabled = state.canGoBack) {
-      Icon(chevronBackward, contentDescription = "Previous ruleset")
+      Icon(chevronBackward, contentDescription = "Previous tax year")
     }
     IconButton(onClick = onNext, enabled = state.canGoForward) {
-      Icon(chevronForward, contentDescription = "Next ruleset")
+      Icon(chevronForward, contentDescription = "Next tax year")
     }
     IconButton(onClick = onReset, enabled = state.canReset) {
-      Icon(settingsBackupRestore, contentDescription = "Reset to current ruleset")
+      Icon(settingsBackupRestore, contentDescription = "Reset to the latest tax year")
     }
   }
 }

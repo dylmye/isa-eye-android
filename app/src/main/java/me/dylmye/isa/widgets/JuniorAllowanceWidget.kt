@@ -50,8 +50,28 @@ class JuniorAllowanceWidgetReceiver : GlanceAppWidgetReceiver() {
 
 @Composable
 private fun JuniorAllowanceContent(state: WidgetState) {
-  WidgetFrame(WidgetTab.Accounts) {
-    val juniors = state.juniors
+  val juniors = state.juniors
+  val description =
+    when {
+      !state.hasAccounts -> {
+        "No accounts yet. Tap to add a Junior ISA in ISA Eye."
+      }
+
+      juniors.isEmpty() -> {
+        "No Junior ISAs. Tap to add one for this tax year in ISA Eye."
+      }
+
+      juniors.size == 1 -> {
+        juniorMeterDescription(juniors.first())
+      }
+
+      else -> {
+        juniors.joinToString(prefix = "Junior ISA allowances: ", separator = " ") {
+          juniorMeterDescription(it)
+        }
+      }
+    }
+  WidgetFrame(WidgetTab.Accounts, description = description) {
     when {
       !state.hasAccounts -> {
         WidgetEmpty("No accounts yet", "Tap to add a Junior ISA in ISA Eye.")

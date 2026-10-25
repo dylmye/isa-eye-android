@@ -33,6 +33,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -140,10 +143,18 @@ fun AccountDetailContent(
 ) {
   val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
   Scaffold(
-    modifier = modifier,
+    modifier =
+      modifier.semantics {
+        paneTitle = uiState.name?.takeIf { it.isNotBlank() } ?: "Account details"
+      },
     topBar = {
       TopAppBar(
-        title = { Text(uiState.name.orEmpty()) },
+        title = {
+          Text(
+            text = uiState.name.orEmpty(),
+            modifier = Modifier.semantics { heading() },
+          )
+        },
         navigationIcon = {
           if (showBackButton) {
             IconButton(onClick = onBack) {

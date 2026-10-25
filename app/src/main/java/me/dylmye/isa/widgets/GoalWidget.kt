@@ -50,13 +50,32 @@ private fun GoalContent(state: WidgetState) {
       } else {
         "No goal set" to "Tap to set this year's savings goal in Insights."
       }
-    WidgetCard(tab = WidgetTab.Insights, fraction = 0f) {
+    WidgetCard(
+      tab = WidgetTab.Insights,
+      fraction = 0f,
+      description = "${empty.first}. ${empty.second}",
+    ) {
       CardEmpty(title = empty.first, message = empty.second)
     }
     return
   }
-  WidgetCard(tab = WidgetTab.Insights, fraction = goal.fraction) {
+  WidgetCard(
+    tab = WidgetTab.Insights,
+    fraction = goal.fraction,
+    description = goalDescription(goal),
+  ) {
     GoalFace(goal = goal)
+  }
+}
+
+/** What the card says to a screen reader: money saved against the goal, not just a percentage. */
+private fun goalDescription(goal: me.dylmye.isa.ui.insights.GoalProgress): String {
+  val percent = (goal.fraction * 100).roundToInt()
+  return if (goal.isMet) {
+    "Savings goal reached: ${formatWidgetGbp(goal.contributedPence)} saved."
+  } else {
+    "Savings goal: ${formatWidgetGbp(goal.contributedPence)} of " +
+      "${formatWidgetGbp(goal.targetPence)} saved, $percent percent."
   }
 }
 

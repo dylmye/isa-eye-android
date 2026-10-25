@@ -3,6 +3,7 @@ package me.dylmye.isa.ui.accounts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -19,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 
 /** A read-only dropdown over [options], showing the label of [selectedId]. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -84,14 +86,21 @@ fun ReadOnlyField(label: String, value: String, modifier: Modifier = Modifier) {
   )
 }
 
-/** The "Flexible?" switch with its explanatory note. */
+/** The "Flexible?" switch with its explanatory note. The whole row toggles, so its label and note
+ * are announced with the switch rather than as separate text. */
 @Composable
 fun FlexibleField(
   flexible: Boolean,
   onFlexibleChange: (Boolean) -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+  Row(
+    modifier =
+      modifier
+        .fillMaxWidth()
+        .toggleable(value = flexible, role = Role.Switch, onValueChange = onFlexibleChange),
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
     Column(Modifier.weight(1f)) {
       Text("Flexible", style = MaterialTheme.typography.bodyLarge)
       Text(
@@ -100,6 +109,6 @@ fun FlexibleField(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
     }
-    Switch(checked = flexible, onCheckedChange = onFlexibleChange)
+    Switch(checked = flexible, onCheckedChange = null)
   }
 }

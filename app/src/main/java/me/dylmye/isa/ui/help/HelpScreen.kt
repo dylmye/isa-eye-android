@@ -26,6 +26,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.buildAnnotatedString
@@ -51,8 +54,16 @@ private const val SOURCE_URL = "https://github.com/dylmye/isa-eye-android"
 fun HelpScreen(onTopicClick: (String) -> Unit, modifier: Modifier = Modifier) {
   val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
   Scaffold(
-    modifier = modifier,
-    topBar = { TopAppBar(title = { Text("Help") }, scrollBehavior = scrollBehavior) },
+    modifier =
+      modifier.semantics {
+        paneTitle = "Help"
+      },
+    topBar = {
+      TopAppBar(
+        title = { Text("Help", modifier = Modifier.semantics { heading() }) },
+        scrollBehavior = scrollBehavior,
+      )
+    },
     contentWindowInsets = WindowInsets(0.dp),
   ) { innerPadding ->
     val layoutDirection = LocalLayoutDirection.current
@@ -150,7 +161,7 @@ private val FallbackTint = Color(0xFF26A69A)
 private fun HelpTopicCard(topic: HelpTopic, onClick: () -> Unit, modifier: Modifier = Modifier) {
   Card(
     onClick = onClick,
-    modifier = modifier.fillMaxWidth(),
+    modifier = modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
     shape = MaterialTheme.shapes.large,
     colors = CardDefaults.cardColors(containerColor = topic.tint.containerTint()),
   ) {
@@ -174,12 +185,18 @@ private fun HelpTopicCard(topic: HelpTopic, onClick: () -> Unit, modifier: Modif
 }
 
 /** The attribution line, with the author and the source code as tappable links. */
-private fun attribution(): AnnotatedString = buildAnnotatedString {
-  append("ISA Eye is a ")
-  withLink(LinkAnnotation.Url(AUTHOR_URL)) { append("dylmye") }
-  append(" creation. You can view the source code for the app on ")
-  withLink(LinkAnnotation.Url(SOURCE_URL)) { append("GitHub") }
-  append(".")
+@Composable
+private fun attribution(): AnnotatedString {
+  // Links are underlined as well as tinted: colour alone would hide them from anyone who cannot
+  // tell the link colour from the body text.
+  val linkStyles = helpLinkStyles()
+  return buildAnnotatedString {
+    append("ISA Eye is a ")
+    withLink(LinkAnnotation.Url(AUTHOR_URL, linkStyles)) { append("dylmye") }
+    append(" creation. You can view the source code for the app on ")
+    withLink(LinkAnnotation.Url(SOURCE_URL, linkStyles)) { append("GitHub") }
+    append(".")
+  }
 }
 
 @FormFactorPreviews

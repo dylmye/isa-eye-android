@@ -62,13 +62,32 @@ private fun AllowanceContent(state: WidgetState) {
       }
     }
   if (empty != null) {
-    WidgetCard(tab = WidgetTab.Accounts, fraction = 0f) {
+    WidgetCard(
+      tab = WidgetTab.Accounts,
+      fraction = 0f,
+      description = "${empty.first}. ${empty.second}",
+    ) {
       CardEmpty(title = empty.first, message = empty.second)
     }
     return
   }
-  WidgetCard(tab = WidgetTab.Accounts, fraction = state.sharedUsedFraction) {
+  WidgetCard(
+    tab = WidgetTab.Accounts,
+    fraction = state.sharedUsedFraction,
+    description = allowanceDescription(state),
+  ) {
     AllowanceFace(state)
+  }
+}
+
+/** What the card says to a screen reader: the figure behind the percentage and the fill. */
+private fun allowanceDescription(state: WidgetState): String? {
+  val left = state.sharedRemainingPence
+  val total = state.sharedAllowancePence
+  return if (left == null || total == null) {
+    null
+  } else {
+    "ISA allowance: ${formatWidgetGbp(left)} of ${formatWidgetGbp(total)} left this year."
   }
 }
 

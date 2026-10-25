@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
@@ -26,6 +25,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.window.core.layout.WindowSizeClass
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
+import me.dylmye.isa.ui.components.LoadingIndicator
 
 /** Stateful entry point: owns the edit-account ViewModel and hoists its state into the content. */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
@@ -85,7 +85,7 @@ fun EditAccountContent(
         modifier = Modifier.fillMaxSize().padding(innerPadding),
         contentAlignment = Alignment.Center,
       ) {
-        CircularProgressIndicator()
+        LoadingIndicator(label = "Loading account")
       }
     } else {
       EditAccountForm(

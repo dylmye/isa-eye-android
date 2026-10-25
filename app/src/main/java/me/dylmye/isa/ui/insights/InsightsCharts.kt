@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -195,7 +196,11 @@ internal fun LegendRow(colour: Color, label: String, value: String, modifier: Mo
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(8.dp),
   ) {
-    Surface(color = colour, shape = CircleShape, modifier = Modifier.size(SWATCH_SIZE)) {}
+    Surface(
+      color = colour,
+      shape = CircleShape,
+      modifier = Modifier.size(SWATCH_SIZE).clearAndSetSemantics {},
+    ) {}
     Text(label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
     Text(
       text = value,
@@ -241,7 +246,11 @@ internal fun typeDonutDescription(uiState: InsightsUiState): String {
 /** Spoken summary of the bar chart, whose axis labels a screen reader cannot follow. */
 internal fun barDescription(uiState: InsightsUiState): String =
   uiState.yearShares.joinToString(prefix = "Contributions by year: ", separator = ", ") { year ->
-    "${year.rulesetId} ${formatGbp(year.totalPence)}"
+    val byType =
+      year.byType.joinToString(separator = ", ") { type ->
+        "${type.name} ${formatGbp(type.pence)}"
+      }
+    "${year.rulesetId} ${formatGbp(year.totalPence)} ($byType)"
   }
 
 /** [pence] as a whole percentage of [total], for the legend and the spoken summaries. */

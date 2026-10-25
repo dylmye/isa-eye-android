@@ -18,6 +18,9 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -43,7 +46,7 @@ fun RulesetNotesSurface(
 ) {
   if (isCompact) {
     ModalBottomSheet(
-      modifier = modifier,
+      modifier = modifier.semantics { paneTitle = "Tax year notes" },
       onDismissRequest = onDismiss,
       sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     ) {
@@ -56,7 +59,11 @@ fun RulesetNotesSurface(
         DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
     ) {
       Surface(
-        modifier = modifier.widthIn(max = 560.dp).heightIn(max = 560.dp),
+        modifier =
+          modifier
+            .semantics { paneTitle = "Tax year notes" }
+            .widthIn(max = 560.dp)
+            .heightIn(max = 560.dp),
         shape = MaterialTheme.shapes.extraLarge,
         tonalElevation = 6.dp,
       ) {
@@ -86,6 +93,7 @@ fun RulesetNotesBody(notes: RulesetNotesUiState, modifier: Modifier = Modifier) 
     Text(
       text = "Notes for ${notes.ruleset.orEmpty()} tax year",
       style = MaterialTheme.typography.titleLarge,
+      modifier = Modifier.semantics { heading() },
     )
     Text(
       text = notes.notes ?: "No notes for this tax year.",
@@ -122,7 +130,7 @@ private fun AllowanceRow(
   note: String? = null,
   emphasised: Boolean = false,
 ) {
-  Column(modifier = modifier) {
+  Column(modifier = modifier.semantics(mergeDescendants = true) {}) {
     Row(verticalAlignment = Alignment.CenterVertically) {
       Text(
         text = label,

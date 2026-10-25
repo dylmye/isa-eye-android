@@ -21,6 +21,8 @@ import androidx.glance.layout.Column
 import androidx.glance.layout.ColumnScope
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.padding
+import androidx.glance.semantics.contentDescription
+import androidx.glance.semantics.semantics
 import androidx.glance.unit.ColorProvider
 import me.dylmye.isa.MainActivity
 
@@ -54,6 +56,7 @@ internal val isLarge: Boolean
 @Composable
 internal fun WidgetFrame(
   tab: WidgetTab,
+  description: String? = null,
   background: ColorProvider? = null,
   content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -66,6 +69,13 @@ internal fun WidgetFrame(
         .background(background ?: GlanceTheme.colors.widgetBackground)
         .roundedOnS()
         .clickable(actionStartActivity(intent))
+        .then(
+          if (description == null) {
+            GlanceModifier
+          } else {
+            GlanceModifier.semantics { contentDescription = description }
+          },
+        )
         .padding(horizontal = if (isCompact) 12.dp else 16.dp, vertical = 12.dp),
     verticalAlignment = Alignment.Top,
     horizontalAlignment = Alignment.Start,

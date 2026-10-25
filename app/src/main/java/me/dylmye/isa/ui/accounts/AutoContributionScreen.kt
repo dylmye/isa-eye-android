@@ -13,7 +13,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -24,6 +23,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -32,6 +34,7 @@ import me.dylmye.isa.notifications.rememberNotificationPermissionRequest
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.time.formatLongDate
 import me.dylmye.isa.ui.FormFactorPreviews
+import me.dylmye.isa.ui.components.LoadingIndicator
 import me.dylmye.isa.ui.formatGbp
 
 /** Stateful entry point: owns the auto-contribution ViewModel and hoists its state down. */
@@ -77,6 +80,12 @@ fun AutoContributionContent(
   onClose: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
+  val title =
+    if (uiState.savedMonthlyPence == null) {
+      "Set up auto-contribution"
+    } else {
+      "Edit auto-contribution"
+    }
   Box(
     modifier = modifier.fillMaxSize().imePadding().padding(DIALOG_MARGIN),
     contentAlignment = Alignment.Center,
@@ -84,14 +93,14 @@ fun AutoContributionContent(
     Surface(
       shape = MaterialTheme.shapes.extraLarge,
       tonalElevation = 6.dp,
-      modifier = Modifier.widthIn(max = DIALOG_MAX_WIDTH),
+      modifier = Modifier.semantics { paneTitle = title }.widthIn(max = DIALOG_MAX_WIDTH),
     ) {
       if (uiState.isLoading) {
         Box(
           modifier = Modifier.fillMaxWidth().padding(DIALOG_PADDING),
           contentAlignment = Alignment.Center,
         ) {
-          CircularProgressIndicator()
+          LoadingIndicator(label = "Loading auto-contribution")
         }
       } else {
         AutoContributionDialog(
@@ -124,6 +133,7 @@ private fun AutoContributionDialog(
     Text(
       text = if (isNew) "Set up auto-contribution" else "Edit auto-contribution",
       style = MaterialTheme.typography.headlineSmall,
+      modifier = Modifier.semantics { heading() },
     )
     // The amount is the whole point of the dialog, so it is set as a headline figure rather than the
     // body size a form field would use.

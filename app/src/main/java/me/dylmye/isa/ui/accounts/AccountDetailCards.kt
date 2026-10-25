@@ -42,7 +42,7 @@ internal fun ContributionsCard(
 ) {
   Card(
     onClick = onClick,
-    modifier = modifier.fillMaxWidth(),
+    modifier = modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
     shape = MaterialTheme.shapes.large,
   ) {
     Column(
@@ -91,8 +91,9 @@ internal fun ContributionsCard(
  * Actions for the selected account: recording this year's contributions, setting up or changing an
  * auto-contribution, and deleting the account.
  *
- * The card has no visible heading. "Actions" is kept as its accessibility description instead, so a
- * screen reader still announces the group while the card itself stays as tight as the buttons allow.
+ * The card has no visible heading. "Account actions" is kept as its accessibility description
+ * instead, so a screen reader still announces the group while the card itself stays as tight as the
+ * buttons allow.
  */
 @Composable
 internal fun ActionsCard(
@@ -104,7 +105,7 @@ internal fun ActionsCard(
   onDeleteAccount: () -> Unit = {},
 ) {
   Card(
-    modifier = modifier.fillMaxWidth().semantics { contentDescription = "Actions" },
+    modifier = modifier.fillMaxWidth().semantics { contentDescription = "Account actions" },
     shape = MaterialTheme.shapes.large,
   ) {
     Column(
@@ -185,12 +186,7 @@ private fun TrendIndicator(
       ContributionTrend.Down -> MaterialTheme.colorScheme.error
       ContributionTrend.Flat -> MaterialTheme.colorScheme.onSurfaceVariant
     }
-  val description =
-    when (trend) {
-      ContributionTrend.Up -> "Up on ${previousRuleset.orEmpty()}"
-      ContributionTrend.Down -> "Down on ${previousRuleset.orEmpty()}"
-      ContributionTrend.Flat -> "Unchanged from ${previousRuleset.orEmpty()}"
-    }
+  val description = trendDescription(trend, previousRuleset)
   Icon(
     imageVector = icon,
     contentDescription = description,
@@ -198,6 +194,14 @@ private fun TrendIndicator(
     modifier = modifier.size(24.dp),
   )
 }
+
+/** The spoken direction, naming the year it is compared against when there is one. */
+private fun trendDescription(trend: ContributionTrend, previousRuleset: String?): String =
+  when (trend) {
+    ContributionTrend.Up -> previousRuleset?.let { "Up on $it" } ?: "Up"
+    ContributionTrend.Down -> previousRuleset?.let { "Down on $it" } ?: "Down"
+    ContributionTrend.Flat -> previousRuleset?.let { "Unchanged from $it" } ?: "Unchanged"
+  }
 
 /** Titles the callout after the ISA type, e.g. "All about Cash ISAs". */
 internal fun infoTitle(typeName: String?): String {

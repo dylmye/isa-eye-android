@@ -28,6 +28,8 @@ import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
+import androidx.glance.semantics.contentDescription
+import androidx.glance.semantics.semantics
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
@@ -42,6 +44,7 @@ import kotlin.math.roundToInt
 internal fun WidgetCard(
   tab: WidgetTab,
   fraction: Float,
+  description: String? = null,
   content: @Composable ColumnScope.() -> Unit,
 ) {
   val context = LocalContext.current
@@ -67,6 +70,13 @@ internal fun WidgetCard(
         .background(ImageProvider(bitmap))
         .roundedOnS()
         .clickable(actionStartActivity(widgetIntent(context, tab)))
+        .then(
+          if (description == null) {
+            GlanceModifier
+          } else {
+            GlanceModifier.semantics { contentDescription = description }
+          },
+        )
         .padding(horizontal = if (isCompact) 14.dp else 16.dp, vertical = 12.dp),
     verticalAlignment = Alignment.Top,
     horizontalAlignment = Alignment.Start,

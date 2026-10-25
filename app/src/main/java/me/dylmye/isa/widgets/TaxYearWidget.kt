@@ -30,6 +30,8 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
+import androidx.glance.semantics.contentDescription
+import androidx.glance.semantics.semantics
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
@@ -74,7 +76,8 @@ private fun TaxYearContent(state: WidgetState) {
     modifier =
       GlanceModifier.fillMaxSize()
         .appWidgetBackground()
-        .clickable(actionStartActivity(widgetIntent(context, WidgetTab.Insights))),
+        .clickable(actionStartActivity(widgetIntent(context, WidgetTab.Insights)))
+        .semantics { contentDescription = taxYearDescription(state) },
     contentAlignment = Alignment.Center,
   ) {
     Image(
@@ -88,20 +91,21 @@ private fun TaxYearContent(state: WidgetState) {
     if (state.rulesetId == null || daysLeft == null || totalDays == null) {
       TaxYearEmpty()
     } else {
-      TaxYearFace(state = state, daysLeft = daysLeft, totalDays = totalDays, size = circleSize)
+      TaxYearFace(state = state, daysLeft = daysLeft, size = circleSize)
     }
   }
 }
 
 @Composable
-private fun TaxYearFace(state: WidgetState, daysLeft: Int, totalDays: Int, size: Dp) {
+private fun TaxYearFace(state: WidgetState, daysLeft: Int, size: Dp) {
   val stage = stageColour(state.stage)
   WidgetRing(
     fraction = state.remainingYearFraction,
     size = size * RING_FRACTION,
     fill = stage,
     track = GlanceTheme.colors.surfaceVariant,
-    description = "$daysLeft of $totalDays days left in the ${state.yearLabel} tax year.",
+    // The card's own description carries the countdown, so the ring underneath it is decorative.
+    description = null,
   ) {
     Column(
       modifier = GlanceModifier.padding(horizontal = 10.dp),
@@ -148,3 +152,15 @@ private fun TaxYearEmpty() {
 
 /** The ring fills three quarters of the circular card. */
 private const val RING_FRACTION = 0.88f
+
+/** What the card says to a screen reader, including the countdown the ring draws. */
+private fun taxYearDescription(state: WidgetState): String {
+  val daysLeft = state.daysRemaining
+  val totalDays = state.totalDays
+  val year = state.yearLabel
+  val empty = "Tax year: no data. Tap to open ISA Eye and update it."
+  if (state.rulesetId == null || daysLeft == null || totalDays == null) {
+    return empty
+  }
+  return if (year == null) empty else "$daysLeft of $totalDays days left in the $year tax year."
+}

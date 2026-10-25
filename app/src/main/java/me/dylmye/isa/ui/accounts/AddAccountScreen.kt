@@ -36,6 +36,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -283,11 +285,15 @@ private fun ProviderPickerSheet(
     ) {
       item {
         Column(Modifier.padding(horizontal = 16.dp)) {
-          Text("Bank", style = MaterialTheme.typography.titleMedium)
+          Text(
+            "Bank",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.semantics { heading() },
+          )
           OutlinedTextField(
             value = query,
             onValueChange = { query = it },
-            placeholder = { Text("Search banks") },
+            label = { Text("Search banks") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
           )
@@ -296,10 +302,11 @@ private fun ProviderPickerSheet(
       items(filtered, key = { it.id }) { option ->
         ListItem(
           headlineContent = { Text(option.label) },
-          modifier = Modifier.clickable {
-            onSelected(option.id)
-            onDismiss()
-          },
+          modifier =
+            Modifier.clickable(onClickLabel = "Choose ${option.label}") {
+              onSelected(option.id)
+              onDismiss()
+            },
         )
       }
     }

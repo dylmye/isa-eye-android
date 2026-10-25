@@ -25,7 +25,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -51,7 +53,8 @@ internal fun CountdownCard(uiState: InsightsUiState, modifier: Modifier = Modifi
     colors = CardDefaults.cardColors(containerColor = stage.container()),
   ) {
     Column(
-      modifier = Modifier.padding(16.dp),
+      modifier =
+        Modifier.padding(16.dp).semantics(mergeDescendants = true) {},
       verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
       Text(
@@ -80,7 +83,7 @@ internal fun GoalCard(uiState: InsightsUiState, onEdit: () -> Unit, modifier: Mo
     title = "This year's goal",
     modifier = modifier,
     action = {
-      TextButton(onClick = onEdit) { Text(if (uiState.goal == null) "Set goal" else "Edit") }
+      TextButton(onClick = onEdit) { Text(if (uiState.goal == null) "Set goal" else "Edit goal") }
     },
   ) {
     val goal = uiState.goal
@@ -160,7 +163,10 @@ internal fun AccountDonutCard(uiState: InsightsUiState, modifier: Modifier = Mod
         onSelect = { selection = it },
         modifier = Modifier.fillMaxWidth().height(CHART_HEIGHT),
       )
-      Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+      Column(
+        modifier = Modifier.clearAndSetSemantics {},
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+      ) {
         uiState.accountShares.forEach { share ->
           LegendRow(
             colour = share.colour.toTint(),
@@ -189,7 +195,10 @@ internal fun ProductTypeDonutCard(uiState: InsightsUiState, modifier: Modifier =
         onSelect = { selection = it },
         modifier = Modifier.fillMaxWidth().height(CHART_HEIGHT),
       )
-      Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+      Column(
+        modifier = Modifier.clearAndSetSemantics {},
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+      ) {
         uiState.typeShares.forEach { share ->
           LegendRow(
             colour = share.colour.toTint(),
@@ -247,7 +256,11 @@ internal fun InsightsCard(
       verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
       Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+        Text(
+          title,
+          style = MaterialTheme.typography.titleMedium,
+          modifier = Modifier.weight(1f).semantics { heading() },
+        )
         action?.invoke()
       }
       content()
@@ -285,7 +298,7 @@ private fun TaxYearStage.content(): Color = if (isSystemInDarkTheme()) {
 } else {
   when (this) {
     TaxYearStage.Early -> Color(0xFF1B5E20)
-    TaxYearStage.Mid -> Color(0xFFE65100)
+    TaxYearStage.Mid -> Color(0xFFB45309)
     TaxYearStage.Late -> Color(0xFFB71C1C)
   }
 }

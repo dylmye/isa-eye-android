@@ -10,11 +10,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -26,6 +31,7 @@ import me.dylmye.isa.ui.components.InfoCalloutCard
  */
 @Composable
 internal fun HelpArticle(blocks: List<HelpBlock>, modifier: Modifier = Modifier) {
+  val linkStyles = helpLinkStyles()
   Column(
     modifier = modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -34,36 +40,50 @@ internal fun HelpArticle(blocks: List<HelpBlock>, modifier: Modifier = Modifier)
       when (block) {
         is HelpBlock.Heading -> {
           Text(
-            text = block.spans.toHelpText(),
+            text = block.spans.toHelpText(linkStyles),
             style =
               if (block.level <= 2) {
                 MaterialTheme.typography.titleLarge
               } else {
                 MaterialTheme.typography.titleMedium
               },
-            // Headings need more air above them than the uniform gap gives.
-            modifier = Modifier.padding(top = 8.dp),
+            // Headings need more air above them than the uniform gap gives, and a screen reader
+            // uses them to skim the article.
+            modifier = Modifier.padding(top = 8.dp).semantics { heading() },
           )
         }
 
         is HelpBlock.Paragraph -> {
-          Text(text = block.spans.toHelpText(), style = MaterialTheme.typography.bodyLarge)
+          Text(
+            text = block.spans.toHelpText(linkStyles),
+            style = MaterialTheme.typography.bodyLarge,
+          )
         }
 
         is HelpBlock.Bullets -> {
-          HelpBullets(block.items)
+          HelpBullets(block.items, linkStyles)
         }
 
         is HelpBlock.Callout -> {
-          InfoCalloutCard(text = block.spans.toHelpText())
+          InfoCalloutCard(text = block.spans.toHelpText(linkStyles))
         }
       }
     }
   }
 }
 
+/** Links are underlined as well as tinted, so they do not rely on colour alone. */
 @Composable
-private fun HelpBullets(items: List<List<HelpSpan>>) {
+internal fun helpLinkStyles(): TextLinkStyles = TextLinkStyles(
+  style =
+    SpanStyle(
+      color = MaterialTheme.colorScheme.primary,
+      textDecoration = TextDecoration.Underline,
+    ),
+)
+
+@Composable
+private fun HelpBullets(items: List<List<HelpSpan>>, linkStyles: TextLinkStyles) {
   Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
     items.forEach { item ->
       Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
@@ -71,9 +91,11 @@ private fun HelpBullets(items: List<List<HelpSpan>>) {
           text = "•",
           style = MaterialTheme.typography.bodyLarge,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
+          // The bullet is a visual marker; reading it adds nothing to the item's words.
+          modifier = Modifier.clearAndSetSemantics {},
         )
         Text(
-          text = item.toHelpText(),
+          text = item.toHelpText(linkStyles),
           style = MaterialTheme.typography.bodyLarge,
           modifier = Modifier.weight(1f),
         )
@@ -83,20 +105,21 @@ private fun HelpBullets(items: List<List<HelpSpan>>) {
 }
 
 /** Maps the parsed spans onto an annotated string, so links behave as they do elsewhere. */
-private fun List<HelpSpan>.toHelpText(): AnnotatedString = buildAnnotatedString {
-  forEach { span ->
-    when (span) {
-      is HelpSpan.Text -> {
-        append(span.text)
-      }
+private fun List<HelpSpan>.toHelpText(linkStyles: TextLinkStyles): AnnotatedString =
+  buildAnnotatedString {
+    forEach { span ->
+      when (span) {
+        is HelpSpan.Text -> {
+          append(span.text)
+        }
 
-      is HelpSpan.Bold -> {
-        withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { append(span.text) }
-      }
+        is HelpSpan.Bold -> {
+          withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { append(span.text) }
+        }
 
-      is HelpSpan.Link -> {
-        withLink(LinkAnnotation.Url(span.url)) { append(span.text) }
+        is HelpSpan.Link -> {
+          withLink(LinkAnnotation.Url(span.url, linkStyles)) { append(span.text) }
+        }
       }
     }
   }
-}

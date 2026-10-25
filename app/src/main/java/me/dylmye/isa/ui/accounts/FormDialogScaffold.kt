@@ -19,6 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
 /**
@@ -50,9 +53,10 @@ fun FormDialogScaffold(
     ) {
       Scaffold(
         containerColor = Color.Transparent,
+        modifier = Modifier.semantics { paneTitle = title },
         topBar = {
           TopAppBar(
-            title = { Text(title) },
+            title = { Text(title, modifier = Modifier.semantics { heading() }) },
             actions = { TextButton(onClick = onClose) { Text("Cancel") } },
           )
         },

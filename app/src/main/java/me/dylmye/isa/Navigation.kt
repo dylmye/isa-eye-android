@@ -17,6 +17,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.dropUnlessResumed
@@ -125,6 +127,9 @@ fun MainNavigation(
           onClick = dropUnlessResumed { openAddAccount() },
           icon = { Icon(AddIcon, contentDescription = null) },
           text = { Text("Add account") },
+          // The extended FAB clears the semantics of its label in Material 3, so the button needs
+          // its own description to be announced by a screen reader.
+          modifier = Modifier.semantics { contentDescription = "Add account" },
         )
       },
     ) { innerPadding ->

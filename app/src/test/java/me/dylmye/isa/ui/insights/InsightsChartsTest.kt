@@ -69,4 +69,36 @@ class InsightsChartsTest {
       accountDonutDescription(state),
     )
   }
+
+  @Test
+  fun barDescription_namesEachYearAndItsTypeBreakdown() {
+    val state =
+      InsightsUiState(
+        yearShares =
+          listOf(
+            YearShare(
+              rulesetId = "2025/2026",
+              label = "25/26",
+              totalPence = 50_000,
+              byType = listOf(TypeShare("CASH", "Cash ISA", "#2E7D32", 50_000)),
+            ),
+            YearShare(
+              rulesetId = "2026/2027",
+              label = "26/27",
+              totalPence = 165_000,
+              byType =
+                listOf(
+                  TypeShare("STOCKS_AND_SHARES", "Stocks & Shares ISA", "#1565C0", 125_000),
+                  TypeShare("CASH", "Cash ISA", "#2E7D32", 40_000),
+                ),
+            ),
+          ),
+      )
+
+    assertEquals(
+      "Contributions by year: 2025/2026 £500.00 (Cash ISA £500.00), " +
+        "2026/2027 £1,650.00 (Stocks & Shares ISA £1,250.00, Cash ISA £400.00)",
+      barDescription(state),
+    )
+  }
 }

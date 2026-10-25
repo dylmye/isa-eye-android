@@ -11,7 +11,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
@@ -21,6 +20,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -28,6 +30,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.window.core.layout.WindowSizeClass
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
+import me.dylmye.isa.ui.components.LoadingIndicator
 import me.dylmye.isa.ui.formatGbp
 
 private const val REDUCTION_WARNING =
@@ -92,7 +95,7 @@ fun UpdateContributionsContent(
         modifier = Modifier.fillMaxSize().padding(innerPadding),
         contentAlignment = Alignment.Center,
       ) {
-        CircularProgressIndicator()
+        LoadingIndicator(label = "Loading contributions")
       }
     } else {
       UpdateContributionsForm(
@@ -139,7 +142,11 @@ private fun UpdateContributionsForm(
           if (warnings.isEmpty()) {
             null
           } else {
-            { Column { warnings.forEach { message -> Text(message) } } }
+            {
+              Column(Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
+                warnings.forEach { message -> Text(message) }
+              }
+            }
           },
         modifier = Modifier.fillMaxWidth(),
       )
