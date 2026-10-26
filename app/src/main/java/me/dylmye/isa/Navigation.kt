@@ -1,5 +1,7 @@
 package me.dylmye.isa
 
+import android.app.Activity
+import android.content.Intent
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
@@ -258,14 +260,8 @@ private fun EntryProviderScope<NavKey>.dialogEntries(backStack: TopLevelBackStac
     val activity = LocalActivity.current
     BackupRestoreDialog(
       onClose = { backStack.removeLast() },
-      // An import swaps the database file. Rebuilding the activity rebinds every ViewModel to the
-      // application's new database container.
       onImported = {
-        if (activity != null) {
-          activity.recreate()
-        } else {
-          backStack.removeLast()
-        }
+        if (activity != null) activity.restartForNewDatabase() else backStack.removeLast()
       },
     )
   }
@@ -277,6 +273,18 @@ private fun EntryProviderScope<NavKey>.dialogEntries(backStack: TopLevelBackStac
  */
 private fun TopLevelBackStack<NavKey>.addDialog(key: NavKey) {
   if (backStack.lastOrNull()?.isDialog() != true) add(key)
+}
+
+/**
+ * Restarts the app on a fresh activity after an import. The import replaces the database file and
+ * the application builds a new container the next time the database is touched, but recreate()
+ * keeps the activity's ViewModelStore, so ViewModels still holding collectors on the closed
+ * connection would never re-subscribe. A new activity starts with fresh ViewModels, which bind to
+ * the reopened database.
+ */
+private fun Activity.restartForNewDatabase() {
+  startActivity(Intent(this, MainActivity::class.java))
+  finish()
 }
 
 /**
