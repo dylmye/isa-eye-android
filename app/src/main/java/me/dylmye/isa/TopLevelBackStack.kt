@@ -42,8 +42,13 @@ class TopLevelBackStack<T : NavKey>(startKey: T) {
     }
   }
 
-  /** Opens [key]'s tab at its own root, dropping anything that was stacked above it. */
+  /**
+   * Opens [key]'s tab at its own root, dropping anything that was stacked above it. The key moves to
+   * the end of the map, because that order is what [updateBackStack] flattens: a tab that kept its
+   * old position would leave another tab's page showing while the nav bar highlighted this one.
+   */
   fun resetTopLevel(key: T) {
+    topLevelStacks.remove(key)
     topLevelStacks[key] = mutableStateListOf(key)
     select(key)
   }

@@ -69,6 +69,20 @@ class TopLevelBackStackTest {
   }
 
   @Test
+  fun resetTopLevel_movesTheTabToTheEnd_soItsPageIsTheOneShowing() {
+    val backStack = TopLevelBackStack<NavKey>(TabA)
+    backStack.addTopLevel(TabB)
+
+    // A widget tap or notification can ask for a tab other than the most recently opened one.
+    backStack.resetTopLevel(TabA)
+
+    assertEquals(TabA, backStack.topLevelKey)
+    // The highlighted tab and the page on screen must agree.
+    assertEquals(backStack.topLevelKey, backStack.backStack.last())
+    assertEquals(listOf(TabB, TabA), backStack.backStack.toList())
+  }
+
+  @Test
   fun selectTopLevel_popsTheActiveTabBackToItsRoot() {
     val backStack = TopLevelBackStack<NavKey>(TabA)
     backStack.add(Detail("1"))
