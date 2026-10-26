@@ -89,6 +89,12 @@ android {
       resources {
         excludes += "/META-INF/{AL2.0,LGPL2.1}"
       }
+      // The SQLCipher libraries ship prebuilt. A machine with an NDK installed has AGP strip them,
+      // while one without ships them untouched, so the same source would produce different bytes.
+      // Keeping the symbols unconditionally makes the artifact independent of the build host.
+      jniLibs {
+        keepDebugSymbols += "**/*.so"
+      }
     }
 
     // Compose Preview Screenshot Testing. The suite renders previews from `src/screenshotTest`
