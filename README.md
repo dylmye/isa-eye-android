@@ -88,6 +88,55 @@ unsigned, which is fine for contributors.
 The AAB is written to `app/build/outputs/bundle/release/app-release.aab`. If the upload key is lost
 or compromised, Play Console can reset it; the Google-held app signing key is unaffected.
 
+### Releasing a version
+
+Bump `versionCode` and `versionName` in `app/build.gradle.kts` - the tag workflow rejects a
+`versionCode` that is not greater than the previous tag's - then tag the commit:
+
+```sh
+git tag v2.0.1
+git push origin v2.0.1
+```
+
+A `v*` tag runs three jobs: it validates the version, proves the release build is reproducible, and
+only once both pass builds the signed APK and attaches it to the GitHub release as:
+
+- `me.dylmye.isa-<version>.apk`, signed with the upload key. The F-Droid recipe's `Binaries:` URL
+  points at exactly this name.
+- `me.dylmye.isa-<version>-mapping.txt`, the R8 mapping. Keep every one: R8 renames every class, so
+  a stack trace from a released build can only be deobfuscated with the mapping that produced it.
+
+The release job needs four repository secrets:
+
+| Secret | Value |
+| --- | --- |
+| `ISA_EYE_KEYSTORE_BASE64` | `base64 -w0 < ~/.android-keystores/isa-eye-upload.jks` |
+| `ISA_EYE_KEYSTORE_PASSWORD` | the key's `storePassword` |
+| `ISA_EYE_KEY_ALIAS` | the key's `keyAlias` |
+| `ISA_EYE_KEY_PASSWORD` | the key's `keyPassword` |
+
+### Submitting to F-Droid
+
+`fdroid/me.dylmye.isa.yml` is the [fdroiddata](https://gitlab.com/fdroid/fdroiddata) recipe. Copy it
+to `metadata/me.dylmye.isa.yml` in a fork and open a merge request.
+
+It publishes the APK released on GitHub rather than F-Droid's own re-signed rebuild (`Binaries` plus
+`AllowedAPKSigningKeys`). F-Droid still builds the tagged commit and only publishes the upstream APK
+when the two match byte for byte, which is what the reproducibility check establishes. The recipe's
+`versionName`, `versionCode` and `commit` must agree with `app/build.gradle.kts` at that commit, and
+`commit` is the full commit hash rather than the tag name.
+
+The listing text and graphics deliberately are not in the recipe. They live beside the app in
+`fastlane/metadata/android/en-US/`, which F-Droid reads from the source tree:
+
+- `short_description.txt` - the summary, 80 characters at most
+- `full_description.txt` - the description, 4000 characters at most
+- `images/icon.png`, `images/featureGraphic.png` and `images/phoneScreenshots/` - graphics
+
+Anything in the recipe overrides those files, which is why it carries no `Summary` or `Description`.
+They have to be committed before the release is tagged, because F-Droid scans the tree at the
+version it builds.
+
 ### Reproducible builds
 
 [F-Droid verifies a release](https://f-droid.org/docs/Reproducible_Builds/) by rebuilding the tagged

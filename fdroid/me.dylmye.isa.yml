@@ -1,0 +1,32 @@
+Categories:
+  - Finance Manager
+License: ISC
+AuthorName: Dylan Myers
+AuthorWebSite: https://dylmye.me
+Liberapay: dyl
+WebSite: https://isaeye.uk
+SourceCode: https://github.com/dylmye/isa-eye-android
+IssueTracker: https://github.com/dylmye/isa-eye-android/issues
+Changelog: https://github.com/dylmye/isa-eye-android/releases
+
+AutoName: ISA Eye
+
+RepoType: git
+Repo: https://github.com/dylmye/isa-eye-android
+
+Builds:
+  - versionName: 2.0.0
+    versionCode: 14
+    commit: cf2dd79fbcc03711b4894a1b257e06a9637ef9dd
+    gradle:
+      - yes
+    output: app/build/outputs/apk/release/app-release-unsigned.apk
+
+AllowedAPKSigningKeys: 6d5d72f7974201629ebf6edb93b22887683c0918a52688caaf2247e2a3300343
+
+Binaries: https://github.com/dylmye/isa-eye-android/releases/download/v%v/me.dylmye.isa-%v.apk
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 2.0.0
+CurrentVersionCode: 14
