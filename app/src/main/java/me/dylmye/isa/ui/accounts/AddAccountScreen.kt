@@ -1,5 +1,6 @@
 package me.dylmye.isa.ui.accounts
 
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -25,6 +27,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -36,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
@@ -55,11 +59,27 @@ import me.dylmye.isa.ui.FormFactorPreviews
 fun AddAccountScreen(onClose: () -> Unit, modifier: Modifier = Modifier) {
   val viewModel: AddAccountViewModel = viewModel(factory = AddAccountViewModel.Factory)
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  val context = LocalContext.current
 
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
       when (event) {
-        AddAccountEvent.Saved -> onClose()
+        AddAccountEvent.Saved -> {
+          onClose()
+        }
+
+        AddAccountEvent.LimitReached -> {
+          Toast.makeText(
+            context,
+            "You've reached the free account limit.",
+            Toast.LENGTH_SHORT,
+          )
+            .show()
+        }
+
+        is AddAccountEvent.ShowMessage -> {
+          Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+        }
       }
     }
   }
@@ -87,6 +107,7 @@ fun AddAccountScreen(onClose: () -> Unit, modifier: Modifier = Modifier) {
     onNext = viewModel::onNext,
     onBack = viewModel::onBack,
     onSave = viewModel::save,
+    onRestorePurchases = viewModel::onRestorePurchases,
     onClose = onClose,
     isCompact = isCompact,
     modifier = modifier,
@@ -105,6 +126,7 @@ fun AddAccountContent(
   onNext: () -> Unit,
   onBack: () -> Unit,
   onSave: () -> Unit,
+  onRestorePurchases: () -> Unit,
   onClose: () -> Unit,
   isCompact: Boolean,
   modifier: Modifier = Modifier,
@@ -123,6 +145,7 @@ fun AddAccountContent(
           onProviderSelected = onProviderSelected,
           onRulesetSelected = onRulesetSelected,
           onNext = onNext,
+          onRestorePurchases = onRestorePurchases,
           modifier = Modifier.padding(innerPadding),
         )
       }
@@ -149,6 +172,7 @@ private fun AddAccountDetailsContent(
   onProviderSelected: (String) -> Unit,
   onRulesetSelected: (String) -> Unit,
   onNext: () -> Unit,
+  onRestorePurchases: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   var showProviderSheet by rememberSaveable { mutableStateOf(false) }
@@ -158,6 +182,15 @@ private fun AddAccountDetailsContent(
       modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp),
       verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+      val limit = uiState.freeAccountLimit
+      if (uiState.showLimitCard && limit != null) {
+        FreeAccountLimitCard(
+          accountCount = uiState.accountCount,
+          limit = limit,
+          isRestoring = uiState.isRestoring,
+          onRestorePurchases = onRestorePurchases,
+        )
+      }
       OutlinedTextField(
         value = uiState.nickname,
         onValueChange = onNicknameChange,
@@ -192,6 +225,41 @@ private fun AddAccountDetailsContent(
       onSelected = onProviderSelected,
       onDismiss = { showProviderSheet = false },
     )
+  }
+}
+
+/**
+ * Explains the free-tier limit before the user reaches it. The purchase itself is not offered here:
+ * the add FAB remains the gate once the limit is met.
+ */
+@Composable
+private fun FreeAccountLimitCard(
+  accountCount: Int,
+  limit: Int,
+  isRestoring: Boolean,
+  onRestorePurchases: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  Card(modifier = modifier.fillMaxWidth()) {
+    Column(
+      modifier = Modifier.padding(16.dp),
+      verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+      Text(
+        text = "Free version: $accountCount of $limit accounts used",
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.semantics { heading() },
+      )
+      Text(
+        text =
+          "Accounts count across all tax years. You'll need to unlock unlimited accounts to add " +
+            "more than $limit.",
+        style = MaterialTheme.typography.bodyMedium,
+      )
+      TextButton(onClick = onRestorePurchases, enabled = !isRestoring) {
+        Text(if (isRestoring) "Restoring..." else "Restore purchases")
+      }
+    }
   }
 }
 
@@ -334,6 +402,7 @@ private fun AddAccountDetailsPreview() {
       onNext = {},
       onBack = {},
       onSave = {},
+      onRestorePurchases = {},
       onClose = {},
     )
   }
@@ -360,6 +429,36 @@ private fun AddAccountFollowUpPreview() {
       onNext = {},
       onBack = {},
       onSave = {},
+      onRestorePurchases = {},
+      onClose = {},
+    )
+  }
+}
+
+@FormFactorPreviews
+@Composable
+private fun AddAccountLimitCardPreview() {
+  ISAEyeTheme {
+    AddAccountContent(
+      uiState =
+        AddAccountUiState(
+          providerOptions = listOf(PickerOption("lloyds", "Lloyds Bank")),
+          selectedProviderId = "lloyds",
+          rulesetOptions = listOf(PickerOption("2026/2027", "2026/2027")),
+          selectedRulesetId = "2026/2027",
+          accountCount = 2,
+          freeAccountLimit = 4,
+        ),
+      isCompact = true,
+      onNicknameChange = {},
+      onProviderSelected = {},
+      onRulesetSelected = {},
+      onProductTypeSelected = {},
+      onFlexibleChange = {},
+      onNext = {},
+      onBack = {},
+      onSave = {},
+      onRestorePurchases = {},
       onClose = {},
     )
   }

@@ -24,28 +24,44 @@ git config core.hooksPath .githooks
 ### Useful commands
 
 ```sh
-# Build and install on a connected device/emulator
-./gradlew :app:installDebug
+# Build and install the Google Play build on a connected device/emulator
+./gradlew :app:installGpeDebug
 
-# Full verification gate: build, unit tests, instrumented-test compile, screenshot tests,
+# Full verification gate: both flavours, unit tests, instrumented-test compile, screenshot tests,
 # detekt, ktlint, Android Lint
-./gradlew :app:assembleDebug :app:testDebugUnitTest :app:assembleDebugAndroidTest \
-  :app:testDebugScreenshotTestDefaultTestSuite :app:detekt :app:ktlintCheck :app:lintDebug
+./gradlew :app:assembleGpeDebug :app:assembleFdroidDebug \
+  :app:testGpeDebugUnitTest :app:testFdroidDebugUnitTest \
+  :app:assembleGpeDebugAndroidTest :app:assembleFdroidDebugAndroidTest \
+  :app:testGpeDebugScreenshotTestDefaultTestSuite \
+  :app:detekt :app:ktlintCheck :app:lintGpeDebug :app:lintFdroidDebug
 
 # Just the static analysis (what the pre-commit hook runs)
 ./gradlew :app:ktlintCheck :app:detekt
 
 # Unit tests
-./gradlew :app:testDebugUnitTest
+./gradlew :app:testGpeDebugUnitTest :app:testFdroidDebugUnitTest
 
 # Local unit-test coverage (HTML and XML under app/build/reports/coverage)
-./gradlew :app:createDebugUnitTestCoverageReport
+./gradlew :app:createGpeDebugUnitTestCoverageReport
 
 # Instrumented tests (needs a device/emulator)
-./gradlew :app:connectedDebugAndroidTest
+./gradlew :app:connectedGpeDebugAndroidTest
 ```
 
 These are also set up as tasks in VS Code.
+
+### Build flavours
+
+Two product flavours share `:app`:
+
+- `gpe` - the Google Play build. It includes Play Billing and enforces the free limit of four
+  accounts. The one-time `full_access` product removes the limit.
+- `fdroid` - the F-Droid and GitHub build. It has no Billing client, no `BILLING` permission and no
+  account limit.
+
+Both keep the same application ID and version. F-Droid's recipe builds the `fdroid` flavour and the
+GitHub release publishes that APK under the existing `me.dylmye.isa-<version>.apk` name. The Play
+build is uploaded to Play Console as an AAB; no GPE APK is published on GitHub.
 
 ### Release signing
 
@@ -71,22 +87,44 @@ storeFile=/home/<you>/.android-keystores/isa-eye-upload.jks
 storePassword=<password>
 keyAlias=isa-eye-upload
 keyPassword=<password>
+playLicensingPublicKey=<base64-play-licensing-public-key>
 ```
 
-Alternatively, set `ISA_EYE_KEYSTORE_FILE`, `ISA_EYE_KEYSTORE_PASSWORD`, `ISA_EYE_KEY_ALIAS` and
-`ISA_EYE_KEY_PASSWORD` in the environment (the CI path). With neither present, release builds are
-unsigned, which is fine for contributors.
+Alternatively, set `ISA_EYE_KEYSTORE_FILE`, `ISA_EYE_KEYSTORE_PASSWORD`, `ISA_EYE_KEY_ALIAS`,
+`ISA_EYE_KEY_PASSWORD` and `ISA_EYE_PLAY_LICENSING_PUBLIC_KEY` in the environment (the CI path).
+The Play licensing key can also be passed as
+`-PISA_EYE_PLAY_LICENSING_PUBLIC_KEY=<base64>`. With no signing values, release builds are unsigned,
+which is fine for contributors; the licensing key is public, but the tag workflow requires it for a
+release.
 
 ```sh
 # Play artifact: signed with the upload key, then re-signed by Play App Signing
-./gradlew :app:bundleRelease
+./gradlew :app:bundleGpeRelease
 
-# Locally signed APK, if needed
-./gradlew :app:assembleRelease
+# Locally signed F-Droid APK, if needed
+./gradlew :app:assembleFdroidRelease
 ```
 
-The AAB is written to `app/build/outputs/bundle/release/app-release.aab`. If the upload key is lost
-or compromised, Play Console can reset it; the Google-held app signing key is unaffected.
+The Play AAB is written to `app/build/outputs/bundle/gpeRelease/app-gpe-release.aab`; the F-Droid
+APK is written to `app/build/outputs/apk/fdroid/release/app-fdroid-release.apk` when signing is
+configured. If the upload key is lost or compromised, Play Console can reset it; the Google-held app
+signing key is unaffected.
+
+### Google Play `full_access`
+
+Create a one-time, non-consumable product with the ID `full_access` in Play Console and set it to
+the lowest price tier. The GPE build queries the localised price from Play and displays that in the
+Play purchase dialog; no price is hard-coded in the app.
+
+The GPE build verifies the purchase signature with the app's Base64 licensing public key from Play
+Console -> Monetization setup -> Licensing. Supply that key at build time through
+`ISA_EYE_PLAY_LICENSING_PUBLIC_KEY`, `-PISA_EYE_PLAY_LICENSING_PUBLIC_KEY=...`, or
+`playLicensingPublicKey` in `keystore.properties`. It is injected into the GPE `BuildConfig` only and
+is deliberately absent from the F-Droid flavour.
+
+The tag workflow refuses to build a release when the key is missing. Debug GPE builds still compile
+without it and log a warning when a purchase has to be verified; release GPE builds reject
+unverified purchases.
 
 ### Releasing a version
 
@@ -94,19 +132,23 @@ Bump `versionCode` and `versionName` in `app/build.gradle.kts` - the tag workflo
 `versionCode` that is not greater than the previous tag's - then tag the commit:
 
 ```sh
-git tag v2.0.1
-git push origin v2.0.1
+git tag v2.1.0
+git push origin v2.1.0
 ```
 
-A `v*` tag runs three jobs: it validates the version, proves the release build is reproducible, and
-only once both pass builds the signed APK and attaches it to the GitHub release as:
+A `v*` tag runs three jobs: it validates the version, proves the F-Droid release build is
+reproducible, and only once both pass builds both release flavours and attaches these to the GitHub
+release:
 
-- `me.dylmye.isa-<version>.apk`, signed with the upload key. The F-Droid recipe's `Binaries:` URL
+- `me.dylmye.isa-<version>.apk`, the signed F-Droid flavour. The F-Droid recipe's `Binaries:` URL
   points at exactly this name.
-- `me.dylmye.isa-<version>-mapping.txt`, the R8 mapping. Keep every one: R8 renames every class, so
-  a stack trace from a released build can only be deobfuscated with the mapping that produced it.
+- `me.dylmye.isa-<version>-mapping.txt`, the F-Droid R8 mapping. Keep every one: R8 renames every
+  class, so a stack trace from a released build can only be deobfuscated with the mapping that
+  produced it.
+- `me.dylmye.isa-<version>-gpe-mapping.txt`, the GPE R8 mapping for Play crash reports. The GPE AAB
+  itself is not attached to the GitHub release.
 
-The release job needs four repository secrets:
+The release job needs five repository secrets:
 
 | Secret | Value |
 | --- | --- |
@@ -114,6 +156,7 @@ The release job needs four repository secrets:
 | `ISA_EYE_KEYSTORE_PASSWORD` | the key's `storePassword` |
 | `ISA_EYE_KEY_ALIAS` | the key's `keyAlias` |
 | `ISA_EYE_KEY_PASSWORD` | the key's `keyPassword` |
+| `ISA_EYE_PLAY_LICENSING_PUBLIC_KEY` | the Base64 Play licensing public key |
 
 Once the release is published, the same job rewrites `fdroid/me.dylmye.isa.yml` to the released
 version and commit hash and pushes that to `main`. It is only the staging copy here: F-Droid's
@@ -129,8 +172,9 @@ to `metadata/me.dylmye.isa.yml` in a fork and open a merge request.
 It publishes the APK released on GitHub rather than F-Droid's own re-signed rebuild (`Binaries` plus
 `AllowedAPKSigningKeys`). F-Droid still builds the tagged commit and only publishes the upstream APK
 when the two match byte for byte, which is what the reproducibility check establishes. The recipe's
-`versionName`, `versionCode` and `commit` must agree with `app/build.gradle.kts` at that commit, and
-`commit` is the full commit hash rather than the tag name.
+`gradle: - fdroid` entry builds the no-Billing variant and its `output` is the unsigned fdroid APK.
+The recipe's `versionName`, `versionCode` and `commit` must agree with `app/build.gradle.kts` at that
+commit, and `commit` is the full commit hash rather than the tag name.
 
 The listing text and graphics deliberately are not in the recipe. They live beside the app in
 `fastlane/metadata/android/en-US/`, which F-Droid reads from the source tree:
@@ -155,10 +199,10 @@ be deterministic. To check that it still is:
 ```
 
 It builds the current commit twice, in separate clones with different directory lengths, timezones
-and locales, and compares the unsigned APKs (`app-release-unsigned.apk`) - that is the artifact
-F-Droid rebuilds against, because the v2/v3 signature covers every other byte and is copied onto the
-rebuild by `apksigcopier`. `diffoscope` will show where two builds diverge. The same check runs on
-every `v*` tag in CI.
+and locales, and compares the unsigned F-Droid APKs
+(`app-fdroid-release-unsigned.apk`) - that is the artifact F-Droid rebuilds against, because the
+v2/v3 signature covers every other byte and is copied onto the rebuild by `apksigcopier`.
+`diffoscope` will show where two builds diverge. The same check runs on every `v*` tag in CI.
 
 Things that keep it that way, and are easy to break by accident:
 
@@ -180,16 +224,18 @@ emulator needed.
 
 ```sh
 # Compare against the committed reference images
-./gradlew :app:testDebugScreenshotTestDefaultTestSuite
+./gradlew :app:testGpeDebugScreenshotTestDefaultTestSuite
 
 # Re-record them after an intended UI change
-./gradlew :app:updateDebugScreenshotTestDefaultTestSuite
+./gradlew :app:updateGpeDebugScreenshotTestDefaultTestSuite
 ```
 
-Reference images live in `app/src/screenshotTestDefaultDebug/reference/` and are **committed** -
-they are the golden files. A failing run therefore means either a regression or a change you meant
-to make and need to re-record. Every preview carries `@PreviewTest`; the window sizes, themes and
-font scales come from the multi-preview annotations in `WindowSizePreviews.kt`.
+Reference images live in `app/src/screenshotTestDefaultGpeDebug/reference/` and are **committed** -
+they are the golden files. The suite targets the GPE debug variant because the free-limit card is
+GPE-only; the F-Droid UI is the same minus that card. A failing run therefore means either a
+regression or a change you meant to make and need to re-record. Every preview carries
+`@PreviewTest`; the window sizes, themes and font scales come from the multi-preview annotations in
+`WindowSizePreviews.kt`.
 
 ### Store listing screenshots
 
@@ -228,7 +274,7 @@ $ANDROID_HOME/emulator/emulator -avd isa-desktop \
 
 # Install the debug build, then open Help -> Backup & restore to import a populated
 # .isabackup (push it to /sdcard/Download/IsaEye/ first). Use demo data, never real balances.
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r app/build/outputs/apk/gpe/debug/app-gpe-debug.apk
 
 RAW=art/store-screenshots/raw
 

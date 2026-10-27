@@ -13,6 +13,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import me.dylmye.isa.billing.AccountLimitPolicy
+import me.dylmye.isa.data.AccountLimitRepository
 import me.dylmye.isa.data.AccountOrderRepository
 import me.dylmye.isa.data.AccountRepository
 import me.dylmye.isa.data.AutoContributionRepository
@@ -30,7 +32,7 @@ import okhttp3.OkHttpClient
 import androidx.work.Configuration as WorkManagerConfiguration
 
 /** Holds the process-wide database and repositories (manual DI, no framework). */
-class IsaEyeApplication :
+open class IsaEyeApplication :
   Application(),
   WorkManagerConfiguration.Provider {
   /**
@@ -58,6 +60,9 @@ class IsaEyeApplication :
     ReminderScheduler.ensureScheduled(this)
     WidgetRefreshScheduler.ensureScheduled(this)
     WidgetThemeScheduler.ensureScheduled(this)
+    // The Play build reconciles its cached entitlement with the store on every process start. The
+    // F-Droid policy is a no-op.
+    applicationScope.launch { accountLimitPolicy.refresh() }
     // The widgets bake theme colours into bitmaps, so a light/dark switch needs a fresh composition.
     // This receiver lives only while the app process does; the manifest cannot receive the implicit
     // configuration broadcast on modern Android.
@@ -88,6 +93,7 @@ class IsaEyeApplication :
   private class Container(context: Context) {
     val database = IsaDatabase.build(context)
     val accountRepository = AccountRepository(database)
+    val accountLimitRepository = AccountLimitRepository(database)
     val accountOrderRepository = AccountOrderRepository(database)
     val goalRepository = GoalRepository(database)
     val autoContributionRepository = AutoContributionRepository(database)
@@ -104,6 +110,9 @@ class IsaEyeApplication :
   val accountRepository: AccountRepository
     get() = container().accountRepository
 
+  val accountLimitRepository: AccountLimitRepository
+    get() = container().accountLimitRepository
+
   val accountOrderRepository: AccountOrderRepository
     get() = container().accountOrderRepository
 
@@ -112,6 +121,20 @@ class IsaEyeApplication :
 
   val autoContributionRepository: AutoContributionRepository
     get() = container().autoContributionRepository
+
+  /**
+   * The distribution channel's account limit and purchase behaviour. The flavour-specific
+   * Application subclass supplies it; the F-Droid build returns an always-unlimited policy.
+   */
+  val accountLimitPolicy: AccountLimitPolicy by lazy { createAccountLimitPolicy() }
+
+  protected open fun createAccountLimitPolicy(): AccountLimitPolicy =
+    error("This build does not declare an account limit policy.")
+
+  /** Reconciles the cached entitlement with the store, e.g. when the activity resumes. */
+  fun refreshEntitlement() {
+    applicationScope.launch { accountLimitPolicy.refresh() }
+  }
 
   /**
    * Closes the current database so an import can replace its file. The next access to [database]

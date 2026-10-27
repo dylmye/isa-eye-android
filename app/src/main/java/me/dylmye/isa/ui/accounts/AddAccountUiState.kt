@@ -34,7 +34,27 @@ data class AddAccountUiState(
   val flexible: Boolean = false,
   val isLoading: Boolean = false,
   val isSaving: Boolean = false,
+  /** Total accounts, regardless of tax year or whether they are closed. */
+  val accountCount: Int = 0,
+  /** The free-tier limit for this build, or null when accounts are unlimited. */
+  val freeAccountLimit: Int? = null,
+  val isUnlimited: Boolean = false,
+  val isRestoring: Boolean = false,
 )
+
+/** True when the add form should explain the free limit and offer the restore action. */
+val AddAccountUiState.showLimitCard: Boolean
+  get() {
+    val limit = freeAccountLimit ?: return false
+    return !isUnlimited && accountCount < limit
+  }
+
+/** Whether a new account can be saved without purchasing. Existing edits do not use this. */
+val AddAccountUiState.canCreateAccount: Boolean
+  get() {
+    val limit = freeAccountLimit ?: return true
+    return isUnlimited || accountCount < limit
+  }
 
 val AddAccountUiState.selectedProvider: PickerOption?
   get() = providerOptions.firstOrNull { it.id == selectedProviderId }

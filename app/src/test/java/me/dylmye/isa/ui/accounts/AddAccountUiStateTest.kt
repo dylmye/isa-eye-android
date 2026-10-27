@@ -39,4 +39,24 @@ class AddAccountUiStateTest {
     assertTrue(option.matches("TSB"))
     assertFalse(option.matches("barclays"))
   }
+
+  @Test
+  fun showLimitCard_isOnlyShownWhileLimitedAndUnderTheLimit() {
+    val limited = AddAccountUiState(accountCount = 2, freeAccountLimit = 4)
+
+    assertTrue(limited.showLimitCard)
+    assertFalse(limited.copy(accountCount = 4).showLimitCard)
+    assertFalse(limited.copy(isUnlimited = true).showLimitCard)
+    assertFalse(limited.copy(freeAccountLimit = null).showLimitCard)
+  }
+
+  @Test
+  fun canCreateAccount_allowsBelowTheLimitOrWhenUnlimited() {
+    val limited = AddAccountUiState(accountCount = 3, freeAccountLimit = 4)
+
+    assertTrue(limited.canCreateAccount)
+    assertFalse(limited.copy(accountCount = 4).canCreateAccount)
+    assertTrue(limited.copy(accountCount = 10, isUnlimited = true).canCreateAccount)
+    assertTrue(limited.copy(freeAccountLimit = null).canCreateAccount)
+  }
 }

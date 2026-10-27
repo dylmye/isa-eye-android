@@ -30,6 +30,7 @@ import me.dylmye.isa.widgets.WidgetPreviews
 import me.dylmye.isa.widgets.WidgetTab
 import me.dylmye.isa.widgets.WidgetUpdater
 
+@Suppress("TooManyFunctions")
 class MainActivity : ComponentActivity() {
   /**
    * Requests to open the add-account flow, raised by the Meta+N shortcut. Navigation belongs to the
@@ -96,6 +97,12 @@ class MainActivity : ComponentActivity() {
     super.onNewIntent(intent)
     setIntent(intent)
     (intent.notificationScreen() ?: intent.widgetScreen())?.let(::openScreen)
+  }
+
+  /** Reconcile the Play entitlement after returning from the store or another activity. */
+  override fun onResume() {
+    super.onResume()
+    (application as IsaEyeApplication).refreshEntitlement()
   }
 
   /**

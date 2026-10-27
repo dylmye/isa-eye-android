@@ -84,14 +84,24 @@ jobs:
           fi
           printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/isa-eye-upload.jks"
           chmod 600 "$RUNNER_TEMP/isa-eye-upload.jks"
-      - name: Build the signed release APK
+      - name: Check the Play licensing key is configured
+        env:
+          ISA_EYE_PLAY_LICENSING_PUBLIC_KEY: ${{ secrets.ISA_EYE_PLAY_LICENSING_PUBLIC_KEY }}
+        run: |
+          set -eu
+          if [ -z "${ISA_EYE_PLAY_LICENSING_PUBLIC_KEY:-}" ]; then
+            echo "::error::ISA_EYE_PLAY_LICENSING_PUBLIC_KEY is not set, so purchases would not be verifiable."
+            exit 1
+          fi
+      - name: Build the signed release artifacts
         env:
           ISA_EYE_KEYSTORE_FILE: ${{ runner.temp }}/isa-eye-upload.jks
           ISA_EYE_KEYSTORE_PASSWORD: ${{ secrets.ISA_EYE_KEYSTORE_PASSWORD }}
           ISA_EYE_KEY_ALIAS: ${{ secrets.ISA_EYE_KEY_ALIAS }}
           ISA_EYE_KEY_PASSWORD: ${{ secrets.ISA_EYE_KEY_PASSWORD }}
-        run: ./gradlew :app:assembleRelease --no-daemon
-      - name: Publish the APK and its mapping
+          ISA_EYE_PLAY_LICENSING_PUBLIC_KEY: ${{ secrets.ISA_EYE_PLAY_LICENSING_PUBLIC_KEY }}
+        run: ./gradlew :app:assembleFdroidRelease :app:bundleGpeRelease --no-daemon
+      - name: Publish the F-Droid APK and mappings
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -99,15 +109,18 @@ jobs:
           version="${GITHUB_REF_NAME#v}"
           apk="$RUNNER_TEMP/me.dylmye.isa-$version.apk"
           mapping="$RUNNER_TEMP/me.dylmye.isa-$version-mapping.txt"
-          cp app/build/outputs/apk/release/app-release.apk "$apk"
+          gpe_mapping="$RUNNER_TEMP/me.dylmye.isa-$version-gpe-mapping.txt"
+          cp app/build/outputs/apk/fdroid/release/app-fdroid-release.apk "$apk"
           # R8 renames every class, so a crash report from a released APK can only be read with the
-          # mapping that produced it. It is published beside the APK and never regenerated.
-          cp app/build/outputs/mapping/release/mapping.txt "$mapping"
+          # mapping that produced it. The F-Droid mapping stays beside the APK; the GPE mapping is
+          # for Play crash reports and is attached with a channel suffix.
+          cp app/build/outputs/mapping/fdroidRelease/mapping.txt "$mapping"
+          cp app/build/outputs/mapping/gpeRelease/mapping.txt "$gpe_mapping"
 
           gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 ||
             gh release create "$GITHUB_REF_NAME" --title "ISA Eye $version" \
               --notes "Built from $GITHUB_SHA."
-          gh release upload "$GITHUB_REF_NAME" "$apk" "$mapping" --clobber
+          gh release upload "$GITHUB_REF_NAME" "$apk" "$mapping" "$gpe_mapping" --clobber
       - name: Point the F-Droid recipe at this release
         run: ./scripts/update-fdroid-metadata.sh "$GITHUB_REF_NAME"
       - name: Commit the recipe update

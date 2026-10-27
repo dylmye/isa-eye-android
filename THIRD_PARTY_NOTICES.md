@@ -43,3 +43,10 @@ Android source distributions for the complete notices.
 
 These libraries are licensed under the Apache License 2.0. Their licence texts and notices are
 included in the respective artifacts and are available from their upstream projects.
+
+## Google Play Billing (GPE build only)
+
+The `gpe` flavour includes the Google Play Billing Library
+(`com.android.billingclient:billing`). It is not present in the `fdroid` flavour, which has no
+Billing client and no account limit. The Billing library is distributed under Google's Android SDK
+licence terms; see the artifact and Google Play Billing documentation for the applicable terms.

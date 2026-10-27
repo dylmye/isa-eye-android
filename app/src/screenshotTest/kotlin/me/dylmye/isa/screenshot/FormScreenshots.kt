@@ -36,6 +36,7 @@ fun AddAccountScreenshot() {
       onNext = {},
       onBack = {},
       onSave = {},
+      onRestorePurchases = {},
       onClose = {},
       isCompact = true,
     )
@@ -57,6 +58,52 @@ fun AddAccountExpandedScreenshot() {
       onNext = {},
       onBack = {},
       onSave = {},
+      onRestorePurchases = {},
+      onClose = {},
+      isCompact = false,
+    )
+  }
+}
+
+/** The informational free-limit card, with the restore action, on a GPE-style limited account. */
+@PreviewTest
+@CompactFormPreviews
+@Composable
+fun AddAccountLimitCardScreenshot() {
+  ISAEyeTheme(dynamicColor = false) {
+    AddAccountContent(
+      uiState = PreviewAddAccount.copy(accountCount = 2, freeAccountLimit = 4),
+      onNicknameChange = {},
+      onProviderSelected = {},
+      onRulesetSelected = {},
+      onProductTypeSelected = {},
+      onFlexibleChange = {},
+      onNext = {},
+      onBack = {},
+      onSave = {},
+      onRestorePurchases = {},
+      onClose = {},
+      isCompact = true,
+    )
+  }
+}
+
+@PreviewTest
+@ExpandedFormPreviews
+@Composable
+fun AddAccountLimitCardExpandedScreenshot() {
+  ISAEyeTheme(dynamicColor = false) {
+    AddAccountContent(
+      uiState = PreviewAddAccount.copy(accountCount = 2, freeAccountLimit = 4),
+      onNicknameChange = {},
+      onProviderSelected = {},
+      onRulesetSelected = {},
+      onProductTypeSelected = {},
+      onFlexibleChange = {},
+      onNext = {},
+      onBack = {},
+      onSave = {},
+      onRestorePurchases = {},
       onClose = {},
       isCompact = false,
     )

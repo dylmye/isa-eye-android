@@ -2,6 +2,7 @@ package me.dylmye.isa
 
 import android.app.Activity
 import android.content.Intent
+import android.widget.Toast
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,12 +30,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.dropUnlessResumed
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
@@ -48,6 +51,8 @@ import kotlinx.coroutines.flow.emptyFlow
 import me.dylmye.isa.ui.accounts.AccountDetailPlaceholder
 import me.dylmye.isa.ui.accounts.AccountDetailScreen
 import me.dylmye.isa.ui.accounts.AccountsScreen
+import me.dylmye.isa.ui.accounts.AddAccountGateEvent
+import me.dylmye.isa.ui.accounts.AddAccountGateViewModel
 import me.dylmye.isa.ui.accounts.AddAccountScreen
 import me.dylmye.isa.ui.accounts.AutoContributionScreen
 import me.dylmye.isa.ui.accounts.EditAccountScreen
@@ -98,7 +103,7 @@ fun MainNavigation(
   // The add button, the shortcut and the goal card share one guard, so none of them can open a
   // dialog on top of a dialog that is already showing.
   val openAddAccount = { backStack.addDialog(AddAccount) }
-  LaunchedEffect(Unit) { addAccountShortcut.collect { openAddAccount() } }
+  val requestAddAccount = rememberAddAccountRequest(addAccountShortcut, openAddAccount)
   // A tapped reminder opens its screen at the top: a detail page is pushed over the accounts list,
   // and a tab drops any detail page that was left open on it.
   LaunchedEffect(Unit) {
@@ -144,7 +149,7 @@ fun MainNavigation(
     primaryActionContent = {
       NavigationHeader(
         showLogo = wideRail,
-        onClick = dropUnlessResumed { openAddAccount() },
+        onClick = dropUnlessResumed { requestAddAccount() },
         modifier = if (wideRail) Modifier.padding(horizontal = 20.dp) else Modifier,
       )
     },
@@ -215,6 +220,41 @@ private fun NavigationHeader(
     }
     AddAccountFab(onClick = onClick)
   }
+}
+
+/**
+ * Wires the add button and the keyboard shortcut to the gate ViewModel, and surfaces its one-off
+ * events. Kept out of [MainNavigation] so the scaffold itself stays readable.
+ */
+@Composable
+private fun rememberAddAccountRequest(
+  addAccountShortcut: Flow<Unit>,
+  openAddAccount: () -> Unit,
+): () -> Unit {
+  val gateViewModel: AddAccountGateViewModel = viewModel(factory = AddAccountGateViewModel.Factory)
+  val activity = LocalActivity.current
+  val context = LocalContext.current
+  LaunchedEffect(gateViewModel, activity) {
+    gateViewModel.events.collect { event ->
+      when (event) {
+        AddAccountGateEvent.OpenAddAccount -> {
+          openAddAccount()
+        }
+
+        is AddAccountGateEvent.ShowMessage -> {
+          Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+        }
+      }
+    }
+  }
+  val requestAddAccount =
+    remember(gateViewModel, activity) {
+      { if (activity != null) gateViewModel.onAddClicked(activity) else openAddAccount() }
+    }
+  LaunchedEffect(addAccountShortcut, requestAddAccount) {
+    addAccountShortcut.collect { requestAddAccount() }
+  }
+  return requestAddAccount
 }
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)

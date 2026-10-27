@@ -19,8 +19,8 @@ Builds:
     versionCode: 15
     commit: 3b3c6b866fa8e374ed6583a3bbca9ff413804f1f
     gradle:
-      - yes
-    output: app/build/outputs/apk/release/app-release-unsigned.apk
+      - fdroid
+    output: app/build/outputs/apk/fdroid/release/app-fdroid-release-unsigned.apk
 
 AllowedAPKSigningKeys: 6d5d72f7974201629ebf6edb93b22887683c0918a52688caaf2247e2a3300343
 

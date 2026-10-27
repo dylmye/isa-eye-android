@@ -2,9 +2,9 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "assembleDebug",
+      "label": "assemble GPE debug",
       "type": "shell",
-      "command": "./gradlew :app:assembleDebug --console=plain",
+      "command": "./gradlew :app:assembleGpeDebug --console=plain",
       "problemMatcher": {
         "owner": "kotlin",
         "fileLocation": "absolute",
@@ -20,9 +20,9 @@
       "presentation": { "reveal": "always", "panel": "shared", "clear": true }
     },
     {
-      "label": "installDebug",
+      "label": "install GPE debug",
       "type": "shell",
-      "command": "./gradlew :app:installDebug --console=plain",
+      "command": "./gradlew :app:installGpeDebug --console=plain",
       "problemMatcher": {
         "owner": "kotlin",
         "fileLocation": "absolute",
@@ -37,6 +37,24 @@
       "presentation": { "reveal": "always", "panel": "shared", "clear": true }
     },
     {
+      "label": "assemble F-Droid debug",
+      "type": "shell",
+      "command": "./gradlew :app:assembleFdroidDebug --console=plain",
+      "problemMatcher": {
+        "owner": "kotlin",
+        "fileLocation": "absolute",
+        "pattern": {
+          "regexp": "^e: file://(.*):(\\d+):(\\d+)\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4
+        }
+      },
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
       "label": "launch app",
       "type": "shell",
       "command": "ADB=$(command -v adb || echo \"$(sed -n 's/^sdk.dir=//p' local.properties)/platform-tools/adb\"); \"$ADB\" shell am start -n me.dylmye.isa/.MainActivity",
@@ -45,14 +63,14 @@
     {
       "label": "run app",
       "dependsOrder": "sequence",
-      "dependsOn": ["installDebug", "launch app"],
+      "dependsOn": ["install GPE debug", "launch app"],
       "group": { "kind": "build", "isDefault": true },
       "problemMatcher": []
     },
     {
       "label": "unit tests",
       "type": "shell",
-      "command": "./gradlew :app:testDebugUnitTest --console=plain",
+      "command": "./gradlew :app:testGpeDebugUnitTest :app:testFdroidDebugUnitTest --console=plain",
       "group": "test",
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "shared", "clear": true }

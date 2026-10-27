@@ -16,35 +16,59 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import me.dylmye.isa.IsaEyeApplication
+import me.dylmye.isa.billing.AccountLimitPolicy
+import me.dylmye.isa.billing.RestoreResult
+import me.dylmye.isa.data.AccountLimitRepository
 import me.dylmye.isa.data.AccountRepository
 import me.dylmye.isa.data.db.entity.ProductEntity
+import me.dylmye.isa.data.db.entity.ProductTypeEntity
+import me.dylmye.isa.data.db.entity.ProviderAliasEntity
+import me.dylmye.isa.data.db.entity.ProviderEntity
+import me.dylmye.isa.data.db.entity.RulesetEntity
 import java.util.UUID
 
 /**
  * State holder for the add-account flow. Reference data is observed from Room; the in-progress form
  * lives only here as [draft] until the account is saved.
  */
-class AddAccountViewModel(private val repository: AccountRepository) : ViewModel() {
+class AddAccountViewModel(
+  private val repository: AccountRepository,
+  private val accountLimitRepository: AccountLimitRepository,
+  private val policy: AccountLimitPolicy,
+) : ViewModel() {
   private val draft = MutableStateFlow(AddAccountDraft())
   private val savedEvents = Channel<AddAccountEvent>(Channel.BUFFERED)
 
   /** One-off events, e.g. the account was saved and the flow should close. */
   val events: Flow<AddAccountEvent> = savedEvents.receiveAsFlow()
 
-  val uiState: StateFlow<AddAccountUiState> =
+  private val referenceData =
     combine(
       repository.observeProviders(),
       repository.observeProviderAliases(),
       repository.observeRulesets(),
       repository.observeProductTypes(),
-      draft,
-    ) { providers, aliases, rulesets, productTypes, draft ->
-      val aliasesByProvider = aliases.groupBy { it.providerId }
+    ) { providers, aliases, rulesets, productTypes ->
+      ReferenceData(providers, aliases, rulesets, productTypes)
+    }
+
+  private val entitlement =
+    combine(
+      accountLimitRepository.observeAccountCount(),
+      policy.isUnlimited,
+      policy.isRestoring,
+    ) { count, unlimited, restoring ->
+      EntitlementState(count, unlimited, restoring)
+    }
+
+  val uiState: StateFlow<AddAccountUiState> =
+    combine(referenceData, entitlement, draft) { references, entitlements, draft ->
+      val aliasesByProvider = references.aliases.groupBy { it.providerId }
       AddAccountUiState(
         step = draft.step,
         nickname = draft.nickname,
         providerOptions =
-          providers.map { provider ->
+          references.providers.map { provider ->
             PickerOption(
               id = provider.id,
               label = provider.name,
@@ -52,13 +76,18 @@ class AddAccountViewModel(private val repository: AccountRepository) : ViewModel
             )
           },
         selectedProviderId = draft.providerId,
-        rulesetOptions = rulesets.map { PickerOption(it.id, it.id) },
+        rulesetOptions = references.rulesets.map { PickerOption(it.id, it.id) },
         // Default to the most recent tax year, matching the web app.
-        selectedRulesetId = draft.rulesetId ?: rulesets.lastOrNull()?.id,
-        productTypeOptions = productTypes.map { PickerOption(it.id, it.name, it.shortDescription) },
+        selectedRulesetId = draft.rulesetId ?: references.rulesets.lastOrNull()?.id,
+        productTypeOptions =
+          references.productTypes.map { PickerOption(it.id, it.name, it.shortDescription) },
         selectedProductTypeId = draft.productTypeId,
         flexible = draft.flexible,
         isSaving = draft.isSaving,
+        accountCount = entitlements.count,
+        freeAccountLimit = policy.freeAccountLimit,
+        isUnlimited = entitlements.unlimited,
+        isRestoring = entitlements.restoring,
       )
     }
       .stateIn(
@@ -81,8 +110,27 @@ class AddAccountViewModel(private val repository: AccountRepository) : ViewModel
 
   fun onBack() = draft.update { it.copy(step = AddAccountStep.Details) }
 
+  fun onRestorePurchases() {
+    if (uiState.value.isRestoring) return
+    viewModelScope.launch {
+      val message =
+        when (policy.restore()) {
+          RestoreResult.Restored -> "Purchases restored."
+          RestoreResult.NotFound -> "No previous purchase found."
+          RestoreResult.Unavailable -> "Google Play billing isn't available on this device."
+          RestoreResult.Failed -> "Purchases couldn't be restored. Try again later."
+        }
+      savedEvents.send(AddAccountEvent.ShowMessage(message))
+    }
+  }
+
   fun save() {
-    val product = buildProduct(uiState.value) ?: return
+    val state = uiState.value
+    if (!state.canCreateAccount) {
+      viewModelScope.launch { savedEvents.send(AddAccountEvent.LimitReached) }
+      return
+    }
+    val product = buildProduct(state) ?: return
     draft.update { it.copy(isSaving = true) }
     viewModelScope.launch {
       repository.upsertProduct(product)
@@ -116,11 +164,24 @@ class AddAccountViewModel(private val repository: AccountRepository) : ViewModel
     val Factory = viewModelFactory {
       initializer {
         val application = this[APPLICATION_KEY] as IsaEyeApplication
-        AddAccountViewModel(application.accountRepository)
+        AddAccountViewModel(
+          application.accountRepository,
+          application.accountLimitRepository,
+          application.accountLimitPolicy,
+        )
       }
     }
   }
 }
+
+private data class ReferenceData(
+  val providers: List<ProviderEntity>,
+  val aliases: List<ProviderAliasEntity>,
+  val rulesets: List<RulesetEntity>,
+  val productTypes: List<ProductTypeEntity>,
+)
+
+private data class EntitlementState(val count: Int, val unlimited: Boolean, val restoring: Boolean)
 
 private data class AddAccountDraft(
   val step: AddAccountStep = AddAccountStep.Details,
@@ -134,4 +195,8 @@ private data class AddAccountDraft(
 
 sealed interface AddAccountEvent {
   data object Saved : AddAccountEvent
+
+  data object LimitReached : AddAccountEvent
+
+  data class ShowMessage(val message: String) : AddAccountEvent
 }

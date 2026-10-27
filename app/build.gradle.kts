@@ -32,6 +32,22 @@ val hasReleaseSigning =
   listOf(releaseStoreFile, releaseStorePassword, releaseKeyAlias, releaseKeyPassword)
     .all { it != null }
 
+fun buildConfigString(value: String): String =
+  "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+
+// Public Play licensing key, supplied at build time like the signing values. It is public, but it
+// is deliberately kept out of the F-Droid variant; only the GPE build gets the BuildConfig field.
+val playLicensingPublicKey =
+  (
+    providers.environmentVariable("ISA_EYE_PLAY_LICENSING_PUBLIC_KEY").orNull
+      ?: providers.gradleProperty("ISA_EYE_PLAY_LICENSING_PUBLIC_KEY").orNull
+      ?: keystoreProperties.getProperty("playLicensingPublicKey")
+      ?: ""
+  )
+    .replace("-----BEGIN PUBLIC KEY-----", "")
+    .replace("-----END PUBLIC KEY-----", "")
+    .filterNot { it.isWhitespace() }
+
 android {
     namespace = "me.dylmye.isa"
     compileSdk = 37
@@ -39,9 +55,29 @@ android {
         applicationId = "me.dylmye.isa"
         minSdk = 24
         targetSdk = 37
-        versionCode = 15
-        versionName = "2.0.1"
+        versionCode = 16
+        versionName = "2.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        manifestPlaceholders["applicationName"] = ".IsaEyeApplication"
+    }
+
+    // Two distribution channels share the app module. GPE is the Play build with the full_access
+    // purchase; F-Droid is built without the Billing client and without the account limit.
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("gpe") {
+            dimension = "distribution"
+            manifestPlaceholders["applicationName"] = ".GpeIsaEyeApplication"
+            buildConfigField(
+                "String",
+                "PLAY_LICENSING_PUBLIC_KEY",
+                buildConfigString(playLicensingPublicKey),
+            )
+        }
+        create("fdroid") {
+            dimension = "distribution"
+            manifestPlaceholders["applicationName"] = ".FdroidIsaEyeApplication"
+        }
     }
 
     signingConfigs {
@@ -83,7 +119,7 @@ android {
     buildFeatures {
       compose = true
       aidl = false
-      buildConfig = false
+      buildConfig = true
       shaders = false
     }
 
@@ -107,7 +143,7 @@ android {
       screenshotTests {
         create("screenshotTest") {
           engineVersion = libs.versions.screenshot.get()
-          targetVariants.add("debug")
+          targetVariants.add("gpeDebug")
           dependencies {
             implementation(libs.screenshot.validation.api)
           }
@@ -171,6 +207,10 @@ dependencies {
   implementation(libs.androidx.core.splashscreen)
   implementation(libs.androidx.lifecycle.runtime.ktx)
   implementation(libs.androidx.activity.compose)
+
+  // Play Billing is deliberately flavour-specific. The F-Droid build must not resolve or package
+  // it, so this cannot be an `implementation` dependency.
+  "gpeImplementation"(libs.androidx.billing)
 
   // Arch Components
   implementation(libs.androidx.lifecycle.runtime.compose)

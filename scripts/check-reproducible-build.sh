@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Checks that the release APK is reproducible.
+# Checks that the F-Droid release APK is reproducible.
 #
 # F-Droid verifies a release by rebuilding the tagged commit and comparing the result against the
 # developer's APK, so this builds the same commit twice under deliberately different conditions and
@@ -41,9 +41,9 @@ build() {
   printf 'Building in %s (TZ=%s, LANG=%s)\n' "$dir" "$tz" "$locale" >&2
   (
     cd "$dir"
-    TZ="$tz" LANG="$locale" LC_ALL="$locale" ./gradlew :app:assembleRelease --no-daemon --quiet
+    TZ="$tz" LANG="$locale" LC_ALL="$locale" ./gradlew :app:assembleFdroidRelease --no-daemon --quiet
   )
-  printf '%s\n' "$dir/app/build/outputs/apk/release/app-release-unsigned.apk"
+  printf '%s\n' "$dir/app/build/outputs/apk/fdroid/release/app-fdroid-release-unsigned.apk"
 }
 
 first="$(build "$work/a" UTC C.UTF-8)"

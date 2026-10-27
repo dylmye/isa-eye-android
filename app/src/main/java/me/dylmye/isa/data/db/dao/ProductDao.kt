@@ -29,6 +29,12 @@ interface ProductDao {
   @Query(ACCOUNT_SUMMARIES)
   suspend fun getSummaries(): List<AccountSummary>
 
+  @Query("SELECT COUNT(*) FROM products")
+  fun observeCount(): Flow<Int>
+
+  @Query("SELECT COUNT(*) FROM products")
+  suspend fun count(): Int
+
   @Query("SELECT * FROM products WHERE _id = :id")
   fun observeById(id: String): Flow<ProductEntity?>
 

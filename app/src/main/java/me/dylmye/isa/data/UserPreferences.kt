@@ -51,6 +51,14 @@ class UserPreferences(context: Context) {
         }
       }
 
+  /**
+   * Whether the Google Play build has the `full_access` purchase. The store is queried again on
+   * start and resume, so this is only an offline cache and never the sole record of the purchase.
+   */
+  var fullAccessUnlocked: Boolean
+    get() = prefs.getBoolean(KEY_FULL_ACCESS_UNLOCKED, false)
+    set(value) = prefs.edit { putBoolean(KEY_FULL_ACCESS_UNLOCKED, value) }
+
   private companion object {
     const val PREFS_NAME = "isa_eye_preferences"
     const val KEY_HAS_LAUNCHED = "has_launched"
@@ -62,5 +70,6 @@ class UserPreferences(context: Context) {
     const val KEY_LEGACY_HAS_ACCOUNT = "has_account"
     const val KEY_CURRENT_RULESET = "current_ruleset"
     const val KEY_BACKUP_FOLDER_URI = "backup_folder_uri"
+    const val KEY_FULL_ACCESS_UNLOCKED = "full_access_unlocked"
   }
 }
