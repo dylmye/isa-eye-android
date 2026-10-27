@@ -115,6 +115,12 @@ The release job needs four repository secrets:
 | `ISA_EYE_KEY_ALIAS` | the key's `keyAlias` |
 | `ISA_EYE_KEY_PASSWORD` | the key's `keyPassword` |
 
+Once the release is published, the same job rewrites `fdroid/me.dylmye.isa.yml` to the released
+version and commit hash and pushes that to `main`. It is only the staging copy here: F-Droid's
+autoupdate adds new builds to its own copy from the tags, so nothing is pushed downstream. The
+commit is marked `[skip ci]` because it touches recipe metadata rather than the app. If `main` has
+moved since the tag, that push fails instead of overwriting the other change.
+
 ### Submitting to F-Droid
 
 `fdroid/me.dylmye.isa.yml` is the [fdroiddata](https://gitlab.com/fdroid/fdroiddata) recipe. Copy it

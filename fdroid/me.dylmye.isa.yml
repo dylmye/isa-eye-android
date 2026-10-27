@@ -15,9 +15,9 @@ RepoType: git
 Repo: https://github.com/dylmye/isa-eye-android
 
 Builds:
-  - versionName: 2.0.0
-    versionCode: 14
-    commit: cf2dd79fbcc03711b4894a1b257e06a9637ef9dd
+  - versionName: 2.0.1
+    versionCode: 15
+    commit: 3b3c6b866fa8e374ed6583a3bbca9ff413804f1f
     gradle:
       - yes
     output: app/build/outputs/apk/release/app-release-unsigned.apk
@@ -28,5 +28,5 @@ Binaries: https://github.com/dylmye/isa-eye-android/releases/download/v%v/me.dyl
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 2.0.0
-CurrentVersionCode: 14
+CurrentVersion: 2.0.1
+CurrentVersionCode: 15
