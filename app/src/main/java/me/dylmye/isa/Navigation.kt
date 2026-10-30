@@ -5,7 +5,7 @@ import android.content.Intent
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -14,7 +14,10 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -105,38 +108,39 @@ fun MainNavigation(
   val singlePane = directive.maxHorizontalPartitions == 1
   val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>(directive = directive)
   val dialogStrategy = remember { DialogSceneStrategy<NavKey>() }
+  // Material 3's preferred navigation components: a short navigation bar on compact windows and a
+  // wide navigation rail on larger ones. The primary action rides in the rail's header.
+  val navigationSuiteType = remember(windowAdaptiveInfo) {
+    NavigationSuiteScaffoldDefaults.navigationSuiteType(windowAdaptiveInfo)
+  }
+  // A wide rail is 96dp, so a 56dp FAB needs 20dp either side to sit under the nav icons.
+  val wideRail =
+    navigationSuiteType == NavigationSuiteType.WideNavigationRailCollapsed ||
+      navigationSuiteType == NavigationSuiteType.WideNavigationRailExpanded
 
   NavigationSuiteScaffold(
-    navigationSuiteItems = {
-      AppTabs.forEach { tab ->
-        item(
-          icon = { Icon(tab.icon, contentDescription = null) },
-          label = { Text(tab.label) },
-          selected = tab.key == backStack.topLevelKey,
-          onClick = {
-            if (singlePane) {
-              backStack.selectTopLevel(tab.key)
-            } else {
-              backStack.addTopLevel(tab.key)
-            }
-          },
-        )
-      }
+    navigationItems = {
+      AppNavigationItems(
+        selectedKey = backStack.topLevelKey,
+        navigationSuiteType = navigationSuiteType,
+        onSelect = { key ->
+          if (singlePane) {
+            backStack.selectTopLevel(key)
+          } else {
+            backStack.addTopLevel(key)
+          }
+        },
+      )
+    },
+    navigationSuiteType = navigationSuiteType,
+    primaryActionContent = {
+      AddAccountFab(
+        onClick = dropUnlessResumed { openAddAccount() },
+        modifier = if (wideRail) Modifier.padding(horizontal = 20.dp) else Modifier,
+      )
     },
   ) {
-    Scaffold(
-      contentWindowInsets = WindowInsets(0.dp),
-      floatingActionButton = {
-        ExtendedFloatingActionButton(
-          onClick = dropUnlessResumed { openAddAccount() },
-          icon = { Icon(AddIcon, contentDescription = null) },
-          text = { Text("Add account") },
-          // The extended FAB clears the semantics of its label in Material 3, so the button needs
-          // its own description to be announced by a screen reader.
-          modifier = Modifier.semantics { contentDescription = "Add account" },
-        )
-      },
-    ) { innerPadding ->
+    Scaffold(contentWindowInsets = WindowInsets(0.dp)) { innerPadding ->
       AppNavDisplay(
         backStack = backStack,
         listDetailStrategy = listDetailStrategy,
@@ -144,6 +148,36 @@ fun MainNavigation(
         modifier = Modifier.padding(innerPadding),
       )
     }
+  }
+}
+
+/** The top-level destinations, rendered with whichever navigation component the suite chose. */
+@Composable
+private fun AppNavigationItems(
+  selectedKey: NavKey,
+  navigationSuiteType: NavigationSuiteType,
+  onSelect: (NavKey) -> Unit,
+) {
+  AppTabs.forEach { tab ->
+    NavigationSuiteItem(
+      icon = { Icon(tab.icon, contentDescription = null) },
+      label = { Text(tab.label) },
+      selected = tab.key == selectedKey,
+      onClick = { onSelect(tab.key) },
+      navigationSuiteType = navigationSuiteType,
+    )
+  }
+}
+
+/** The app's primary action; the navigation suite places it in the rail header on large screens. */
+@Composable
+private fun AddAccountFab(onClick: () -> Unit, modifier: Modifier = Modifier) {
+  FloatingActionButton(
+    onClick = onClick,
+    // The FAB is icon-only in the rail header, so it carries its own description.
+    modifier = modifier.semantics { contentDescription = "Add account" },
+  ) {
+    Icon(AddIcon, contentDescription = null)
   }
 }
 
