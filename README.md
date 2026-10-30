@@ -190,6 +190,65 @@ they are the golden files. A failing run therefore means either a regression or 
 to make and need to re-record. Every preview carries `@PreviewTest`; the window sizes, themes and
 font scales come from the multi-preview annotations in `WindowSizePreviews.kt`.
 
+### Store listing screenshots
+
+The committed captures live in `art/store-screenshots/`:
+
+- `desktop/` - 3840x2160 (16:9), for the Chromebook/Googlebook and other large-screen
+  listings
+- `tablet/` - 1600x2560 (9:16), for the 10-inch tablet listing
+
+Google Play wants 16:9 landscape or 9:16 portrait captures for its large-screen slots, with
+a short edge of at least 1080px, and recommends at least four. The two sets above cover both
+orientations; upload the desktop set to the Chromebook/large-screen slot and the tablet set
+to the 10-inch tablet slot.
+
+They are captured with the SDK emulator, without Android Studio. The `desktop_large` AVD
+profile is a 1920x1080 Googlebook-shaped device; `wm size` and `wm density` then produce
+either target in the same AVD:
+
+```sh
+# One-off setup
+sdkmanager "emulator" "system-images;android-37.0;google_apis;x86_64"
+echo no | avdmanager create avd -n isa-desktop \
+  -k "system-images;android-37.0;google_apis;x86_64" -d desktop_large
+
+# Boot headless. On Fedora/Silverblue SwiftShader trips an SELinux `execheap` denial, so
+# use the host GPU instead of the default software renderer.
+$ANDROID_HOME/emulator/emulator -avd isa-desktop \
+  -no-window -no-audio -no-snapshot -gpu host
+
+# Install the debug build, then open Help -> Backup & restore to import a populated
+# .isabackup (push it to /sdcard/Download/IsaEye/ first). Use demo data, never real balances.
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+
+# Desktop / Googlebook (16:9)
+adb shell wm size 3840x2160
+adb shell wm density 320
+adb exec-out screencap -p > art/store-screenshots/desktop/01-insights.png
+
+# Tablet (9:16)
+adb shell wm size 1600x2560
+adb shell wm density 320
+adb exec-out screencap -p > art/store-screenshots/tablet/01-insights.png
+
+# Put the AVD's own display back afterwards
+adb shell wm size reset
+adb shell wm density reset
+```
+
+`screencap` writes a 32-bit PNG, while Play wants 24-bit (no alpha). Strip the alpha before
+uploading:
+
+```sh
+magick art/store-screenshots/desktop/01-insights.png -alpha off \
+  art/store-screenshots/desktop/01-insights.png
+```
+
+The app's adaptive layout depends only on window size, so the same sizes work on a physical
+tablet or Googlebook. Check the status bar and any account names before committing a
+capture: the emulator starts with a clean bar, but a real device will not.
+
 ### Debugging on device
 
 Android Auto Backup is disabled in every build. The database is encrypted with a key held by
