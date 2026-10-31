@@ -21,6 +21,7 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
@@ -81,7 +82,8 @@ fun MainNavigation(
   addAccountShortcut: Flow<Unit> = emptyFlow(),
   screenRequests: Flow<NavKey> = emptyFlow(),
 ) {
-  val backStack = remember { TopLevelBackStack<NavKey>(startTab) }
+  val backStack =
+    rememberSaveable(saver = TopLevelBackStackSaver) { TopLevelBackStack<NavKey>(startTab) }
   // The add button, the shortcut and the goal card share one guard, so none of them can open a
   // dialog on top of a dialog that is already showing.
   val openAddAccount = { backStack.addDialog(AddAccount) }

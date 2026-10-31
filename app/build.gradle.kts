@@ -1,3 +1,4 @@
+import com.android.build.api.variant.HasUnitTestBuilder
 import java.util.Properties
 
 plugins {
@@ -40,6 +41,7 @@ android {
         targetSdk = 37
         versionCode = 15
         versionName = "2.0.1"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
@@ -100,6 +102,8 @@ android {
     // Compose Preview Screenshot Testing. The suite renders previews from `src/screenshotTest`
     // host-side with layoutlib, so no device is needed.
     testOptions {
+      // AGP 9.5's Compose Preview runfiles need compiled resources for the screenshot suite.
+      unitTests.isIncludeAndroidResources = true
       screenshotTests {
         create("screenshotTest") {
           engineVersion = libs.versions.screenshot.get()
@@ -110,6 +114,14 @@ android {
         }
       }
     }
+}
+
+// AGP 9.5 creates Compose Preview runfiles for every variant. Release unit tests are off by
+// default, which makes those runfiles fail even though the screenshot suite only targets debug.
+androidComponents {
+  beforeVariants(selector().withBuildType("release")) { variant ->
+    (variant as HasUnitTestBuilder).enableUnitTest = true
+  }
 }
 
 kotlin {

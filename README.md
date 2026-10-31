@@ -30,7 +30,7 @@ git config core.hooksPath .githooks
 # Full verification gate: build, unit tests, instrumented-test compile, screenshot tests,
 # detekt, ktlint, Android Lint
 ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:assembleDebugAndroidTest \
-  :app:testScreenshotTestDefaultDebugTestSuite :app:detekt :app:ktlintCheck :app:lintDebug
+  :app:testDebugScreenshotTestDefaultTestSuite :app:detekt :app:ktlintCheck :app:lintDebug
 
 # Just the static analysis (what the pre-commit hook runs)
 ./gradlew :app:ktlintCheck :app:detekt
@@ -179,10 +179,10 @@ emulator needed.
 
 ```sh
 # Compare against the committed reference images
-./gradlew :app:testScreenshotTestDefaultDebugTestSuite
+./gradlew :app:testDebugScreenshotTestDefaultTestSuite
 
 # Re-record them after an intended UI change
-./gradlew :app:updateScreenshotTestDefaultDebugTestSuite
+./gradlew :app:updateDebugScreenshotTestDefaultTestSuite
 ```
 
 Reference images live in `app/src/screenshotTestDefaultDebug/reference/` and are **committed** -

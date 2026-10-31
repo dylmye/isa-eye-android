@@ -3,6 +3,7 @@ package me.dylmye.isa
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 @Serializable private data object TabA : NavKey
@@ -104,5 +105,32 @@ class TopLevelBackStackTest {
 
     assertEquals(TabA, backStack.topLevelKey)
     assertEquals(listOf(TabB, Detail("2"), TabA, Detail("1")), backStack.backStack.toList())
+  }
+
+  @Test
+  fun saveState_restoresTabsAndPages() {
+    val backStack = TopLevelBackStack<NavKey>(Accounts)
+    backStack.add(AccountDetail("1"))
+    backStack.addTopLevel(Insights)
+    backStack.add(SetGoal)
+
+    val restored = TopLevelBackStack.restore(backStack.saveState()!!)!!
+
+    assertEquals(Insights, restored.topLevelKey)
+    assertEquals(
+      listOf(Accounts, AccountDetail("1"), Insights, SetGoal),
+      restored.backStack.toList(),
+    )
+
+    restored.addTopLevel(Accounts)
+    assertEquals(
+      listOf(Insights, SetGoal, Accounts, AccountDetail("1")),
+      restored.backStack.toList(),
+    )
+  }
+
+  @Test
+  fun restore_rejectsUnknownKeys() {
+    assertNull(TopLevelBackStack.restore("accounts;unknown"))
   }
 }

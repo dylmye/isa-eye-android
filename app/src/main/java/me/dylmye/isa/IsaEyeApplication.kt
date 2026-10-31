@@ -27,9 +27,19 @@ import me.dylmye.isa.widgets.WidgetThemeReceiver
 import me.dylmye.isa.widgets.WidgetThemeScheduler
 import me.dylmye.isa.widgets.WidgetUpdater
 import okhttp3.OkHttpClient
+import androidx.work.Configuration as WorkManagerConfiguration
 
 /** Holds the process-wide database and repositories (manual DI, no framework). */
-class IsaEyeApplication : Application() {
+class IsaEyeApplication :
+  Application(),
+  WorkManagerConfiguration.Provider {
+  /**
+   * WorkManager creates its own JobScheduler jobs. Keep them away from the widget theme job, which
+   * owns id 4271 in [me.dylmye.isa.widgets.WidgetThemeScheduler].
+   */
+  override val workManagerConfiguration: WorkManagerConfiguration
+    get() = WorkManagerConfiguration.Builder().setJobSchedulerJobIdRange(0, 1000).build()
+
   override fun onCreate() {
     super.onCreate()
     // Coil is the app's only network client. Pinning it to the provider-icon host keeps a tampered
