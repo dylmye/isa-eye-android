@@ -137,7 +137,7 @@ The listing text and graphics deliberately are not in the recipe. They live besi
 
 - `short_description.txt` - the summary, 80 characters at most
 - `full_description.txt` - the description, 4000 characters at most
-- `images/icon.png`, `images/featureGraphic.png` and `images/phoneScreenshots/` - graphics
+- `images/icon.png`, `images/featureGraphic.png` and `images/tenInchScreenshots/` - graphics
 
 Anything in the recipe overrides those files, which is why it carries no `Summary` or `Description`.
 They have to be committed before the release is tagged, because F-Droid scans the tree at the
@@ -192,16 +192,19 @@ font scales come from the multi-preview annotations in `WindowSizePreviews.kt`.
 
 ### Store listing screenshots
 
-The committed captures live in `art/store-screenshots/`:
+The committed captures live in
+`fastlane/metadata/android/en-US/images/tenInchScreenshots/`:
 
-- `desktop/` - 3840x2160 (16:9), for the Chromebook/Googlebook and other large-screen
-  listings
-- `tablet/` - 1600x2560 (9:16), for the 10-inch tablet listing
+- `01-tablet-insights.png`, `02-tablet-accounts.png`, `03-tablet-account-detail.png` -
+  1600x2560 (9:16), for the 10-inch tablet listing
+- `04-desktop-insights.png`, `05-desktop-accounts.png` - 3840x2160 (16:9), for the
+  Chromebook/Googlebook and other large-screen listings
 
-Google Play wants 16:9 landscape or 9:16 portrait captures for its large-screen slots, with
-a short edge of at least 1080px, and recommends at least four. The two sets above cover both
-orientations; upload the desktop set to the Chromebook/large-screen slot and the tablet set
-to the 10-inch tablet slot.
+F-Droid has one large-screen screenshot slot (`tenInchScreenshots`) rather than separate
+desktop and tablet folders, so both sets live there. Google Play wants 16:9 landscape or
+9:16 portrait captures for its large-screen slots, with a short edge of at least 1080px, and
+recommends at least four. Upload the desktop set to the Chromebook/large-screen slot and the
+tablet set to the 10-inch tablet slot.
 
 They are captured with the SDK emulator, without Android Studio. The `desktop_large` AVD
 profile is a 1920x1080 Googlebook-shaped device; `wm size` and `wm density` then produce
@@ -222,15 +225,17 @@ $ANDROID_HOME/emulator/emulator -avd isa-desktop \
 # .isabackup (push it to /sdcard/Download/IsaEye/ first). Use demo data, never real balances.
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 
+SHOTS=fastlane/metadata/android/en-US/images/tenInchScreenshots
+
 # Desktop / Googlebook (16:9)
 adb shell wm size 3840x2160
 adb shell wm density 320
-adb exec-out screencap -p > art/store-screenshots/desktop/01-insights.png
+adb exec-out screencap -p > "$SHOTS/04-desktop-insights.png"
 
 # Tablet (9:16)
 adb shell wm size 1600x2560
 adb shell wm density 320
-adb exec-out screencap -p > art/store-screenshots/tablet/01-insights.png
+adb exec-out screencap -p > "$SHOTS/01-tablet-insights.png"
 
 # Put the AVD's own display back afterwards
 adb shell wm size reset
@@ -241,8 +246,9 @@ adb shell wm density reset
 uploading:
 
 ```sh
-magick art/store-screenshots/desktop/01-insights.png -alpha off \
-  art/store-screenshots/desktop/01-insights.png
+SHOTS=fastlane/metadata/android/en-US/images/tenInchScreenshots
+magick "$SHOTS/04-desktop-insights.png" -alpha off \
+  "$SHOTS/04-desktop-insights.png"
 ```
 
 The app's adaptive layout depends only on window size, so the same sizes work on a physical
