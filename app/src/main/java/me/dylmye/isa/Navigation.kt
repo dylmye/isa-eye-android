@@ -3,10 +3,14 @@ package me.dylmye.isa
 import android.app.Activity
 import android.content.Intent
 import androidx.activity.compose.LocalActivity
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
@@ -22,8 +26,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -65,6 +71,11 @@ private val AppTabs =
     AppTab(Insights, "Insights", InsightsIcon),
     AppTab(Help, "Help", HelpIcon),
   )
+
+private val NavigationSuiteType.usesWideRail: Boolean
+  get() =
+    this == NavigationSuiteType.WideNavigationRailCollapsed ||
+      this == NavigationSuiteType.WideNavigationRailExpanded
 
 /** Chooses the tab shown on launch: Help the first time the app opens, Insights after that. */
 internal fun launchTab(hasLaunched: Boolean): NavKey = if (hasLaunched) Insights else Help
@@ -110,15 +121,10 @@ fun MainNavigation(
   val singlePane = directive.maxHorizontalPartitions == 1
   val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>(directive = directive)
   val dialogStrategy = remember { DialogSceneStrategy<NavKey>() }
-  // Material 3's preferred navigation components: a short navigation bar on compact windows and a
-  // wide navigation rail on larger ones. The primary action rides in the rail's header.
   val navigationSuiteType = remember(windowAdaptiveInfo) {
     NavigationSuiteScaffoldDefaults.navigationSuiteType(windowAdaptiveInfo)
   }
-  // A wide rail is 96dp, so a 56dp FAB needs 20dp either side to sit under the nav icons.
-  val wideRail =
-    navigationSuiteType == NavigationSuiteType.WideNavigationRailCollapsed ||
-      navigationSuiteType == NavigationSuiteType.WideNavigationRailExpanded
+  val wideRail = navigationSuiteType.usesWideRail
 
   NavigationSuiteScaffold(
     navigationItems = {
@@ -136,7 +142,8 @@ fun MainNavigation(
     },
     navigationSuiteType = navigationSuiteType,
     primaryActionContent = {
-      AddAccountFab(
+      NavigationHeader(
+        showLogo = wideRail,
         onClick = dropUnlessResumed { openAddAccount() },
         modifier = if (wideRail) Modifier.padding(horizontal = 20.dp) else Modifier,
       )
@@ -180,6 +187,33 @@ private fun AddAccountFab(onClick: () -> Unit, modifier: Modifier = Modifier) {
     modifier = modifier.semantics { contentDescription = "Add account" },
   ) {
     Icon(AddIcon, contentDescription = null)
+  }
+}
+
+/**
+ * The navigation header. The wide rail has room for the eye mark above the primary action; the
+ * compact bar only shows the action.
+ */
+@Composable
+private fun NavigationHeader(
+  showLogo: Boolean,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  Column(
+    modifier = modifier,
+    horizontalAlignment = Alignment.CenterHorizontally,
+    verticalArrangement = Arrangement.spacedBy(12.dp),
+  ) {
+    if (showLogo) {
+      Icon(
+        painter = painterResource(R.drawable.ic_splash_logo),
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier.size(56.dp),
+      )
+    }
+    AddAccountFab(onClick = onClick)
   }
 }
 
