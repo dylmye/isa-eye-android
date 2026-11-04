@@ -222,8 +222,7 @@ sdkmanager "emulator" "system-images;android-37.0;google_apis;x86_64"
 echo no | avdmanager create avd -n isa-desktop \
   -k "system-images;android-37.0;google_apis;x86_64" -d desktop_large
 
-# Boot headless. On Fedora/Silverblue SwiftShader trips an SELinux `execheap` denial, so
-# use the host GPU instead of the default software renderer.
+# Boot headless.
 $ANDROID_HOME/emulator/emulator -avd isa-desktop \
   -no-window -no-audio -no-snapshot -gpu host
 
