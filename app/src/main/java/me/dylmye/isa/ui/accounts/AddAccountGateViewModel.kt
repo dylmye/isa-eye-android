@@ -59,7 +59,7 @@ class AddAccountGateViewModel(
           }
 
           PurchaseResult.Cancelled -> {
-            Unit
+            return@launch
           }
 
           PurchaseResult.Pending -> {
