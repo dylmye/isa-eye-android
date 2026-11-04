@@ -132,8 +132,8 @@ Bump `versionCode` and `versionName` in `app/build.gradle.kts` - the tag workflo
 `versionCode` that is not greater than the previous tag's - then tag the commit:
 
 ```sh
-git tag v2.1.0
-git push origin v2.1.0
+git tag v2.2.0
+git push origin v2.2.0
 ```
 
 A `v*` tag runs three jobs: it validates the version, proves the F-Droid release build is
