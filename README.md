@@ -198,8 +198,9 @@ The committed captures live in `fastlane/metadata/android/en-US/images/`:
 - `phoneScreenshots/` - 1440x2560 (9:16), for the phone listing
 - `tenInchScreenshots/01-tablet-insights.png`, `02-tablet-accounts.png`,
   `03-tablet-account-detail.png` - 1600x2560 (9:16), for the 10-inch tablet listing
-- `tenInchScreenshots/04-desktop-insights.png`, `05-desktop-accounts.png` - 3840x2160
-  (16:9), for the Chromebook/Googlebook and other large-screen listings
+- `tenInchScreenshots/04-desktop-insights.png`, `05-desktop-accounts.png`,
+  `06-desktop-help.png`, `07-desktop-auto-contribution.png` - 3840x2160 (16:9), for the
+  Chromebook/Googlebook and other large-screen listings
 
 F-Droid reads the phone set from `phoneScreenshots` and has one large-screen screenshot slot
 (`tenInchScreenshots`) rather than separate desktop and tablet folders, so both large-screen
