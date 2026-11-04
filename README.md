@@ -137,8 +137,8 @@ The listing text and graphics deliberately are not in the recipe. They live besi
 
 - `short_description.txt` - the summary, 80 characters at most
 - `full_description.txt` - the description, 4000 characters at most
-- `images/icon.png`, `images/featureGraphic.png`, `images/phoneScreenshots/` and
-  `images/tenInchScreenshots/` - graphics
+- `images/icon.png`, `images/featureGraphic.png`, `images/phoneScreenshots/`,
+  `images/sevenInchScreenshots/` and `images/tenInchScreenshots/` - graphics
 
 Anything in the recipe overrides those files, which is why it carries no `Summary` or `Description`.
 They have to be committed before the release is tagged, because F-Droid scans the tree at the
@@ -193,21 +193,24 @@ font scales come from the multi-preview annotations in `WindowSizePreviews.kt`.
 
 ### Store listing screenshots
 
-The committed captures live in `fastlane/metadata/android/en-US/images/`:
+The published listing assets live in `fastlane/metadata/android/en-US/images/`:
 
-- `phoneScreenshots/` - 1440x2560 (9:16), for the phone listing
-- `tenInchScreenshots/01-tablet-insights.png`, `02-tablet-accounts.png`,
-  `03-tablet-account-detail.png` - 1600x2560 (9:16), for the 10-inch tablet listing
-- `tenInchScreenshots/04-desktop-insights.png`, `05-desktop-accounts.png`,
-  `06-desktop-help.png`, `07-desktop-auto-contribution.png` - 3840x2160 (16:9), for the
-  Chromebook/Googlebook and other large-screen listings
+- `phoneScreenshots/` - marketing phone captures, 1080x1920 (9:16)
+- `sevenInchScreenshots/` - marketing 7-inch tablet captures, 1920x1200
+- `tenInchScreenshots/` - raw 10-inch tablet captures (1600x2560) and raw desktop
+  captures (3840x2160)
+- `featureGraphic.png` - the 1024x500 banner
+- `icon.png` - the 512x512 Play listing icon
 
-F-Droid reads the phone set from `phoneScreenshots` and has one large-screen screenshot slot
-(`tenInchScreenshots`) rather than separate desktop and tablet folders, so both large-screen
-sets live there. Google Play wants 16:9 landscape or 9:16 portrait captures for its
-large-screen slots, with a short edge of at least 1080px, and recommends at least four.
-Upload the desktop set to the Chromebook/large-screen slot and the tablet set to the
-10-inch tablet slot.
+F-Droid reads each set from its matching folder. Google Play wants 16:9 landscape or 9:16
+portrait captures for its large-screen slots, with a short edge of at least 1080px, and
+recommends at least four. Upload the desktop set to the Chromebook/large-screen slot and the
+tablet set to the 10-inch tablet slot.
+
+The source artwork stays in `art/`: `play-store-phone-*.png`, `play-store-7in-*.png`,
+`play-store-banner.png`, `play-store-icon-512.png`, and the raw emulator captures under
+`art/store-screenshots/raw/{phone,tablet,desktop}/`. Copy the chosen artwork into fastlane
+when it changes; F-Droid only reads the fastlane copies.
 
 They are captured with the SDK emulator, without Android Studio. The `desktop_large` AVD
 profile is a 1920x1080 Googlebook-shaped device; `wm size` and `wm density` then produce all
@@ -228,36 +231,34 @@ $ANDROID_HOME/emulator/emulator -avd isa-desktop \
 # .isabackup (push it to /sdcard/Download/IsaEye/ first). Use demo data, never real balances.
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 
-PHONE=fastlane/metadata/android/en-US/images/phoneScreenshots
-SHOTS=fastlane/metadata/android/en-US/images/tenInchScreenshots
+RAW=art/store-screenshots/raw
 
 # Phone (9:16)
 adb shell wm size 1440x2560
 adb shell wm density 560
-adb exec-out screencap -p > "$PHONE/01-insights.png"
+adb exec-out screencap -p > "$RAW/phone/01-insights.png"
 
 # Desktop / Googlebook (16:9)
 adb shell wm size 3840x2160
 adb shell wm density 320
-adb exec-out screencap -p > "$SHOTS/04-desktop-insights.png"
+adb exec-out screencap -p > "$RAW/desktop/04-desktop-insights.png"
 
 # Tablet (9:16)
 adb shell wm size 1600x2560
 adb shell wm density 320
-adb exec-out screencap -p > "$SHOTS/01-tablet-insights.png"
+adb exec-out screencap -p > "$RAW/tablet/01-tablet-insights.png"
 
 # Put the AVD's own display back afterwards
 adb shell wm size reset
 adb shell wm density reset
 ```
 
-`screencap` writes a 32-bit PNG, while Play wants 24-bit (no alpha). Strip the alpha before
-uploading:
+`screencap` writes a 32-bit PNG; strip the alpha from the raw captures before publishing them.
+The marketing artwork keeps its own alpha for the rounded device edges:
 
 ```sh
-PHONE=fastlane/metadata/android/en-US/images/phoneScreenshots
-SHOTS=fastlane/metadata/android/en-US/images/tenInchScreenshots
-for f in "$PHONE"/*.png "$SHOTS"/*.png; do magick "$f" -alpha off "$f"; done
+RAW=art/store-screenshots/raw
+for f in "$RAW"/*/*.png; do magick "$f" -alpha off "$f"; done
 ```
 
 The app's adaptive layout depends only on window size, so the same sizes work on a physical
