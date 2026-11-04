@@ -15,9 +15,9 @@ RepoType: git
 Repo: https://github.com/dylmye/isa-eye-android
 
 Builds:
-  - versionName: 2.1.0
-    versionCode: 16
-    commit: 6f6f674dfc523d335a5aacc7b1ff6b73384ed400
+  - versionName: 2.2.0
+    versionCode: 17
+    commit: 9733cd22d0e55ec8a10c9ede14c2f1d39ff9b507
     gradle:
       - fdroid
     output: app/build/outputs/apk/fdroid/release/app-fdroid-release-unsigned.apk
@@ -28,5 +28,5 @@ Binaries: https://github.com/dylmye/isa-eye-android/releases/download/v%v/me.dyl
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 2.1.0
-CurrentVersionCode: 16
+CurrentVersion: 2.2.0
+CurrentVersionCode: 17
