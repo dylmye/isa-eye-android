@@ -35,6 +35,7 @@ class AddAccountViewModel(
   private val repository: AccountRepository,
   private val accountLimitRepository: AccountLimitRepository,
   private val policy: AccountLimitPolicy,
+  private val onDataChanged: () -> Unit = {},
 ) : ViewModel() {
   private val draft = MutableStateFlow(AddAccountDraft())
   private val savedEvents = Channel<AddAccountEvent>(Channel.BUFFERED)
@@ -134,6 +135,7 @@ class AddAccountViewModel(
     draft.update { it.copy(isSaving = true) }
     viewModelScope.launch {
       repository.upsertProduct(product)
+      onDataChanged()
       savedEvents.send(AddAccountEvent.Saved)
     }
   }
@@ -168,6 +170,7 @@ class AddAccountViewModel(
           application.accountRepository,
           application.accountLimitRepository,
           application.accountLimitPolicy,
+          application::refreshWidgets,
         )
       }
     }

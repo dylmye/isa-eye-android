@@ -29,6 +29,7 @@ class AccountDetailViewModel(
   autoContributionRepository: AutoContributionRepository,
   userPreferences: UserPreferences,
   private val productId: String,
+  private val onDataChanged: () -> Unit = {},
 ) : ViewModel() {
   private val deletedEvents = Channel<AccountDetailEvent>(Channel.BUFFERED)
 
@@ -72,6 +73,7 @@ class AccountDetailViewModel(
   fun delete() {
     viewModelScope.launch {
       accountRepository.deleteProduct(productId)
+      onDataChanged()
       deletedEvents.send(AccountDetailEvent.Deleted)
     }
   }
@@ -87,6 +89,7 @@ class AccountDetailViewModel(
           application.autoContributionRepository,
           application.userPreferences,
           productId,
+          application::refreshWidgets,
         )
       }
     }

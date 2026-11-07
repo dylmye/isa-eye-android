@@ -30,6 +30,7 @@ class AutoContributionViewModel(
   private val accountRepository: AccountRepository,
   private val autoContributionRepository: AutoContributionRepository,
   private val productId: String,
+  private val onDataChanged: () -> Unit = {},
 ) : ViewModel() {
   private val draft = MutableStateFlow(AutoContributionDraft())
   private val savedEvents = Channel<AutoContributionEvent>(Channel.BUFFERED)
@@ -78,6 +79,7 @@ class AutoContributionViewModel(
       // A schedule set up on the 1st is due straight away, and the start-up catch-up has already run
       // by the time this dialog opens, so apply it here rather than leaving it until next launch.
       autoContributionRepository.applyDue(System.currentTimeMillis())
+      onDataChanged()
       savedEvents.send(AutoContributionEvent.Saved)
     }
   }
@@ -89,6 +91,7 @@ class AutoContributionViewModel(
     draft.update { it.copy(isSaving = true) }
     viewModelScope.launch {
       autoContributionRepository.clear(productId, rulesetId)
+      onDataChanged()
       savedEvents.send(AutoContributionEvent.Removed)
     }
   }
@@ -101,7 +104,10 @@ class AutoContributionViewModel(
     val state = uiState.value
     val rulesetId = state.ruleset ?: return
     if (!state.canUndoLastCredit) return
-    viewModelScope.launch { autoContributionRepository.undoLastCredit(productId, rulesetId) }
+    viewModelScope.launch {
+      autoContributionRepository.undoLastCredit(productId, rulesetId)
+      onDataChanged()
+    }
   }
 
   companion object {
@@ -114,6 +120,7 @@ class AutoContributionViewModel(
           application.accountRepository,
           application.autoContributionRepository,
           productId,
+          application::refreshWidgets,
         )
       }
     }
