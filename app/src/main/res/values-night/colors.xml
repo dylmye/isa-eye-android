@@ -4,4 +4,10 @@
     <color name="widget_stage_early">#A5D6A7</color>
     <color name="widget_stage_mid">#FFCC80</color>
     <color name="widget_stage_late">#EF9A9A</color>
+
+    <!-- Dark primary-container palette so the static previews match the live widgets at night. -->
+    <color name="widget_preview_card">#4F378B</color>
+    <color name="widget_preview_on_card">#EADDFF</color>
+    <color name="widget_preview_fill">#D0BCFF</color>
+    <color name="widget_preview_on_fill">#381E72</color>
 </resources>
