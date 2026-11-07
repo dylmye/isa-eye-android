@@ -8,7 +8,7 @@
     android:minResizeHeight="110dp"
     android:minResizeWidth="110dp"
     android:minWidth="110dp"
-    android:previewImage="@drawable/widget_preview_tax_year_circle"
+    android:previewImage="@drawable/widget_preview_tax_year"
     android:previewLayout="@layout/widget_preview_tax_year"
     android:resizeMode="none"
     android:targetCellHeight="2"

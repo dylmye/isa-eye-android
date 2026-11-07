@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fallback for launchers that cannot inflate previewLayout. Mirrors the live TaxYearWidget:
+     a surface-coloured circle, the progress ring, and the countdown label. Text is drawn as
+     blocks because vector drawables cannot render text, and the day count is left out because
+     a static drawable cannot know today's date. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="110dp"
+    android:height="110dp"
+    android:viewportWidth="110"
+    android:viewportHeight="110">
+
+    <path
+        android:fillColor="@color/widget_preview_surface"
+        android:pathData="M55,0 a55,55 0 1,0 0,110 a55,55 0 1,0 0,-110" />
+
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M55,6.6 a48.4,48.4 0 1,0 0,96.8 a48.4,48.4 0 1,0 0,-96.8"
+        android:strokeColor="@color/widget_preview_surface_variant"
+        android:strokeLineCap="round"
+        android:strokeWidth="5.8" />
+
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M55,6.6 A48.4,48.4 0 0,1 80.9,95.9"
+        android:strokeColor="@color/widget_stage_mid"
+        android:strokeLineCap="round"
+        android:strokeWidth="5.8" />
+
+    <path
+        android:fillColor="@color/widget_stage_mid"
+        android:pathData="M33,44 h44 v8 h-44 z" />
+
+    <path
+        android:fillColor="@color/widget_preview_secondary"
+        android:pathData="M41,58 h28 v5 h-28 z" />
+</vector>

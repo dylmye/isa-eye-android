@@ -21,9 +21,9 @@ import kotlin.reflect.KClass
 internal object WidgetPreviews {
   private val receivers: List<KClass<out GlanceAppWidgetReceiver>> =
     listOf(
+      TaxYearWidgetReceiver::class,
       AllowanceWidgetReceiver::class,
       JuniorAllowanceWidgetReceiver::class,
-      TaxYearWidgetReceiver::class,
       GoalWidgetReceiver::class,
     )
 
@@ -35,25 +35,24 @@ internal object WidgetPreviews {
     }
   }
 
+  suspend fun publishTaxYear(context: Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+      publishSafely(context, TaxYearWidgetReceiver::class)
+    }
+  }
+
   /**
    * The Android 15+ half of [publishNext]. A preview is a nicety, so any failure here is logged and
    * skipped rather than taking down the app as it leaves the foreground.
    */
   @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
-  @Suppress("TooGenericExceptionCaught")
   private suspend fun publishNextOn35(
     context: Context,
     prefs: SharedPreferences,
     nowMillis: Long,
   ) {
     val index = prefs.getInt(KEY_NEXT, 0).mod(receivers.size)
-    val result =
-      try {
-        publish(context, receivers[index])
-      } catch (error: RuntimeException) {
-        Log.w(TAG, "Could not publish the ${receivers[index].simpleName} preview", error)
-        null
-      }
+    val result = publishSafely(context, receivers[index])
     if (result == null) return
     // Advance even when rate-limited: retrying the same widget in a loop would keep hitting the
     // limit, while the next hour can try the next one.
@@ -64,6 +63,18 @@ internal object WidgetPreviews {
     if (result == GlanceAppWidgetManager.SET_WIDGET_PREVIEWS_RESULT_RATE_LIMITED) {
       Log.i(TAG, "Widget preview publishing was rate-limited; will try the next widget later.")
     }
+  }
+
+  @Suppress("TooGenericExceptionCaught")
+  @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+  private suspend fun publishSafely(
+    context: Context,
+    receiver: KClass<out GlanceAppWidgetReceiver>,
+  ): Int? = try {
+    publish(context, receiver)
+  } catch (error: RuntimeException) {
+    Log.w(TAG, "Could not publish the ${receiver.simpleName} preview", error)
+    null
   }
 
   /** True when an hour has passed since the last attempt. */
