@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -28,6 +26,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
+import me.dylmye.isa.ui.components.TooltipIconButton
+import me.dylmye.isa.ui.components.TooltipPosition
 import me.dylmye.isa.ui.icons.arrowBack
 
 /** Wider than this and prose gets uncomfortable to track, so the copy is centred within a limit. */
@@ -78,9 +78,12 @@ fun HelpTopicContent(
         title = { Text(title, modifier = Modifier.semantics { heading() }) },
         navigationIcon = {
           if (showBackButton) {
-            IconButton(onClick = onBack) {
-              Icon(arrowBack, contentDescription = "Back to help")
-            }
+            TooltipIconButton(
+              icon = arrowBack,
+              contentDescription = "Back to help",
+              onClick = onBack,
+              position = TooltipPosition.Below,
+            )
           }
         },
       )
