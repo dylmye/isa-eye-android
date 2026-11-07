@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -83,7 +84,9 @@ internal fun GoalCard(uiState: InsightsUiState, onEdit: () -> Unit, modifier: Mo
     title = "This year's goal",
     modifier = modifier,
     action = {
-      TextButton(onClick = onEdit) { Text(if (uiState.goal == null) "Set goal" else "Edit goal") }
+      TextButton(onClick = onEdit, modifier = Modifier.testTag("robo_set_goal")) {
+        Text(if (uiState.goal == null) "Set goal" else "Edit goal")
+      }
     },
   ) {
     val goal = uiState.goal

@@ -33,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
@@ -202,7 +203,9 @@ private fun AccountDetailGrid(
 ) {
   LazyVerticalGrid(
     columns = GridCells.Adaptive(minSize = 320.dp),
-    modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+    modifier =
+      Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+        .testTag("robo_account_detail_grid"),
     contentPadding = contentPadding,
     horizontalArrangement = Arrangement.spacedBy(12.dp),
     verticalArrangement = Arrangement.spacedBy(12.dp),

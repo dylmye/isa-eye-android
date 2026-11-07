@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
@@ -82,7 +83,9 @@ fun HelpScreen(
   ) { innerPadding ->
     val layoutDirection = LocalLayoutDirection.current
     LazyColumn(
-      modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+      modifier =
+        Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+          .testTag("robo_help_list"),
       contentPadding =
         PaddingValues(
           start = innerPadding.calculateStartPadding(layoutDirection) + 16.dp,
@@ -176,7 +179,11 @@ private val FallbackTint = Color(0xFF26A69A)
 private fun HelpTopicCard(topic: HelpTopic, onClick: () -> Unit, modifier: Modifier = Modifier) {
   Card(
     onClick = onClick,
-    modifier = modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
+    modifier =
+      modifier
+        .fillMaxWidth()
+        .semantics(mergeDescendants = true) {}
+        .testTag("robo_help_topic_${topic.id}"),
     shape = MaterialTheme.shapes.large,
     colors = CardDefaults.cardColors(containerColor = topic.tint.containerTint()),
   ) {

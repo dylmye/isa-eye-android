@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
 
 /**
@@ -49,7 +50,7 @@ fun FormDialogScaffold(
           Modifier.fillMaxSize()
         } else {
           Modifier.widthIn(max = 560.dp).fillMaxHeight(0.9f)
-        },
+        }.semantics { testTagsAsResourceId = true },
     ) {
       Scaffold(
         containerColor = Color.Transparent,

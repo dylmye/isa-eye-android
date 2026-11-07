@@ -310,6 +310,15 @@ The app's adaptive layout depends only on window size, so the same sizes work on
 tablet or Googlebook. Check the status bar and any account names before committing a
 capture: the emulator starts with a clean bar, but a real device will not.
 
+### Pre-launch report
+
+`fastlane/prelaunch-report/robo-script.json` drives the Play pre-launch report
+through adding an account, recording a contribution, setting an
+auto-contribution and goal, then checking Insights and Help. Upload it under
+**Test and release > Testing > Pre-launch report > Settings**. The
+[companion README](fastlane/prelaunch-report/README.md) lists the test tags the
+script depends on and the seed-data date it assumes.
+
 ### Debugging on device
 
 Android Auto Backup is disabled in every build. The database is encrypted with a key held by

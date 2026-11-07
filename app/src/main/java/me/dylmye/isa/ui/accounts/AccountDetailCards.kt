@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -112,7 +113,10 @@ internal fun ActionsCard(
       modifier = Modifier.padding(16.dp),
       verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-      Button(onClick = onUpdateContributions, modifier = Modifier.fillMaxWidth()) {
+      Button(
+        onClick = onUpdateContributions,
+        modifier = Modifier.fillMaxWidth().testTag("robo_update_contributions"),
+      ) {
         Icon(balance, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
         Spacer(Modifier.size(ButtonDefaults.IconSpacing))
         Text("Update contributions")
@@ -120,7 +124,7 @@ internal fun ActionsCard(
       Button(
         onClick = onSetUpAutoContribution,
         enabled = autoContributionEnabled,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().testTag("robo_setup_auto_contribution"),
       ) {
         Icon(
           autoRenew,

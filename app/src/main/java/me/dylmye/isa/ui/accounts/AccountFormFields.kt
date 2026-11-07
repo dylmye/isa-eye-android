@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 
 /** A read-only dropdown over [options], showing the label of [selectedId]. */
@@ -31,6 +32,7 @@ fun OptionDropdownField(
   selectedId: String?,
   onSelected: (String) -> Unit,
   modifier: Modifier = Modifier,
+  testTag: String? = null,
 ) {
   var expanded by remember { mutableStateOf(false) }
   val selectedLabel = options.firstOrNull { it.id == selectedId }?.label
@@ -47,7 +49,9 @@ fun OptionDropdownField(
       label = { Text(label) },
       trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
       modifier =
-        Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
+        Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+          .fillMaxWidth()
+          .then(testTag?.let { Modifier.testTag(it) } ?: Modifier),
     )
     ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
       options.forEach { option ->

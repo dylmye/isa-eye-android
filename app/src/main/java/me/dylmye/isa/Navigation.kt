@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -68,13 +69,18 @@ import me.dylmye.isa.ui.icons.financeMode as InsightsIcon
 import me.dylmye.isa.ui.icons.help as HelpIcon
 import me.dylmye.isa.ui.icons.savings as SavingsIcon
 
-private data class AppTab(val key: NavKey, val label: String, val icon: ImageVector)
+private data class AppTab(
+  val key: NavKey,
+  val label: String,
+  val icon: ImageVector,
+  val testTag: String,
+)
 
 private val AppTabs =
   listOf(
-    AppTab(Accounts, "Accounts", SavingsIcon),
-    AppTab(Insights, "Insights", InsightsIcon),
-    AppTab(Help, "Help", HelpIcon),
+    AppTab(Accounts, "Accounts", SavingsIcon, "robo_tab_accounts"),
+    AppTab(Insights, "Insights", InsightsIcon, "robo_tab_insights"),
+    AppTab(Help, "Help", HelpIcon, "robo_tab_help"),
   )
 
 private val NavigationSuiteType.usesWideRail: Boolean
@@ -179,6 +185,7 @@ private fun AppNavigationItems(
       selected = tab.key == selectedKey,
       onClick = { onSelect(tab.key) },
       navigationSuiteType = navigationSuiteType,
+      modifier = Modifier.testTag(tab.testTag),
     )
   }
 }
@@ -189,7 +196,10 @@ private fun AddAccountFab(onClick: () -> Unit, modifier: Modifier = Modifier) {
   FloatingActionButton(
     onClick = onClick,
     // The FAB is icon-only in the rail header, so it carries its own description.
-    modifier = modifier.semantics { contentDescription = "Add account" },
+    modifier =
+      modifier
+        .semantics { contentDescription = "Add account" }
+        .testTag("robo_add_account"),
   ) {
     Icon(AddIcon, contentDescription = null)
   }
