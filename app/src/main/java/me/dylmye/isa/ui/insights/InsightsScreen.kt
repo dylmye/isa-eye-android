@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,6 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
+import me.dylmye.isa.ui.components.verticalScrollbar
 
 /** Stateful entry point: owns the insights ViewModel and hoists its state into [InsightsContent]. */
 @Composable
@@ -67,13 +69,16 @@ fun InsightsContent(
         } else {
           MIN_CARD_WIDTH * columns + CARD_GAP * (columns - 1) + PAGE_PADDING * 2
         }
+      val gridState = rememberLazyGridState()
       LazyVerticalGrid(
         columns = GridCells.Fixed(columns),
+        state = gridState,
         modifier =
           Modifier.width(gridWidth)
             .fillMaxHeight()
             .align(Alignment.TopCenter)
-            .testTag("robo_insights_grid"),
+            .testTag("robo_insights_grid")
+            .verticalScrollbar(state = gridState.scrollIndicatorState),
         contentPadding =
           PaddingValues(
             start = PAGE_PADDING,

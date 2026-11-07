@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,6 +44,7 @@ import me.dylmye.isa.ui.FormFactorPreviews
 import me.dylmye.isa.ui.components.TooltipIconButton
 import me.dylmye.isa.ui.components.TooltipPosition
 import me.dylmye.isa.ui.components.containerTint
+import me.dylmye.isa.ui.components.verticalScrollbar
 import me.dylmye.isa.ui.icons.chevronForward
 import me.dylmye.isa.ui.icons.downloadForOffline
 
@@ -83,18 +85,25 @@ fun HelpScreen(
     contentWindowInsets = WindowInsets(0.dp),
   ) { innerPadding ->
     val layoutDirection = LocalLayoutDirection.current
+    val contentPadding =
+      PaddingValues(
+        start = innerPadding.calculateStartPadding(layoutDirection) + 16.dp,
+        top = innerPadding.calculateTopPadding() + 8.dp,
+        end = innerPadding.calculateEndPadding(layoutDirection) + 16.dp,
+        // Clears the add-account button floating over every tab.
+        bottom = innerPadding.calculateBottomPadding() + 88.dp,
+      )
+    val listState = rememberLazyListState()
     LazyColumn(
+      state = listState,
       modifier =
         Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
-          .testTag("robo_help_list"),
-      contentPadding =
-        PaddingValues(
-          start = innerPadding.calculateStartPadding(layoutDirection) + 16.dp,
-          top = innerPadding.calculateTopPadding() + 8.dp,
-          end = innerPadding.calculateEndPadding(layoutDirection) + 16.dp,
-          // Clears the add-account button floating over every tab.
-          bottom = innerPadding.calculateBottomPadding() + 88.dp,
-        ),
+          .testTag("robo_help_list")
+          .verticalScrollbar(
+            state = listState.scrollIndicatorState,
+            topInset = contentPadding.calculateTopPadding(),
+          ),
+      contentPadding = contentPadding,
       verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
       item { HelpIntro() }

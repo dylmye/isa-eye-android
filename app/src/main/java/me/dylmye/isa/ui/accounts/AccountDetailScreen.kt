@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -44,6 +45,7 @@ import me.dylmye.isa.ui.FormFactorPreviews
 import me.dylmye.isa.ui.components.InfoCalloutCard
 import me.dylmye.isa.ui.components.TooltipIconButton
 import me.dylmye.isa.ui.components.TooltipPosition
+import me.dylmye.isa.ui.components.verticalScrollbar
 import me.dylmye.isa.ui.icons.arrowBack
 import me.dylmye.isa.ui.icons.edit
 
@@ -207,11 +209,17 @@ private fun AccountDetailGrid(
   onSetUpAutoContribution: () -> Unit,
   onDeleteAccount: () -> Unit,
 ) {
+  val gridState = rememberLazyGridState()
   LazyVerticalGrid(
     columns = GridCells.Adaptive(minSize = 320.dp),
+    state = gridState,
     modifier =
       Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
-        .testTag("robo_account_detail_grid"),
+        .testTag("robo_account_detail_grid")
+        .verticalScrollbar(
+          state = gridState.scrollIndicatorState,
+          topInset = contentPadding.calculateTopPadding(),
+        ),
     contentPadding = contentPadding,
     horizontalArrangement = Arrangement.spacedBy(12.dp),
     verticalArrangement = Arrangement.spacedBy(12.dp),
