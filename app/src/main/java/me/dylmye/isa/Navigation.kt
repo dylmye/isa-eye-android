@@ -64,6 +64,8 @@ import me.dylmye.isa.ui.accounts.AutoContributionScreen
 import me.dylmye.isa.ui.accounts.EditAccountScreen
 import me.dylmye.isa.ui.accounts.UpdateContributionsScreen
 import me.dylmye.isa.ui.backup.BackupRestoreDialog
+import me.dylmye.isa.ui.components.Tooltip
+import me.dylmye.isa.ui.components.TooltipPosition
 import me.dylmye.isa.ui.help.HelpScreen
 import me.dylmye.isa.ui.help.HelpTopicPlaceholder
 import me.dylmye.isa.ui.help.HelpTopicScreen
@@ -211,15 +213,17 @@ private fun AppNavigationItems(
 /** The app's primary action; the navigation suite places it in the rail header on large screens. */
 @Composable
 private fun AddAccountFab(onClick: () -> Unit, modifier: Modifier = Modifier) {
-  FloatingActionButton(
-    onClick = onClick,
-    // The FAB is icon-only in the rail header, so it carries its own description.
-    modifier =
-      modifier
-        .semantics { contentDescription = "Add account" }
-        .testTag("robo_add_account"),
-  ) {
-    Icon(AddIcon, contentDescription = null)
+  // The FAB is icon-only in the rail header, so it carries a description and a hover label.
+  Tooltip(text = "Add account", position = TooltipPosition.End) {
+    FloatingActionButton(
+      onClick = onClick,
+      modifier =
+        modifier
+          .semantics { contentDescription = "Add account" }
+          .testTag("robo_add_account"),
+    ) {
+      Icon(AddIcon, contentDescription = null)
+    }
   }
 }
 

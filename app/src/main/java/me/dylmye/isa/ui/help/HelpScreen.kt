@@ -15,7 +15,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -41,6 +40,8 @@ import androidx.compose.ui.unit.dp
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FINANCIAL_DISCLAIMER
 import me.dylmye.isa.ui.FormFactorPreviews
+import me.dylmye.isa.ui.components.TooltipIconButton
+import me.dylmye.isa.ui.components.TooltipPosition
 import me.dylmye.isa.ui.components.containerTint
 import me.dylmye.isa.ui.icons.chevronForward
 import me.dylmye.isa.ui.icons.downloadForOffline
@@ -69,12 +70,12 @@ fun HelpScreen(
       TopAppBar(
         title = { Text("Help", modifier = Modifier.semantics { heading() }) },
         actions = {
-          IconButton(onClick = onBackupClick) {
-            Icon(
-              imageVector = downloadForOffline,
-              contentDescription = "Backup and restore",
-            )
-          }
+          TooltipIconButton(
+            icon = downloadForOffline,
+            contentDescription = "Backup and restore",
+            onClick = onBackupClick,
+            position = TooltipPosition.Below,
+          )
         },
         scrollBehavior = scrollBehavior,
       )

@@ -11,8 +11,6 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -44,6 +42,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
 import me.dylmye.isa.ui.components.InfoCalloutCard
+import me.dylmye.isa.ui.components.TooltipIconButton
+import me.dylmye.isa.ui.components.TooltipPosition
 import me.dylmye.isa.ui.icons.arrowBack
 import me.dylmye.isa.ui.icons.edit
 
@@ -158,15 +158,21 @@ fun AccountDetailContent(
         },
         navigationIcon = {
           if (showBackButton) {
-            IconButton(onClick = onBack) {
-              Icon(arrowBack, contentDescription = "Back to accounts")
-            }
+            TooltipIconButton(
+              icon = arrowBack,
+              contentDescription = "Back to accounts",
+              onClick = onBack,
+              position = TooltipPosition.Below,
+            )
           }
         },
         actions = {
-          IconButton(onClick = onEdit) {
-            Icon(edit, contentDescription = "Edit account")
-          }
+          TooltipIconButton(
+            icon = edit,
+            contentDescription = "Edit account",
+            onClick = onEdit,
+            position = TooltipPosition.Below,
+          )
         },
         scrollBehavior = scrollBehavior,
       )

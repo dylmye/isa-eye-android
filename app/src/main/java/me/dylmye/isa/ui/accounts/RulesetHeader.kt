@@ -4,16 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipAnchorPosition
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,6 +14,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
+import me.dylmye.isa.ui.components.TooltipIconButton
 import me.dylmye.isa.ui.icons.chevronBackward
 import me.dylmye.isa.ui.icons.chevronForward
 import me.dylmye.isa.ui.icons.quickReference
@@ -31,7 +24,6 @@ import me.dylmye.isa.ui.icons.settingsBackupRestore
  * Tax-year context header for the accounts view, styled after Google Health's metrics date picker:
  * the selected ruleset leads, with its notes and the previous / next / reset controls trailing.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RulesetHeader(
   state: RulesetState,
@@ -57,27 +49,30 @@ fun RulesetHeader(
         style = MaterialTheme.typography.titleLarge,
         modifier = Modifier.semantics { heading() },
       )
-      // Icon-only, so it carries a hover label as well as its content description.
-      TooltipBox(
-        positionProvider =
-          TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-        tooltip = { PlainTooltip { Text("Allowances for the $label tax year") } },
-        state = rememberTooltipState(),
-      ) {
-        IconButton(onClick = onShowNotes) {
-          Icon(quickReference, contentDescription = "Allowances for the $label tax year")
-        }
-      }
+      TooltipIconButton(
+        icon = quickReference,
+        contentDescription = "Allowances for the $label tax year",
+        onClick = onShowNotes,
+      )
     }
-    IconButton(onClick = onPrevious, enabled = state.canGoBack) {
-      Icon(chevronBackward, contentDescription = "Previous tax year")
-    }
-    IconButton(onClick = onNext, enabled = state.canGoForward) {
-      Icon(chevronForward, contentDescription = "Next tax year")
-    }
-    IconButton(onClick = onReset, enabled = state.canReset) {
-      Icon(settingsBackupRestore, contentDescription = "Reset to the latest tax year")
-    }
+    TooltipIconButton(
+      icon = chevronBackward,
+      contentDescription = "Previous tax year",
+      onClick = onPrevious,
+      enabled = state.canGoBack,
+    )
+    TooltipIconButton(
+      icon = chevronForward,
+      contentDescription = "Next tax year",
+      onClick = onNext,
+      enabled = state.canGoForward,
+    )
+    TooltipIconButton(
+      icon = settingsBackupRestore,
+      contentDescription = "Reset to the latest tax year",
+      onClick = onReset,
+      enabled = state.canReset,
+    )
   }
 }
 
