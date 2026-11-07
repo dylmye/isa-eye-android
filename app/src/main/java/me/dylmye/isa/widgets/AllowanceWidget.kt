@@ -27,8 +27,8 @@ class AllowanceWidget : GlanceAppWidget() {
   override val previewSizeMode = SizeMode.Responsive(WidgetSizes)
 
   override suspend fun provideGlance(context: Context, id: GlanceId) {
-    val state = loadWidgetState(context)
-    provideContent { WidgetTheme { AllowanceContent(state) } }
+    val initial = loadWidgetState(context)
+    provideContent { WidgetTheme { AllowanceContent(rememberWidgetState(initial)) } }
   }
 
   override suspend fun providePreview(context: Context, widgetCategory: Int) {

@@ -137,6 +137,14 @@ open class IsaEyeApplication :
   }
 
   /**
+   * Pushes fresh content to every placed widget. In-app saves call this straight away so a widget
+   * beside the app in split-screen or a desktop window does not wait for [onStop].
+   */
+  fun refreshWidgets() {
+    applicationScope.launch { WidgetUpdater.updateAll(this@IsaEyeApplication) }
+  }
+
+  /**
    * Closes the current database so an import can replace its file. The next access to [database]
    * builds a new container, and the caller recreates the activity so ViewModels rebind to it.
    */

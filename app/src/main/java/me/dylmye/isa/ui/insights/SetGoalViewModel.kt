@@ -27,6 +27,7 @@ import me.dylmye.isa.ui.sanitizePoundsInput
 class SetGoalViewModel(
   private val accountRepository: AccountRepository,
   private val goalRepository: GoalRepository,
+  private val onDataChanged: () -> Unit = {},
 ) : ViewModel() {
   private val draft = MutableStateFlow(SetGoalDraft())
   private val savedEvents = Channel<SetGoalEvent>(Channel.BUFFERED)
@@ -58,6 +59,7 @@ class SetGoalViewModel(
     draft.update { it.copy(isSaving = true) }
     viewModelScope.launch {
       goalRepository.setGoal(rulesetId, target)
+      onDataChanged()
       savedEvents.send(SetGoalEvent.Saved)
     }
   }
@@ -69,6 +71,7 @@ class SetGoalViewModel(
     draft.update { it.copy(isSaving = true) }
     viewModelScope.launch {
       goalRepository.clearGoal(rulesetId)
+      onDataChanged()
       savedEvents.send(SetGoalEvent.Removed)
     }
   }
@@ -79,7 +82,11 @@ class SetGoalViewModel(
     fun factory() = viewModelFactory {
       initializer {
         val application = this[APPLICATION_KEY] as IsaEyeApplication
-        SetGoalViewModel(application.accountRepository, application.goalRepository)
+        SetGoalViewModel(
+          application.accountRepository,
+          application.goalRepository,
+          application::refreshWidgets,
+        )
       }
     }
   }

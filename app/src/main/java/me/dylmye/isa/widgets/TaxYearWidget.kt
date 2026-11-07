@@ -49,8 +49,8 @@ class TaxYearWidget : GlanceAppWidget() {
   override val previewSizeMode = SizeMode.Single
 
   override suspend fun provideGlance(context: Context, id: GlanceId) {
-    val state = loadWidgetState(context)
-    provideContent { WidgetTheme { TaxYearContent(state) } }
+    val initial = loadWidgetState(context)
+    provideContent { WidgetTheme { TaxYearContent(rememberWidgetState(initial)) } }
   }
 
   override suspend fun providePreview(context: Context, widgetCategory: Int) {
