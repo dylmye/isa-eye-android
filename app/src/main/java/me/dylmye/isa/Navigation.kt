@@ -322,50 +322,35 @@ private fun AppNavDisplay(
 /** The account flows, each shown as a dialog over whatever is behind it rather than as a page. */
 private fun EntryProviderScope<NavKey>.dialogEntries(backStack: TopLevelBackStack<NavKey>) {
   entry<AddAccount>(
-    metadata =
-      DialogSceneStrategy.dialog(
-        DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
-      ),
+    metadata = DialogSceneStrategy.dialog(FormDialogProperties),
   ) {
-    AddAccountScreen(onClose = { backStack.removeLast() })
+    AddAccountScreen(
+      onClose = { backStack.removeLast() },
+      onSaved = { backStack.popAndResetTopLevel(Accounts) },
+    )
   }
   entry<EditAccount>(
-    metadata =
-      DialogSceneStrategy.dialog(
-        DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
-      ),
+    metadata = DialogSceneStrategy.dialog(FormDialogProperties),
   ) { edit ->
     EditAccountScreen(productId = edit.productId, onClose = { backStack.removeLast() })
   }
   entry<UpdateContributions>(
-    metadata =
-      DialogSceneStrategy.dialog(
-        DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
-      ),
+    metadata = DialogSceneStrategy.dialog(FormDialogProperties),
   ) { update ->
     UpdateContributionsScreen(productId = update.productId, onClose = { backStack.removeLast() })
   }
   entry<SetAutoContribution>(
-    metadata =
-      DialogSceneStrategy.dialog(
-        DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
-      ),
+    metadata = DialogSceneStrategy.dialog(FormDialogProperties),
   ) { auto ->
     AutoContributionScreen(productId = auto.productId, onClose = { backStack.removeLast() })
   }
   entry<SetGoal>(
-    metadata =
-      DialogSceneStrategy.dialog(
-        DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
-      ),
+    metadata = DialogSceneStrategy.dialog(FormDialogProperties),
   ) {
     SetGoalScreen(onClose = { backStack.removeLast() })
   }
   entry<BackupRestore>(
-    metadata =
-      DialogSceneStrategy.dialog(
-        DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
-      ),
+    metadata = DialogSceneStrategy.dialog(FormDialogProperties),
   ) {
     val activity = LocalActivity.current
     BackupRestoreDialog(
@@ -384,6 +369,10 @@ private fun EntryProviderScope<NavKey>.dialogEntries(backStack: TopLevelBackStac
 private fun TopLevelBackStack<NavKey>.addDialog(key: NavKey) {
   if (backStack.lastOrNull()?.isDialog() != true) add(key)
 }
+
+/** Every account flow uses the same full-screen dialog, so the properties live in one place. */
+private val FormDialogProperties =
+  DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
 
 /**
  * Restarts the app on a fresh activity after an import. The import replaces the database file and

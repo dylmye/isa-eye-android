@@ -73,6 +73,15 @@ class TopLevelBackStack<T : NavKey>(startKey: T) {
   }
 
   /**
+   * Closes the page stacked over the current tab (usually a dialog) and shows [key]'s root, so a
+   * flow that can start from any tab lands where its result is visible.
+   */
+  fun popAndResetTopLevel(key: T) {
+    removeLast()
+    resetTopLevel(key)
+  }
+
+  /**
    * A compact, saveable snapshot of the per-tab stacks and the selected tab. Used by
    * [TopLevelBackStackSaver] so a configuration change or process death does not reset navigation.
    */
