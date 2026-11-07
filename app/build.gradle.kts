@@ -101,6 +101,9 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         debug {
+            // Install a debug build beside the release app. The launcher label is overridden in
+            // src/debug/res/values/strings.xml.
+            applicationIdSuffix = ".debug"
             // Coverage for the local unit tests. The instrumented tests are compile-only here, so
             // there is nothing to instrument for those.
             enableUnitTestCoverage = true
