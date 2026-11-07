@@ -62,6 +62,7 @@ import me.dylmye.isa.ui.components.LoadingIndicator
 import me.dylmye.isa.ui.components.ProviderAvatar
 import me.dylmye.isa.ui.components.containerTint
 import me.dylmye.isa.ui.components.opaqueContainerTint
+import me.dylmye.isa.ui.components.verticalScrollbar
 import me.dylmye.isa.ui.formatGbp
 import me.dylmye.isa.ui.toTint
 
@@ -264,7 +265,11 @@ private fun AccountsList(
     state = listState,
     modifier =
       Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
-        .testTag("robo_accounts_list"),
+        .testTag("robo_accounts_list")
+        .verticalScrollbar(
+          state = listState.scrollIndicatorState,
+          topInset = contentPadding.calculateTopPadding(),
+        ),
     contentPadding = contentPadding,
     verticalArrangement = Arrangement.spacedBy(12.dp),
   ) {
