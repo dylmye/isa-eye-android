@@ -32,6 +32,7 @@ import androidx.window.core.layout.WindowSizeClass
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
 import me.dylmye.isa.ui.components.LoadingIndicator
+import me.dylmye.isa.ui.components.restoreFocusAfterConfigChange
 import me.dylmye.isa.ui.formatGbp
 
 private const val REDUCTION_WARNING =
@@ -137,7 +138,8 @@ private fun UpdateContributionsForm(
         label = { Text("Contributions") },
         prefix = { Text("£") },
         singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        keyboardOptions =
+          KeyboardOptions(keyboardType = KeyboardType.Decimal, showKeyboardOnFocus = true),
         isError = warnings.isNotEmpty(),
         supportingText =
           if (warnings.isEmpty()) {
@@ -149,7 +151,10 @@ private fun UpdateContributionsForm(
               }
             }
           },
-        modifier = Modifier.fillMaxWidth().testTag("robo_contribution_amount"),
+        modifier =
+          Modifier.fillMaxWidth()
+            .restoreFocusAfterConfigChange()
+            .testTag("robo_contribution_amount"),
       )
     }
     Button(

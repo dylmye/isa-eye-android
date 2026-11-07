@@ -36,6 +36,7 @@ import me.dylmye.isa.notifications.rememberNotificationPermissionRequest
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
 import me.dylmye.isa.ui.components.LoadingIndicator
+import me.dylmye.isa.ui.components.restoreFocusAfterConfigChange
 import me.dylmye.isa.ui.formatGbp
 
 /** Stateful entry point: owns the goal ViewModel and hoists its state into [SetGoalContent]. */
@@ -139,10 +140,12 @@ private fun SetGoalDialog(
       prefix = { Text("£", style = MaterialTheme.typography.headlineMedium) },
       textStyle = MaterialTheme.typography.headlineMedium,
       singleLine = true,
-      keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+      keyboardOptions =
+        KeyboardOptions(keyboardType = KeyboardType.Decimal, showKeyboardOnFocus = true),
       isError = uiState.error != null,
       supportingText = { Text(uiState.error ?: allowanceHint(uiState)) },
-      modifier = Modifier.fillMaxWidth().testTag("robo_goal_amount"),
+      modifier =
+        Modifier.fillMaxWidth().restoreFocusAfterConfigChange().testTag("robo_goal_amount"),
     )
     // Low stakes and reversible, so removing needs no confirmation of its own.
     if (uiState.canRemove) {

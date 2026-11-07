@@ -37,6 +37,7 @@ import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.time.formatLongDate
 import me.dylmye.isa.ui.FormFactorPreviews
 import me.dylmye.isa.ui.components.LoadingIndicator
+import me.dylmye.isa.ui.components.restoreFocusAfterConfigChange
 import me.dylmye.isa.ui.formatGbp
 
 /** Stateful entry point: owns the auto-contribution ViewModel and hoists its state down. */
@@ -151,12 +152,14 @@ private fun AutoContributionDialog(
       prefix = { Text("£", style = MaterialTheme.typography.headlineMedium) },
       textStyle = MaterialTheme.typography.headlineMedium,
       singleLine = true,
-      keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+      keyboardOptions =
+        KeyboardOptions(keyboardType = KeyboardType.Decimal, showKeyboardOnFocus = true),
       isError = uiState.error != null,
       supportingText = {
         Text(uiState.error ?: "Recorded automatically on the 1st of each month.")
       },
-      modifier = Modifier.fillMaxWidth().testTag("robo_auto_amount"),
+      modifier =
+        Modifier.fillMaxWidth().restoreFocusAfterConfigChange().testTag("robo_auto_amount"),
     )
     ScheduleLines(uiState)
     LastCreditLine(uiState)
