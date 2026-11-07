@@ -1,15 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Fallback for launchers that cannot inflate previewLayout. Mirrors the live GoalWidget card:
+     rounded primary container, a bottom-up primary fill, the badge and label, and the percentage
+     hero. Text is drawn as blocks because vector drawables cannot render text. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="250dp"
     android:height="110dp"
     android:viewportWidth="250"
     android:viewportHeight="110">
+
+    <!-- Card -->
     <path
-        android:fillColor="@color/widget_preview_background"
-        android:pathData="M16,4 h218 a12,12 0 0 1 12,12 v78 a12,12 0 0 1 -12,12 h-218 a12,12 0 0 1 -12,-12 v-78 a12,12 0 0 1 12,-12 z" />
-    <path android:fillColor="@color/widget_preview_secondary" android:pathData="M24,22 h78 v5 h-78 z" />
-    <path android:fillColor="@color/widget_preview_primary" android:pathData="M24,38 h112 v22 h-112 z" />
-    <path android:fillColor="@color/widget_preview_secondary" android:pathData="M24,68 h138 v5 h-138 z" />
-    <path android:fillColor="@color/widget_preview_secondary" android:pathData="M24,88 h202 v8 h-202 z" />
-    <path android:fillColor="@color/widget_preview_accent" android:pathData="M24,88 h125 v8 h-125 z" />
+        android:fillColor="@color/widget_preview_card"
+        android:pathData="M18,4 h214 a14,14 0 0 1 14,14 v74 a14,14 0 0 1 -14,14 h-214 a14,14 0 0 1 -14,-14 v-74 a14,14 0 0 1 14,-14 z" />
+
+    <!-- 31% fill, rounded to the card's bottom corners -->
+    <path
+        android:fillColor="@color/widget_preview_fill"
+        android:pathData="M4,74.38 h242 v17.62 a14,14 0 0 1 -14,14 h-214 a14,14 0 0 1 -14,-14 z" />
+
+    <!-- Badge -->
+    <path
+        android:fillColor="@color/widget_preview_fill"
+        android:pathData="M34,16 a18,18 0 1 0 0,36 a18,18 0 1 0 0,-36 z" />
+    <group
+        android:scaleX="0.79"
+        android:scaleY="0.79"
+        android:translateX="24.5"
+        android:translateY="24.5">
+        <path
+            android:fillColor="@color/widget_preview_on_fill"
+            android:fillType="evenOdd"
+            android:pathData="M12,2a10,10 0 1,0 0,20a10,10 0 1,0 0,-20zM12,5a7,7 0 1,1 0,14a7,7 0 1,1 0,-14zM12,9a3,3 0 1,0 0,6a3,3 0 1,0 0,-6z" />
+    </group>
+
+    <!-- Label -->
+    <path
+        android:fillColor="@color/widget_preview_on_card"
+        android:pathData="M64,31 h86 v7 h-86 z" />
+
+    <!-- Percentage and qualifier -->
+    <path
+        android:fillColor="@color/widget_preview_on_card"
+        android:pathData="M20,72 h80 v22 h-80 z" />
+    <path
+        android:fillColor="@color/widget_preview_on_card"
+        android:pathData="M108,86 h34 v8 h-34 z" />
 </vector>

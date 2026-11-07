@@ -1,15 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Fallback for launchers that cannot inflate previewLayout. Mirrors the live AllowanceWidget
+     card: rounded primary container, a bottom-up primary fill, the badge and label, and the
+     percentage hero. Text is drawn as blocks because vector drawables cannot render text. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="250dp"
     android:height="110dp"
     android:viewportWidth="250"
     android:viewportHeight="110">
+
+    <!-- Card -->
     <path
-        android:fillColor="@color/widget_preview_background"
-        android:pathData="M16,4 h218 a12,12 0 0 1 12,12 v78 a12,12 0 0 1 -12,12 h-218 a12,12 0 0 1 -12,-12 v-78 a12,12 0 0 1 12,-12 z" />
-    <path android:fillColor="@color/widget_preview_secondary" android:pathData="M24,22 h78 v5 h-78 z" />
-    <path android:fillColor="@color/widget_preview_primary" android:pathData="M24,38 h112 v22 h-112 z" />
-    <path android:fillColor="@color/widget_preview_secondary" android:pathData="M24,68 h138 v5 h-138 z" />
-    <path android:fillColor="@color/widget_preview_secondary" android:pathData="M24,88 h202 v8 h-202 z" />
-    <path android:fillColor="@color/widget_preview_accent" android:pathData="M24,88 h125 v8 h-125 z" />
+        android:fillColor="@color/widget_preview_card"
+        android:pathData="M18,4 h214 a14,14 0 0 1 14,14 v74 a14,14 0 0 1 -14,14 h-214 a14,14 0 0 1 -14,-14 v-74 a14,14 0 0 1 14,-14 z" />
+
+    <!-- 28% fill, rounded to the card's bottom corners -->
+    <path
+        android:fillColor="@color/widget_preview_fill"
+        android:pathData="M4,77.44 h242 v14.56 a14,14 0 0 1 -14,14 h-214 a14,14 0 0 1 -14,-14 z" />
+
+    <!-- Badge -->
+    <path
+        android:fillColor="@color/widget_preview_fill"
+        android:pathData="M34,16 a18,18 0 1 0 0,36 a18,18 0 1 0 0,-36 z" />
+    <group
+        android:scaleX="0.79"
+        android:scaleY="0.79"
+        android:translateX="24.5"
+        android:translateY="24.5">
+        <path
+            android:fillColor="@color/widget_preview_on_fill"
+            android:pathData="M4.5,21q-.85,-2.85 -1.67,-5.69T2,9.5q0,-2.3 1.6,-3.9T7.5,4h5q.73,-.95 1.76,-1.48T16.5,2q.63,0 1.06,.44T18,3.5q0,.13 -.13,.57 -.1,.27 -.19,.56t-.13,.59L19.83,7.5H22v6.98L19.18,15.4 17.5,21H12v-2h-2v2H4.5Zm2.1,-2h2.4v-2h4v2h2.4l1.4,-4.5 2.2,-.7V9.5h-1.8L14.2,6.5H7.5q-1.25,0 -2.12,.88T4.5,9.5q0,2.2 .53,4.63T6.6,19ZM16,11q.43,0 .71,-.29T17,10q0,-.43 -.29,-.71T16,9q-.43,0 -.71,.29T15,10q0,.43 .29,.71T16,11Zm-8,-2h5V7H8v2Zm4,4Z" />
+    </group>
+
+    <!-- Label -->
+    <path
+        android:fillColor="@color/widget_preview_on_card"
+        android:pathData="M64,31 h86 v7 h-86 z" />
+
+    <!-- Percentage and qualifier -->
+    <path
+        android:fillColor="@color/widget_preview_on_card"
+        android:pathData="M20,72 h80 v22 h-80 z" />
+    <path
+        android:fillColor="@color/widget_preview_on_card"
+        android:pathData="M108,86 h34 v8 h-34 z" />
 </vector>

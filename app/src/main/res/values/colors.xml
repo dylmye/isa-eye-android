@@ -15,4 +15,11 @@
     <color name="widget_preview_accent">#6750A4</color>
     <color name="widget_preview_stage">#FFF3E0</color>
     <color name="widget_preview_stage_text">#8A5A00</color>
+
+    <!-- The primary-container card used by the Allowance and Goal previews, with night
+         variants in values-night. -->
+    <color name="widget_preview_card">#EADDFF</color>
+    <color name="widget_preview_on_card">#21005D</color>
+    <color name="widget_preview_fill">#6750A4</color>
+    <color name="widget_preview_on_fill">#FFFFFF</color>
 </resources>
