@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
@@ -26,6 +27,7 @@ import androidx.window.core.layout.WindowSizeClass
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
 import me.dylmye.isa.ui.components.LoadingIndicator
+import me.dylmye.isa.ui.components.restoreFocusAfterConfigChange
 
 /** Stateful entry point: owns the edit-account ViewModel and hoists its state into the content. */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
@@ -121,7 +123,8 @@ private fun EditAccountForm(
         onValueChange = onNicknameChange,
         label = { Text("Nickname (optional)") },
         singleLine = true,
-        modifier = Modifier.fillMaxWidth(),
+        keyboardOptions = KeyboardOptions(showKeyboardOnFocus = true),
+        modifier = Modifier.fillMaxWidth().restoreFocusAfterConfigChange(),
       )
       ReadOnlyField(label = "Bank", value = uiState.providerName)
       ReadOnlyField(label = "Year of opening", value = uiState.startTaxYear)

@@ -52,6 +52,7 @@ import me.dylmye.isa.data.backup.BackupFile
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
 import me.dylmye.isa.ui.accounts.FormDialogScaffold
+import me.dylmye.isa.ui.components.restoreFocusAfterConfigChange
 import java.text.DateFormat
 import java.util.Date
 
@@ -476,13 +477,14 @@ private fun PassphraseField(value: String, onValueChange: (String) -> Unit, labe
     singleLine = true,
     visualTransformation =
       if (visible) VisualTransformation.None else PasswordVisualTransformation(),
-    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+    keyboardOptions =
+      KeyboardOptions(keyboardType = KeyboardType.Password, showKeyboardOnFocus = true),
     trailingIcon = {
       TextButton(onClick = { visible = !visible }) {
         Text(if (visible) "Hide" else "Show")
       }
     },
-    modifier = Modifier.fillMaxWidth(),
+    modifier = Modifier.fillMaxWidth().restoreFocusAfterConfigChange(),
   )
 }
 

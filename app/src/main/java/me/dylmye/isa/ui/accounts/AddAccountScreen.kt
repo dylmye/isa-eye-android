@@ -54,6 +54,7 @@ import androidx.navigationevent.compose.rememberNavigationEventState
 import androidx.window.core.layout.WindowSizeClass
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
+import me.dylmye.isa.ui.components.restoreFocusAfterConfigChange
 
 /** Stateful entry point: owns the ViewModel and hoists its state into [AddAccountContent]. */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
@@ -198,8 +199,9 @@ private fun AddAccountDetailsContent(
         onValueChange = onNicknameChange,
         label = { Text("Nickname (optional)") },
         singleLine = true,
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-        modifier = Modifier.fillMaxWidth().testTag("robo_add_nickname"),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next, showKeyboardOnFocus = true),
+        modifier =
+          Modifier.fillMaxWidth().restoreFocusAfterConfigChange().testTag("robo_add_nickname"),
       )
       ProviderField(
         selected = uiState.selectedProvider,
@@ -371,7 +373,12 @@ private fun ProviderPickerSheet(
             onValueChange = { query = it },
             label = { Text("Search banks") },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).testTag("robo_bank_search"),
+            keyboardOptions = KeyboardOptions(showKeyboardOnFocus = true),
+            modifier =
+              Modifier.fillMaxWidth()
+                .restoreFocusAfterConfigChange()
+                .padding(vertical = 8.dp)
+                .testTag("robo_bank_search"),
           )
         }
       }
