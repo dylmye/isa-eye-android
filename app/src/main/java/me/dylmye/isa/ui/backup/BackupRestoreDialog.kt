@@ -1,5 +1,6 @@
 package me.dylmye.isa.ui.backup
 
+import android.net.Uri
 import android.text.format.Formatter
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -27,6 +28,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,9 +63,14 @@ internal fun BackupRestoreDialog(
   onClose: () -> Unit,
   onImported: () -> Unit,
   modifier: Modifier = Modifier,
+  importUri: Uri? = null,
 ) {
   val viewModel: BackupRestoreViewModel = viewModel(factory = BackupRestoreViewModel.Factory)
   val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+  LaunchedEffect(importUri) {
+    importUri?.let(viewModel::onExternalBackup)
+  }
 
   val close = {
     val reload = state.imported || state.needsReload
@@ -341,7 +348,7 @@ private fun ImportContent(
     return
   }
 
-  if (!state.folderAvailable) {
+  if (!state.folderAvailable && state.selectedBackup == null) {
     Text(
       "Choose a backup folder before importing.",
       style = MaterialTheme.typography.bodyMedium,
@@ -352,7 +359,7 @@ private fun ImportContent(
     return
   }
 
-  if (state.backups.isEmpty()) {
+  if (state.folderAvailable && state.backups.isEmpty() && state.selectedBackup == null) {
     Text(
       "No backups in ${state.folderName ?: "this folder"}.",
       style = MaterialTheme.typography.bodyMedium,
@@ -361,14 +368,28 @@ private fun ImportContent(
     return
   }
 
-  Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-    state.backups.forEach { backup ->
-      BackupRow(
-        backup = backup,
-        selected = state.selectedBackup?.uri == backup.uri,
-        onClick = { onSelectBackup(backup) },
-      )
+  if (state.folderAvailable) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+      state.backups.forEach { backup ->
+        BackupRow(
+          backup = backup,
+          selected = state.selectedBackup?.uri == backup.uri,
+          onClick = { onSelectBackup(backup) },
+        )
+      }
     }
+  }
+
+  // A file opened from the system Files app is not in the backup folder, so it gets its own row
+  // and can be imported without one being chosen.
+  val externalBackup = state.externalBackup
+  if (externalBackup != null) {
+    Text(
+      "Selected backup",
+      style = MaterialTheme.typography.titleSmall,
+      modifier = Modifier.semantics { heading() },
+    )
+    BackupRow(backup = externalBackup, selected = true)
   }
 
   if (state.isCheckingEncryption) {
@@ -390,11 +411,7 @@ private fun ImportContent(
 
   Button(
     onClick = onImport,
-    enabled =
-      state.selectedBackup != null &&
-        !state.isBusy &&
-        !state.isCheckingEncryption &&
-        (!state.selectedIsEncrypted || state.importPassphrase.isNotEmpty()),
+    enabled = state.canImport,
     modifier = Modifier.fillMaxWidth(),
   ) {
     Text("Import backup")
@@ -402,7 +419,28 @@ private fun ImportContent(
 }
 
 @Composable
-private fun BackupRow(backup: BackupFile, selected: Boolean, onClick: () -> Unit) {
+private fun BackupRow(backup: BackupFile, selected: Boolean, onClick: (() -> Unit)? = null) {
+  val colors =
+    if (selected) {
+      CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+    } else {
+      CardDefaults.cardColors()
+    }
+  if (onClick == null) {
+    Card(colors = colors, modifier = Modifier.fillMaxWidth()) { BackupRowBody(backup) }
+  } else {
+    Card(
+      onClick = onClick,
+      colors = colors,
+      modifier = Modifier.fillMaxWidth(),
+    ) {
+      BackupRowBody(backup)
+    }
+  }
+}
+
+@Composable
+private fun BackupRowBody(backup: BackupFile) {
   val context = LocalContext.current
   val date =
     remember(backup.lastModified) {
@@ -415,27 +453,16 @@ private fun BackupRow(backup: BackupFile, selected: Boolean, onClick: () -> Unit
         "Unknown date"
       }
     }
-  Card(
-    onClick = onClick,
-    colors =
-      if (selected) {
-        CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
-      } else {
-        CardDefaults.cardColors()
-      },
-    modifier = Modifier.fillMaxWidth(),
+  Column(
+    modifier = Modifier.fillMaxWidth().padding(12.dp),
+    verticalArrangement = Arrangement.spacedBy(2.dp),
   ) {
-    Column(
-      modifier = Modifier.fillMaxWidth().padding(12.dp),
-      verticalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-      Text(backup.name, style = MaterialTheme.typography.titleSmall)
-      Text(
-        "$date · ${Formatter.formatShortFileSize(context, backup.sizeBytes)}",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
+    Text(backup.name, style = MaterialTheme.typography.titleSmall)
+    Text(
+      "$date · ${Formatter.formatShortFileSize(context, backup.sizeBytes)}",
+      style = MaterialTheme.typography.bodySmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
   }
 }
 

@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">ISA Eye</string>
     <string name="shortcut_add_account">Add account</string>
+    <string name="file_handler_backup">Import ISA Eye backup</string>
 
     <!-- Home screen widget picker entries. -->
     <string name="widget_allowance_label">ISA allowance</string>

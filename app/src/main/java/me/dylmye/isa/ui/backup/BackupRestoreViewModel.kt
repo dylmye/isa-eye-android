@@ -32,6 +32,7 @@ data class BackupRestoreUiState(
   val backups: List<BackupFile> = emptyList(),
   val selectedBackup: BackupFile? = null,
   val selectedIsEncrypted: Boolean = false,
+  val selectedIsExternal: Boolean = false,
   val isCheckingEncryption: Boolean = false,
   val importPassphrase: String = "",
   val isBusy: Boolean = false,
@@ -44,6 +45,16 @@ data class BackupRestoreUiState(
 ) {
   val folderAvailable: Boolean
     get() = folderName != null
+
+  /** A selected backup that came from outside the backup folder, such as the Files app. */
+  val externalBackup: BackupFile?
+    get() = selectedBackup?.takeIf { selected -> backups.none { it.uri == selected.uri } }
+
+  val canImport: Boolean
+    get() = selectedBackup != null &&
+      !isBusy &&
+      !isCheckingEncryption &&
+      (!selectedIsEncrypted || importPassphrase.isNotEmpty())
 }
 
 @Suppress("TooManyFunctions") // Small, explicit actions keep the dialog's state machine testable.
@@ -53,6 +64,9 @@ internal class BackupRestoreViewModel(
 ) : AndroidViewModel(application) {
   private val _uiState = MutableStateFlow(BackupRestoreUiState())
   val uiState: StateFlow<BackupRestoreUiState> = _uiState.asStateFlow()
+
+  /** The last file opened from outside the app, so a recomposition does not restart its import. */
+  private var externalUri: String? = null
 
   init {
     refreshFolder()
@@ -100,13 +114,34 @@ internal class BackupRestoreViewModel(
   }
 
   fun onSelectBackup(file: BackupFile) {
+    select(file, external = false, confirmWhenReady = false)
+  }
+
+  /**
+   * Opens a backup handed over by the system Files app. It is not in the chosen backup folder, so
+   * it is tracked as an external selection, and an unencrypted one goes straight to the replace
+   * confirmation the user already asked for by opening the file.
+   */
+  fun onExternalBackup(uri: Uri) {
+    if (externalUri == uri.toString()) return
+    externalUri = uri.toString()
+    viewModelScope.launch {
+      val file = withContext(Dispatchers.IO) { manager.describe(uri) }
+      select(file, external = true, confirmWhenReady = true)
+    }
+  }
+
+  private fun select(file: BackupFile, external: Boolean, confirmWhenReady: Boolean) {
     _uiState.update {
       it.copy(
+        tab = BackupTab.Import,
         selectedBackup = file,
         selectedIsEncrypted = false,
+        selectedIsExternal = external,
         isCheckingEncryption = true,
         importPassphrase = "",
         error = null,
+        showImportConfirmation = false,
       )
     }
     viewModelScope.launch {
@@ -114,7 +149,11 @@ internal class BackupRestoreViewModel(
         val encrypted = manager.isEncrypted(file.uri)
         _uiState.update { state ->
           if (state.selectedBackup?.uri == file.uri) {
-            state.copy(selectedIsEncrypted = encrypted, isCheckingEncryption = false)
+            state.copy(
+              selectedIsEncrypted = encrypted,
+              isCheckingEncryption = false,
+              showImportConfirmation = confirmWhenReady && !encrypted,
+            )
           } else {
             state
           }
@@ -155,6 +194,7 @@ internal class BackupRestoreViewModel(
    * import). Clear the transient result state so the next open starts at the top.
    */
   fun resetForNextOpen() {
+    externalUri = null
     _uiState.update { BackupRestoreUiState(folderName = it.folderName) }
     refreshFolder()
   }
@@ -226,10 +266,12 @@ internal class BackupRestoreViewModel(
         it.copy(
           folderName = name.getOrNull(),
           backups = backups,
-          selectedBackup = null,
-          selectedIsEncrypted = false,
-          isCheckingEncryption = false,
-          importPassphrase = "",
+          // A file opened from the Files app is not in this folder, so a folder refresh must not
+          // discard it.
+          selectedBackup = if (it.selectedIsExternal) it.selectedBackup else null,
+          selectedIsEncrypted = if (it.selectedIsExternal) it.selectedIsEncrypted else false,
+          isCheckingEncryption = if (it.selectedIsExternal) it.isCheckingEncryption else false,
+          importPassphrase = if (it.selectedIsExternal) it.importPassphrase else "",
         )
       }
     }

@@ -37,6 +37,39 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter
+                android:label="@string/file_handler_backup"
+                tools:ignore="AppLinkUrlError">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/vnd.dylmye.isa-backup" />
+            </intent-filter>
+            <intent-filter
+                android:label="@string/file_handler_backup"
+                tools:ignore="AppLinkUrlError">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" android:host="*" />
+                <data android:mimeType="application/octet-stream" />
+                <data android:pathPattern=".*\\.isabackup" />
+            </intent-filter>
+            <intent-filter android:label="@string/file_handler_backup">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" android:host="media" />
+                <data android:mimeType="application/octet-stream" />
+            </intent-filter>
+            <intent-filter
+                android:label="@string/file_handler_backup"
+                tools:ignore="AppLinkUrlError">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/octet-stream" />
+                <data android:sspPattern=".*\\.isabackup" />
+            </intent-filter>
         </activity>
         <receiver
             android:name=".widgets.AllowanceWidgetReceiver"

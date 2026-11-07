@@ -23,4 +23,4 @@ import kotlinx.serialization.Serializable
 
 @Serializable data object SetGoal : NavKey
 
-@Serializable data object BackupRestore : NavKey
+@Serializable data class BackupRestore(val importUri: String? = null) : NavKey

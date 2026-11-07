@@ -154,6 +154,17 @@ class TopLevelBackStackTest {
   }
 
   @Test
+  fun saveState_keepsTheBackupBeingImported() {
+    val uri = "content://com.example.documents/document/a;b|c%20d.isabackup"
+    val backStack = TopLevelBackStack<NavKey>(Accounts)
+    backStack.add(BackupRestore(uri))
+
+    val restored = TopLevelBackStack.restore(backStack.saveState()!!)!!
+
+    assertEquals(listOf(Accounts, BackupRestore(uri)), restored.backStack.toList())
+  }
+
+  @Test
   fun restore_rejectsUnknownKeys() {
     assertNull(TopLevelBackStack.restore("accounts;unknown"))
   }

@@ -137,9 +137,12 @@ class TopLevelBackStack<T : NavKey>(startKey: T) {
       is UpdateContributions -> "update:$productId"
       is SetAutoContribution -> "auto:$productId"
       SetGoal -> "goal"
-      BackupRestore -> "backup"
+      is BackupRestore -> encodedBackup()
       else -> null
     }
+
+    private fun BackupRestore.encodedBackup(): String =
+      importUri?.let { "backup:${it.escapeState()}" } ?: "backup"
 
     private fun decode(value: String): NavKey? = when (value) {
       "accounts" -> Accounts
@@ -147,7 +150,7 @@ class TopLevelBackStack<T : NavKey>(startKey: T) {
       "help" -> Help
       "add" -> AddAccount
       "goal" -> SetGoal
-      "backup" -> BackupRestore
+      "backup" -> BackupRestore()
       else -> decodePrefixed(value)
     }
 
@@ -161,9 +164,20 @@ class TopLevelBackStack<T : NavKey>(startKey: T) {
         "edit" -> EditAccount(id)
         "update" -> UpdateContributions(id)
         "auto" -> SetAutoContribution(id)
+        "backup" -> BackupRestore(id.unescapeState())
         else -> null
       }
     }
+
+    /**
+     * A backup's URI rides along with its navigation key. The snapshot format uses `;` and `|` as
+     * separators, and a URI may contain either, so those characters (and `%` itself) are escaped.
+     */
+    private fun String.escapeState(): String =
+      replace("%", "%25").replace(";", "%3B").replace("|", "%7C")
+
+    private fun String.unescapeState(): String =
+      replace("%7C", "|").replace("%3B", ";").replace("%25", "%")
   }
 }
 
