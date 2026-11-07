@@ -22,6 +22,7 @@ class WidgetRefreshWorker(appContext: Context, params: WorkerParameters) :
     // Book tomorrow before updating, so a failure below cannot end the daily series.
     WidgetRefreshScheduler.ensureScheduled(applicationContext)
     WidgetUpdater.updateAll(applicationContext)
+    WidgetPreviews.publishTaxYear(applicationContext)
     return Result.success()
   }
 }
