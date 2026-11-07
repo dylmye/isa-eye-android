@@ -27,6 +27,7 @@ import me.dylmye.isa.data.db.entity.ProductEntity
 class EditAccountViewModel(
   private val repository: AccountRepository,
   private val productId: String,
+  private val onDataChanged: () -> Unit = {},
 ) : ViewModel() {
   private val draft = MutableStateFlow<EditAccountDraft?>(null)
   private val savedEvents = Channel<EditAccountEvent>(Channel.BUFFERED)
@@ -113,6 +114,7 @@ class EditAccountViewModel(
           endTaxYear = state.selectedClosingYearId?.takeIf { it != STILL_OPEN_ID },
         ),
       )
+      onDataChanged()
       savedEvents.send(EditAccountEvent.Saved)
     }
   }
@@ -127,7 +129,7 @@ class EditAccountViewModel(
     fun factory(productId: String) = viewModelFactory {
       initializer {
         val application = this[APPLICATION_KEY] as IsaEyeApplication
-        EditAccountViewModel(application.accountRepository, productId)
+        EditAccountViewModel(application.accountRepository, productId, application::refreshWidgets)
       }
     }
   }

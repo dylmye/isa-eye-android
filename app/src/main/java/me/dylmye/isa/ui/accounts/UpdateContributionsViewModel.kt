@@ -31,6 +31,7 @@ class UpdateContributionsViewModel(
   private val repository: AccountRepository,
   userPreferences: UserPreferences,
   private val productId: String,
+  private val onDataChanged: () -> Unit = {},
 ) : ViewModel() {
   private val draft = MutableStateFlow(UpdateContributionsDraft())
   private val savedEvents = Channel<UpdateContributionsEvent>(Channel.BUFFERED)
@@ -90,6 +91,7 @@ class UpdateContributionsViewModel(
           deductedFromAllowancePence = pence,
         ),
       )
+      onDataChanged()
       savedEvents.send(UpdateContributionsEvent.Saved)
     }
   }
@@ -104,6 +106,7 @@ class UpdateContributionsViewModel(
           application.accountRepository,
           application.userPreferences,
           productId,
+          application::refreshWidgets,
         )
       }
     }
