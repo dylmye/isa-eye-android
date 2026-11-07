@@ -1,7 +1,12 @@
+// The navigation tree is a set of small entry builders; splitting it would scatter one screen's
+// wiring across files.
+@file:Suppress("TooManyFunctions")
+
 package me.dylmye.isa
 
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
@@ -103,6 +108,7 @@ fun MainNavigation(
   startTab: NavKey = Accounts,
   addAccountShortcut: Flow<Unit> = emptyFlow(),
   screenRequests: Flow<NavKey> = emptyFlow(),
+  backupImportRequests: Flow<Uri> = emptyFlow(),
 ) {
   val backStack =
     rememberSaveable(saver = TopLevelBackStackSaver) { TopLevelBackStack<NavKey>(startTab) }
@@ -122,6 +128,8 @@ fun MainNavigation(
       }
     }
   }
+  // A backup opened from the Files app arrives as a dialog over whatever the app is showing.
+  OpenBackupImports(backupImportRequests, backStack)
 
   val windowAdaptiveInfo = currentWindowAdaptiveInfoV2()
   val directive = remember(windowAdaptiveInfo) {
@@ -168,6 +176,16 @@ fun MainNavigation(
         modifier = Modifier.padding(innerPadding),
       )
     }
+  }
+}
+
+/**
+ * Opens a backup handed over by the system Files app as a dialog over whatever the app is showing.
+ */
+@Composable
+private fun OpenBackupImports(requests: Flow<Uri>, backStack: TopLevelBackStack<NavKey>) {
+  LaunchedEffect(Unit) {
+    requests.collect { uri -> backStack.addDialog(BackupRestore(uri.toString())) }
   }
 }
 
@@ -316,7 +334,7 @@ private fun AppNavDisplay(
       ) {
         HelpScreen(
           onTopicClick = { id -> backStack.add(HelpTopicPage(id)) },
-          onBackupClick = { backStack.addDialog(BackupRestore) },
+          onBackupClick = { backStack.addDialog(BackupRestore()) },
         )
       }
       entry<HelpTopicPage>(
@@ -361,9 +379,10 @@ private fun EntryProviderScope<NavKey>.dialogEntries(backStack: TopLevelBackStac
   }
   entry<BackupRestore>(
     metadata = DialogSceneStrategy.dialog(FormDialogProperties),
-  ) {
+  ) { destination ->
     val activity = LocalActivity.current
     BackupRestoreDialog(
+      importUri = destination.importUri?.let(Uri::parse),
       onClose = { backStack.removeLast() },
       onImported = {
         if (activity != null) activity.restartForNewDatabase() else backStack.removeLast()

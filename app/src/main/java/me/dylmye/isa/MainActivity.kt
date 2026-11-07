@@ -1,6 +1,7 @@
 package me.dylmye.isa
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
@@ -52,9 +53,22 @@ class MainActivity : ComponentActivity() {
   /** The notification screens for the Compose tree to collect. */
   val requestedScreens: Flow<NavKey> = screenRequests.receiveAsFlow()
 
+  /**
+   * Backup files opened from the system Files app. Navigation and the import flow belong to the
+   * Compose tree, so the file is forwarded there rather than acted on here.
+   */
+  private val backupImportRequests = Channel<Uri>(Channel.CONFLATED)
+
+  /** The backup files for the Compose tree to import. */
+  val requestedBackups: Flow<Uri> = backupImportRequests.receiveAsFlow()
+
   override fun onCreate(savedInstanceState: Bundle?) {
     installSplashScreen()
     super.onCreate(savedInstanceState)
+
+    // A recreation (rotation, theme change) replays the launch intent, so only a fresh start
+    // consumes the file; otherwise closing the import dialog would reopen it.
+    if (savedInstanceState == null) intent.backupUri()?.let(backupImportRequests::trySend)
 
     enableEdgeToEdge()
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -89,16 +103,18 @@ class MainActivity : ComponentActivity() {
             startTab = startTab,
             addAccountShortcut = addAccountShortcut,
             screenRequests = requestedScreens,
+            backupImportRequests = requestedBackups,
           )
         }
       }
     }
   }
 
-  /** A notification tapped with the app already open switches screen without rebuilding it. */
+  /** A notification tapped or a file opened with the app already running reuses this activity. */
   override fun onNewIntent(intent: Intent) {
     super.onNewIntent(intent)
     setIntent(intent)
+    intent.backupUri()?.let(backupImportRequests::trySend)
     (intent.notificationScreen() ?: intent.widgetScreen())?.let(::openScreen)
   }
 
@@ -125,6 +141,11 @@ class MainActivity : ComponentActivity() {
     is ReminderTarget.AccountDetails -> AccountDetail(target.productId)
     ReminderTarget.Insights -> Insights
     null -> null
+  }
+
+  /** The backup file a VIEW intent is asking to import, if it is one. */
+  private fun Intent.backupUri(): Uri? = data?.takeIf {
+    action == Intent.ACTION_VIEW && (it.scheme == "content" || it.scheme == "file")
   }
 
   /** Maps a widget tap to the tab it is about. */

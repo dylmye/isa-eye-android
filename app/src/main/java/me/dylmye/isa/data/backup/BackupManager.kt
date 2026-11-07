@@ -30,6 +30,9 @@ internal const val BACKUP_APPLICATION_ID = 0x49534145 // "ISAE"
 internal const val BACKUP_EXTENSION = ".isabackup"
 internal const val BACKUP_FOLDER_NAME = "IsaEye"
 
+/** A MIME type of our own, so a provider can report a backup without relying on its file name. */
+internal const val BACKUP_MIME_TYPE = "application/vnd.dylmye.isa-backup"
+
 data class BackupFile(val uri: Uri, val name: String, val lastModified: Long, val sizeBytes: Long)
 
 enum class BackupError {
@@ -131,6 +134,20 @@ internal class BackupManager(
       if (read < SQLITE_HEADER.size) throw BackupException(BackupError.InvalidFile)
       !header.contentEquals(SQLITE_HEADER)
     } ?: throw BackupException(BackupError.InvalidFile)
+  }
+
+  /**
+   * Describes a backup opened from outside the app. A provider can withhold any of this metadata,
+   * so a missing name or timestamp falls back to something the dialog can still show.
+   */
+  fun describe(uri: Uri): BackupFile {
+    val document = runCatching { DocumentFile.fromSingleUri(appContext, uri) }.getOrNull()
+    return BackupFile(
+      uri = uri,
+      name = runCatching { document?.name }.getOrNull() ?: uri.lastPathSegment ?: "Backup",
+      lastModified = runCatching { document?.lastModified() }.getOrNull() ?: 0L,
+      sizeBytes = runCatching { document?.length() }.getOrNull() ?: 0L,
+    )
   }
 
   suspend fun export(
@@ -333,7 +350,7 @@ internal class BackupManager(
   private fun writeToFolder(folder: DocumentFile, temporary: File): BackupFile {
     val name = uniqueName(folder)
     val document =
-      folder.createFile("application/octet-stream", name) ?: fail(BackupError.ExportFailed)
+      folder.createFile(BACKUP_MIME_TYPE, name) ?: fail(BackupError.ExportFailed)
     if (document.name != name) {
       runCatching { document.renameTo(name) }
     }
