@@ -56,7 +56,7 @@ import me.dylmye.isa.ui.FormFactorPreviews
 /** Stateful entry point: owns the ViewModel and hoists its state into [AddAccountContent]. */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
-fun AddAccountScreen(onClose: () -> Unit, modifier: Modifier = Modifier) {
+fun AddAccountScreen(onClose: () -> Unit, onSaved: () -> Unit, modifier: Modifier = Modifier) {
   val viewModel: AddAccountViewModel = viewModel(factory = AddAccountViewModel.Factory)
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val context = LocalContext.current
@@ -65,7 +65,7 @@ fun AddAccountScreen(onClose: () -> Unit, modifier: Modifier = Modifier) {
     viewModel.events.collect { event ->
       when (event) {
         AddAccountEvent.Saved -> {
-          onClose()
+          onSaved()
         }
 
         AddAccountEvent.LimitReached -> {

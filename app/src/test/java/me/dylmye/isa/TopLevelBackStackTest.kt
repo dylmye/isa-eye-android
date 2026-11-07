@@ -108,6 +108,30 @@ class TopLevelBackStackTest {
   }
 
   @Test
+  fun popAndResetTopLevel_closesTheDialogAndShowsTheAccountsList() {
+    // The add-account dialog can be opened from another tab, so saving must leave that tab behind.
+    val backStack = TopLevelBackStack<NavKey>(Insights)
+    backStack.add(AddAccount)
+
+    backStack.popAndResetTopLevel(Accounts)
+
+    assertEquals(Accounts, backStack.topLevelKey)
+    assertEquals(listOf(Insights, Accounts), backStack.backStack.toList())
+  }
+
+  @Test
+  fun popAndResetTopLevel_dropsAPageStackedUnderTheDialog() {
+    val backStack = TopLevelBackStack<NavKey>(Accounts)
+    backStack.add(AccountDetail("1"))
+    backStack.add(AddAccount)
+
+    backStack.popAndResetTopLevel(Accounts)
+
+    assertEquals(Accounts, backStack.topLevelKey)
+    assertEquals(listOf(Accounts), backStack.backStack.toList())
+  }
+
+  @Test
   fun saveState_restoresTabsAndPages() {
     val backStack = TopLevelBackStack<NavKey>(Accounts)
     backStack.add(AccountDetail("1"))
