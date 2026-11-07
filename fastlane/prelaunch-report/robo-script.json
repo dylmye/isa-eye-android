@@ -1,0 +1,582 @@
+[
+  {
+    "id": 1000,
+    "description": "ISA Eye smoke journey: add an account, record a contribution, set up an auto-contribution, set a goal, then check Insights and Help",
+    "crawlStage": "crawl",
+    "contextDescriptor": {
+      "condition": "app_under_test_shown"
+    },
+    "actions": [
+      {
+        "eventType": "DISABLE_KEYBOARD"
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 15000,
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_tab_accounts$"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "description": "Open the Accounts tab",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_tab_accounts$"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 10000,
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_add_account$"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "description": "Start adding an account",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_add_account$"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 10000,
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_add_nickname$"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "description": "Name the account",
+        "replacementText": "Robo Cash ISA",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_add_nickname$"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "description": "Choose a bank",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_add_bank$"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 10000,
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_bank_search$"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "description": "Filter the bank list",
+        "replacementText": "Lloyds",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_bank_search$"
+          }
+        ]
+      },
+      {
+        "eventType": "ELEMENT_SCROLL_INTO_VIEW",
+        "description": "Bring Lloyds into view in the filtered bank list",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_bank_list$"
+          }
+        ],
+        "childElementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_bank_lloyds$"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 10000,
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_bank_lloyds$"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "description": "Pick Lloyds",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_bank_lloyds$"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 10000,
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_add_continue$"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "description": "Continue to the ISA type",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_add_continue$"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 10000,
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_add_type$"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "description": "Open the ISA type list",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_add_type$"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 10000,
+        "elementDescriptors": [
+          {
+            "text": "Cash ISA"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "description": "Pick a Cash ISA",
+        "elementDescriptors": [
+          {
+            "text": "Cash ISA"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 10000,
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_add_save$"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "description": "Save the account",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_add_save$"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 15000,
+        "elementDescriptors": [
+          {
+            "contentDescriptionRegex": ".*Cash ISA.*contributed.*"
+          }
+        ]
+      },
+      {
+        "eventType": "ASSERTION",
+        "description": "The new account appears in the list",
+        "contextDescriptor": {
+          "condition": "element_present",
+          "elementDescriptors": [
+            {
+              "contentDescriptionRegex": ".*Cash ISA.*contributed.*"
+            }
+          ]
+        }
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "description": "Open the new account",
+        "elementDescriptors": [
+          {
+            "contentDescriptionRegex": ".*Cash ISA.*contributed.*"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 10000,
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_account_detail_grid$"
+          }
+        ]
+      },
+      {
+        "eventType": "ELEMENT_SCROLL_INTO_VIEW",
+        "description": "Bring the account actions into view",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_account_detail_grid$"
+          }
+        ],
+        "childElementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_update_contributions$"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "description": "Open the contributions form",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_update_contributions$"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 10000,
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_contribution_amount$"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "description": "Record a contribution",
+        "replacementText": "250",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_contribution_amount$"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "description": "Save the contribution",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_contribution_save$"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 10000,
+        "elementDescriptors": [
+          {
+            "textRegex": ".*£250\\.00.*"
+          }
+        ]
+      },
+      {
+        "eventType": "ASSERTION",
+        "description": "The contribution is reflected in the account",
+        "contextDescriptor": {
+          "condition": "element_present",
+          "elementDescriptors": [
+            {
+              "textRegex": ".*£250\\.00.*"
+            }
+          ]
+        }
+      },
+      {
+        "eventType": "ELEMENT_SCROLL_INTO_VIEW",
+        "description": "Bring the auto-contribution action into view",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_account_detail_grid$"
+          }
+        ],
+        "childElementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_setup_auto_contribution$"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "description": "Open the auto-contribution form",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_setup_auto_contribution$"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 10000,
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_auto_amount$"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "description": "Set a monthly amount",
+        "replacementText": "50",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_auto_amount$"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "description": "Save the auto-contribution",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_auto_save$"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2500
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 10000,
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_tab_insights$"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "description": "Open the Insights tab",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_tab_insights$"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 10000,
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_insights_grid$"
+          }
+        ]
+      },
+      {
+        "eventType": "ELEMENT_SCROLL_INTO_VIEW",
+        "description": "Bring the goal card into view",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_insights_grid$"
+          }
+        ],
+        "childElementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_set_goal$"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 10000,
+        "elementDescriptors": [
+          {
+            "text": "This year's goal"
+          }
+        ]
+      },
+      {
+        "eventType": "ASSERTION",
+        "description": "Insights shows the goal card",
+        "contextDescriptor": {
+          "condition": "element_present",
+          "elementDescriptors": [
+            {
+              "text": "This year's goal"
+            }
+          ]
+        }
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "description": "Open the goal form",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_set_goal$"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 10000,
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_goal_amount$"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "description": "Set a goal",
+        "replacementText": "1000",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_goal_amount$"
+          }
+        ]
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "description": "Save the goal",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_goal_save$"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 15000,
+        "elementDescriptors": [
+          {
+            "textRegex": ".*£250\\.00 of £1,000\\.00.*"
+          }
+        ]
+      },
+      {
+        "eventType": "ASSERTION",
+        "description": "Insights reflects the saved goal",
+        "contextDescriptor": {
+          "condition": "element_present",
+          "elementDescriptors": [
+            {
+              "textRegex": ".*£250\\.00 of £1,000\\.00.*"
+            }
+          ]
+        }
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "insights_goal"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "description": "Open the Help tab",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_tab_help$"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 10000,
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_help_list$"
+          }
+        ]
+      },
+      {
+        "eventType": "ELEMENT_SCROLL_INTO_VIEW",
+        "description": "Bring the first help topic into view",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_help_list$"
+          }
+        ],
+        "childElementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_help_topic_what-is-an-isa$"
+          }
+        ]
+      },
+      {
+        "eventType": "ASSERTION",
+        "description": "Help lists its topics",
+        "contextDescriptor": {
+          "condition": "element_present",
+          "elementDescriptors": [
+            {
+              "resourceIdRegex": ".*robo_help_topic_what-is-an-isa$"
+            }
+          ]
+        }
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "description": "Open a help article",
+        "elementDescriptors": [
+          {
+            "resourceIdRegex": ".*robo_help_topic_what-is-an-isa$"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT_FOR_ELEMENT",
+        "delayTime": 10000,
+        "elementDescriptors": [
+          {
+            "textRegex": ".*Individual Savings Accounts are an efficient way.*"
+          }
+        ]
+      },
+      {
+        "eventType": "ASSERTION",
+        "description": "The help article renders",
+        "contextDescriptor": {
+          "condition": "element_present",
+          "elementDescriptors": [
+            {
+              "textRegex": ".*Individual Savings Accounts are an efficient way.*"
+            }
+          ]
+        }
+      },
+      {
+        "eventType": "TAKE_SCREENSHOT",
+        "screenshotName": "help_article"
+      }
+    ]
+  }
+]

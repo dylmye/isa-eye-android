@@ -39,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -261,7 +262,9 @@ private fun AccountsList(
   LaunchedEffect(accounts) { reorder.updateItems(accounts) }
   LazyColumn(
     state = listState,
-    modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+    modifier =
+      Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+        .testTag("robo_accounts_list"),
     contentPadding = contentPadding,
     verticalArrangement = Arrangement.spacedBy(12.dp),
   ) {

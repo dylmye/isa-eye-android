@@ -40,8 +40,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -197,7 +199,7 @@ private fun AddAccountDetailsContent(
         label = { Text("Nickname (optional)") },
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().testTag("robo_add_nickname"),
       )
       ProviderField(
         selected = uiState.selectedProvider,
@@ -213,7 +215,7 @@ private fun AddAccountDetailsContent(
     Button(
       onClick = onNext,
       enabled = uiState.canContinue,
-      modifier = Modifier.fillMaxWidth().padding(16.dp),
+      modifier = Modifier.fillMaxWidth().padding(16.dp).testTag("robo_add_continue"),
     ) {
       Text("Continue")
     }
@@ -283,6 +285,7 @@ private fun AddAccountFollowUpContent(
         options = uiState.productTypeOptions,
         selectedId = uiState.selectedProductTypeId,
         onSelected = onProductTypeSelected,
+        testTag = "robo_add_type",
       )
       FlexibleField(flexible = uiState.flexible, onFlexibleChange = onFlexibleChange)
     }
@@ -294,7 +297,7 @@ private fun AddAccountFollowUpContent(
       Button(
         onClick = onSave,
         enabled = uiState.canSave && !uiState.isSaving,
-        modifier = Modifier.weight(1f),
+        modifier = Modifier.weight(1f).testTag("robo_add_save"),
       ) {
         Text("Save")
       }
@@ -322,7 +325,9 @@ private fun ProviderField(
       label = { Text("Bank") },
       trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = false) },
       modifier =
-        Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
+        Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+          .fillMaxWidth()
+          .testTag("robo_add_bank"),
     )
   }
 }
@@ -348,7 +353,10 @@ private fun ProviderPickerSheet(
     sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
   ) {
     LazyColumn(
-      modifier = Modifier.fillMaxWidth(),
+      modifier =
+        Modifier.fillMaxWidth()
+          .semantics { testTagsAsResourceId = true }
+          .testTag("robo_bank_list"),
       contentPadding = PaddingValues(bottom = 24.dp),
     ) {
       item {
@@ -363,7 +371,7 @@ private fun ProviderPickerSheet(
             onValueChange = { query = it },
             label = { Text("Search banks") },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).testTag("robo_bank_search"),
           )
         }
       }
@@ -371,10 +379,11 @@ private fun ProviderPickerSheet(
         ListItem(
           headlineContent = { Text(option.label) },
           modifier =
-            Modifier.clickable(onClickLabel = "Choose ${option.label}") {
-              onSelected(option.id)
-              onDismiss()
-            },
+            Modifier.testTag("robo_bank_${option.id}")
+              .clickable(onClickLabel = "Choose ${option.label}") {
+                onSelected(option.id)
+                onDismiss()
+              },
         )
       }
     }

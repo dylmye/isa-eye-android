@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -68,7 +69,11 @@ fun InsightsContent(
         }
       LazyVerticalGrid(
         columns = GridCells.Fixed(columns),
-        modifier = Modifier.width(gridWidth).fillMaxHeight().align(Alignment.TopCenter),
+        modifier =
+          Modifier.width(gridWidth)
+            .fillMaxHeight()
+            .align(Alignment.TopCenter)
+            .testTag("robo_insights_grid"),
         contentPadding =
           PaddingValues(
             start = PAGE_PADDING,

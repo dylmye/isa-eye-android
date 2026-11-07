@@ -23,9 +23,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -93,7 +95,12 @@ fun AutoContributionContent(
     Surface(
       shape = MaterialTheme.shapes.extraLarge,
       tonalElevation = 6.dp,
-      modifier = Modifier.semantics { paneTitle = title }.widthIn(max = DIALOG_MAX_WIDTH),
+      modifier =
+        Modifier.widthIn(max = DIALOG_MAX_WIDTH)
+          .semantics {
+            paneTitle = title
+            testTagsAsResourceId = true
+          },
     ) {
       if (uiState.isLoading) {
         Box(
@@ -149,7 +156,7 @@ private fun AutoContributionDialog(
       supportingText = {
         Text(uiState.error ?: "Recorded automatically on the 1st of each month.")
       },
-      modifier = Modifier.fillMaxWidth(),
+      modifier = Modifier.fillMaxWidth().testTag("robo_auto_amount"),
     )
     ScheduleLines(uiState)
     LastCreditLine(uiState)
@@ -169,7 +176,11 @@ private fun AutoContributionDialog(
       horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
     ) {
       TextButton(onClick = onClose) { Text("Cancel") }
-      Button(onClick = onSave, enabled = uiState.canSave) {
+      Button(
+        onClick = onSave,
+        enabled = uiState.canSave,
+        modifier = Modifier.testTag("robo_auto_save"),
+      ) {
         Text(if (isNew) "Set up" else "Save")
       }
     }
