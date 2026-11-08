@@ -1,5 +1,6 @@
 package me.dylmye.isa
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -8,6 +9,8 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.accounts.AddAccountContent
 import me.dylmye.isa.ui.accounts.AddAccountStep
@@ -76,32 +79,38 @@ class InitialFormFocusTest {
 
   @Test
   fun contributionAmount_keepsItsOpeningFocusAcrossConfigurationChange() {
+    val lifecycleOwner = TestLifecycleOwner()
     val restorationTester = StateRestorationTester(composeTestRule)
     restorationTester.setContent {
-      ISAEyeTheme(dynamicColor = false) {
-        var amount by rememberSaveable { mutableStateOf("1000") }
-        UpdateContributionsContent(
-          uiState =
-            UpdateContributionsUiState(
-              accountName = "Cash ISA",
-              yearOptions = listOf(PickerOption("2026/2027", "2026/2027")),
-              selectedYearId = "2026/2027",
-              amountInput = amount,
-              isLoading = false,
-            ),
-          onYearSelected = {},
-          onAmountChange = { amount = it },
-          onSave = {},
-          onClose = {},
-          isCompact = true,
-        )
+      CompositionLocalProvider(LocalLifecycleOwner provides lifecycleOwner) {
+        ISAEyeTheme(dynamicColor = false) {
+          var amount by rememberSaveable { mutableStateOf("1000") }
+          UpdateContributionsContent(
+            uiState =
+              UpdateContributionsUiState(
+                accountName = "Cash ISA",
+                yearOptions = listOf(PickerOption("2026/2027", "2026/2027")),
+                selectedYearId = "2026/2027",
+                amountInput = amount,
+                isLoading = false,
+              ),
+            onYearSelected = {},
+            onAmountChange = { amount = it },
+            onSave = {},
+            onClose = {},
+            isCompact = true,
+          )
+        }
       }
     }
 
     composeTestRule.onNodeWithTag("robo_contribution_amount").assertIsFocused()
 
-    // The rebuilt composition restores the opening focus rather than losing it.
+    // The rebuilt composition restores the opening focus rather than losing it. The Activity is
+    // below RESUMED by the time the old composition is disposed, as it is for a real change.
+    composeTestRule.runOnIdle { lifecycleOwner.lifecycle.currentState = Lifecycle.State.CREATED }
     restorationTester.emulateSavedInstanceStateRestore()
+    composeTestRule.runOnIdle { lifecycleOwner.lifecycle.currentState = Lifecycle.State.RESUMED }
 
     composeTestRule.onNodeWithTag("robo_contribution_amount").assertIsFocused()
   }
