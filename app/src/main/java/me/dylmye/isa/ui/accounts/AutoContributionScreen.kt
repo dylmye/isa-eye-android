@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -36,7 +38,9 @@ import me.dylmye.isa.notifications.rememberNotificationPermissionRequest
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.time.formatLongDate
 import me.dylmye.isa.ui.FormFactorPreviews
+import me.dylmye.isa.ui.PoundsInputTransformation
 import me.dylmye.isa.ui.components.LoadingIndicator
+import me.dylmye.isa.ui.components.reportTextChanges
 import me.dylmye.isa.ui.components.restoreFocusAfterConfigChange
 import me.dylmye.isa.ui.formatGbp
 
@@ -134,6 +138,8 @@ private fun AutoContributionDialog(
   onClose: () -> Unit,
 ) {
   val isNew = uiState.savedMonthlyPence == null
+  val amountState = rememberTextFieldState(uiState.input)
+  amountState.reportTextChanges(onAmountChange)
   Column(
     modifier = Modifier.verticalScroll(rememberScrollState()).padding(DIALOG_PADDING),
     verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -146,12 +152,12 @@ private fun AutoContributionDialog(
     // The amount is the whole point of the dialog, so it is set as a headline figure rather than the
     // body size a form field would use.
     OutlinedTextField(
-      value = uiState.input,
-      onValueChange = onAmountChange,
+      state = amountState,
       label = { Text("Monthly amount") },
       prefix = { Text("£", style = MaterialTheme.typography.headlineMedium) },
       textStyle = MaterialTheme.typography.headlineMedium,
-      singleLine = true,
+      lineLimits = TextFieldLineLimits.SingleLine,
+      inputTransformation = PoundsInputTransformation,
       keyboardOptions =
         KeyboardOptions(keyboardType = KeyboardType.Decimal, showKeyboardOnFocus = true),
       isError = uiState.error != null,

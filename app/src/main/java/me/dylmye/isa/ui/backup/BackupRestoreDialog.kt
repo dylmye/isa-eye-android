@@ -13,6 +13,9 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextObfuscationMode
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -20,7 +23,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedSecureTextField
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -32,14 +35,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -52,6 +54,7 @@ import me.dylmye.isa.data.backup.BackupFile
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
 import me.dylmye.isa.ui.accounts.FormDialogScaffold
+import me.dylmye.isa.ui.components.reportTextChanges
 import me.dylmye.isa.ui.components.restoreFocusAfterConfigChange
 import java.text.DateFormat
 import java.util.Date
@@ -476,14 +479,29 @@ private fun PassphraseField(
   label: String,
   focusOnOpen: Boolean = false,
 ) {
-  var visible by remember { mutableStateOf(false) }
-  OutlinedTextField(
-    value = value,
-    onValueChange = onValueChange,
+  val state = rememberTextFieldState(value)
+  // The ViewModel clears the passphrase when another backup is selected or an import succeeds, and
+  // the field can stay composed through a selection change. Mirroring only values the field did not
+  // report keeps typing field-owned while still letting those resets empty the secure field.
+  var lastReported by remember { mutableStateOf(value) }
+  state.reportTextChanges { text ->
+    lastReported = text
+    onValueChange(text)
+  }
+  LaunchedEffect(value) {
+    if (value != lastReported) {
+      state.setTextAndPlaceCursorAtEnd(value)
+      lastReported = value
+    }
+  }
+  var visible by rememberSaveable { mutableStateOf(false) }
+  // A secure field hides its contents from screenshots and the clipboard, so only the reveal
+  // toggle decides what is shown. RevealLastTyped keeps the newest character visible while typing.
+  OutlinedSecureTextField(
+    state = state,
     label = { Text(label) },
-    singleLine = true,
-    visualTransformation =
-      if (visible) VisualTransformation.None else PasswordVisualTransformation(),
+    textObfuscationMode =
+      if (visible) TextObfuscationMode.Visible else TextObfuscationMode.RevealLastTyped,
     keyboardOptions =
       KeyboardOptions(keyboardType = KeyboardType.Password, showKeyboardOnFocus = true),
     trailingIcon = {

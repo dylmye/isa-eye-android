@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
@@ -27,6 +29,7 @@ import androidx.window.core.layout.WindowSizeClass
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
 import me.dylmye.isa.ui.components.LoadingIndicator
+import me.dylmye.isa.ui.components.reportTextChanges
 import me.dylmye.isa.ui.components.restoreFocusAfterConfigChange
 
 /** Stateful entry point: owns the edit-account ViewModel and hoists its state into the content. */
@@ -113,16 +116,17 @@ private fun EditAccountForm(
   onSave: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
+  val nicknameState = rememberTextFieldState(uiState.nickname)
+  nicknameState.reportTextChanges(onNicknameChange)
   Column(modifier = modifier.fillMaxSize().imePadding()) {
     Column(
       modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp),
       verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
       OutlinedTextField(
-        value = uiState.nickname,
-        onValueChange = onNicknameChange,
+        state = nicknameState,
         label = { Text("Nickname (optional)") },
-        singleLine = true,
+        lineLimits = TextFieldLineLimits.SingleLine,
         keyboardOptions = KeyboardOptions(showKeyboardOnFocus = true),
         modifier = Modifier.fillMaxWidth().restoreFocusAfterConfigChange(focusOnOpen = true),
       )

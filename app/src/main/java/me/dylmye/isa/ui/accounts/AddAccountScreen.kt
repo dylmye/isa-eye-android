@@ -14,6 +14,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -54,6 +56,8 @@ import androidx.navigationevent.compose.rememberNavigationEventState
 import androidx.window.core.layout.WindowSizeClass
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
+import me.dylmye.isa.ui.components.rememberDisplayTextState
+import me.dylmye.isa.ui.components.reportTextChanges
 import me.dylmye.isa.ui.components.restoreFocusAfterConfigChange
 
 /** Stateful entry point: owns the ViewModel and hoists its state into [AddAccountContent]. */
@@ -179,6 +183,8 @@ private fun AddAccountDetailsContent(
   modifier: Modifier = Modifier,
 ) {
   var showProviderSheet by rememberSaveable { mutableStateOf(false) }
+  val nicknameState = rememberTextFieldState(uiState.nickname)
+  nicknameState.reportTextChanges(onNicknameChange)
 
   Column(modifier = modifier.fillMaxSize().imePadding()) {
     Column(
@@ -195,10 +201,9 @@ private fun AddAccountDetailsContent(
         )
       }
       OutlinedTextField(
-        value = uiState.nickname,
-        onValueChange = onNicknameChange,
+        state = nicknameState,
         label = { Text("Nickname (optional)") },
-        singleLine = true,
+        lineLimits = TextFieldLineLimits.SingleLine,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next, showKeyboardOnFocus = true),
         modifier =
           Modifier.fillMaxWidth()
@@ -325,10 +330,10 @@ private fun ProviderField(
     modifier = modifier.fillMaxWidth(),
   ) {
     OutlinedTextField(
-      value = selected?.label ?: "",
-      onValueChange = {},
+      state = rememberDisplayTextState(selected?.label ?: ""),
       readOnly = true,
       label = { Text("Bank") },
+      lineLimits = TextFieldLineLimits.SingleLine,
       trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = false) },
       modifier =
         Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
@@ -345,7 +350,8 @@ private fun ProviderPickerSheet(
   onSelected: (String) -> Unit,
   onDismiss: () -> Unit,
 ) {
-  var query by rememberSaveable { mutableStateOf("") }
+  val queryState = rememberTextFieldState()
+  val query = queryState.text.toString()
   val filtered = remember(options, query) {
     if (query.isBlank()) {
       options
@@ -373,10 +379,9 @@ private fun ProviderPickerSheet(
             modifier = Modifier.semantics { heading() },
           )
           OutlinedTextField(
-            value = query,
-            onValueChange = { query = it },
+            state = queryState,
             label = { Text("Search banks") },
-            singleLine = true,
+            lineLimits = TextFieldLineLimits.SingleLine,
             keyboardOptions = KeyboardOptions(showKeyboardOnFocus = true),
             modifier =
               Modifier.fillMaxWidth()
