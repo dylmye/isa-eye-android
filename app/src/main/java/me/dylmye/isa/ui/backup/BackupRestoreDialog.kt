@@ -15,6 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextObfuscationMode
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -479,7 +480,20 @@ private fun PassphraseField(
   focusOnOpen: Boolean = false,
 ) {
   val state = rememberTextFieldState(value)
-  state.reportTextChanges(onValueChange)
+  // The ViewModel clears the passphrase when another backup is selected or an import succeeds, and
+  // the field can stay composed through a selection change. Mirroring only values the field did not
+  // report keeps typing field-owned while still letting those resets empty the secure field.
+  var lastReported by remember { mutableStateOf(value) }
+  state.reportTextChanges { text ->
+    lastReported = text
+    onValueChange(text)
+  }
+  LaunchedEffect(value) {
+    if (value != lastReported) {
+      state.setTextAndPlaceCursorAtEnd(value)
+      lastReported = value
+    }
+  }
   var visible by rememberSaveable { mutableStateOf(false) }
   // A secure field hides its contents from screenshots and the clipboard, so only the reveal
   // toggle decides what is shown. RevealLastTyped keeps the newest character visible while typing.
