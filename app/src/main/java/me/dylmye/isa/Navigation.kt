@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.WindowAdaptiveInfo
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
@@ -30,8 +31,11 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -51,6 +55,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.scene.DialogSceneStrategy
 import androidx.navigation3.ui.NavDisplay
+import androidx.window.core.layout.WindowSizeClass
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.emptyFlow
@@ -65,6 +70,7 @@ import me.dylmye.isa.ui.accounts.EditAccountScreen
 import me.dylmye.isa.ui.accounts.UpdateContributionsScreen
 import me.dylmye.isa.ui.backup.BackupRestoreDialog
 import me.dylmye.isa.ui.components.Tooltip
+import me.dylmye.isa.ui.components.TooltipIconButton
 import me.dylmye.isa.ui.components.TooltipPosition
 import me.dylmye.isa.ui.help.HelpScreen
 import me.dylmye.isa.ui.help.HelpTopicPlaceholder
@@ -72,6 +78,8 @@ import me.dylmye.isa.ui.help.HelpTopicScreen
 import me.dylmye.isa.ui.insights.InsightsScreen
 import me.dylmye.isa.ui.insights.SetGoalScreen
 import me.dylmye.isa.ui.icons.add as AddIcon
+import me.dylmye.isa.ui.icons.chevronBackward as ChevronBackwardIcon
+import me.dylmye.isa.ui.icons.chevronForward as ChevronForwardIcon
 import me.dylmye.isa.ui.icons.financeMode as InsightsIcon
 import me.dylmye.isa.ui.icons.help as HelpIcon
 import me.dylmye.isa.ui.icons.savings as SavingsIcon
@@ -103,6 +111,42 @@ internal fun launchTab(hasLaunched: Boolean): NavKey = if (hasLaunched) Insights
  * uses the default key, which keeps the two from ever pairing an entry with the wrong pane.
  */
 private const val HELP_SCENE_KEY = "help"
+
+/** The navigation suite type for the current window, plus the wide rail's toggle state. */
+private data class NavigationChrome(
+  val suiteType: NavigationSuiteType,
+  val canExpandRail: Boolean,
+  val railExpanded: Boolean,
+  val onToggleRail: () -> Unit,
+)
+
+/**
+ * Chooses the navigation suite type for the current window. A large window can fit the full
+ * navigation panel, but the suite only ever picks the collapsed rail, so pick the expanded type
+ * here and let the header's toggle switch between the two.
+ */
+@Composable
+private fun rememberNavigationChrome(windowAdaptiveInfo: WindowAdaptiveInfo): NavigationChrome {
+  val canExpandRail =
+    windowAdaptiveInfo.windowSizeClass.isWidthAtLeastBreakpoint(
+      WindowSizeClass.WIDTH_DP_LARGE_LOWER_BOUND,
+    )
+  var railExpanded by rememberSaveable { mutableStateOf(true) }
+  val suiteType =
+    remember(windowAdaptiveInfo, railExpanded) {
+      if (canExpandRail && railExpanded) {
+        NavigationSuiteType.WideNavigationRailExpanded
+      } else {
+        NavigationSuiteScaffoldDefaults.navigationSuiteType(windowAdaptiveInfo)
+      }
+    }
+  return NavigationChrome(
+    suiteType = suiteType,
+    canExpandRail = canExpandRail,
+    railExpanded = railExpanded,
+    onToggleRail = { railExpanded = !railExpanded },
+  )
+}
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
@@ -142,16 +186,14 @@ fun MainNavigation(
   val singlePane = directive.maxHorizontalPartitions == 1
   val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>(directive = directive)
   val dialogStrategy = remember { DialogSceneStrategy<NavKey>() }
-  val navigationSuiteType = remember(windowAdaptiveInfo) {
-    NavigationSuiteScaffoldDefaults.navigationSuiteType(windowAdaptiveInfo)
-  }
-  val wideRail = navigationSuiteType.usesWideRail
+  val navigationChrome = rememberNavigationChrome(windowAdaptiveInfo)
+  val wideRail = navigationChrome.suiteType.usesWideRail
 
   NavigationSuiteScaffold(
     navigationItems = {
       AppNavigationItems(
         selectedKey = backStack.topLevelKey,
-        navigationSuiteType = navigationSuiteType,
+        navigationSuiteType = navigationChrome.suiteType,
         onSelect = { key ->
           if (singlePane) {
             backStack.selectTopLevel(key)
@@ -161,9 +203,10 @@ fun MainNavigation(
         },
       )
     },
-    navigationSuiteType = navigationSuiteType,
+    navigationSuiteType = navigationChrome.suiteType,
     primaryActionContent = {
       NavigationHeader(
+        chrome = navigationChrome,
         showLogo = wideRail,
         onClick = dropUnlessResumed { requestAddAccount() },
         modifier = if (wideRail) Modifier.padding(horizontal = 20.dp) else Modifier,
@@ -229,10 +272,12 @@ private fun AddAccountFab(onClick: () -> Unit, modifier: Modifier = Modifier) {
 
 /**
  * The navigation header. The wide rail has room for the eye mark above the primary action; the
- * compact bar only shows the action.
+ * compact bar only shows the action. A large window also gets the rail's expand/collapse toggle,
+ * which the stock header would otherwise provide.
  */
 @Composable
 private fun NavigationHeader(
+  chrome: NavigationChrome,
   showLogo: Boolean,
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
@@ -248,6 +293,16 @@ private fun NavigationHeader(
         contentDescription = null,
         tint = MaterialTheme.colorScheme.onSurface,
         modifier = Modifier.size(56.dp),
+      )
+    }
+    if (chrome.canExpandRail) {
+      val toggleLabel =
+        if (chrome.railExpanded) "Collapse navigation rail" else "Expand navigation rail"
+      TooltipIconButton(
+        icon = if (chrome.railExpanded) ChevronBackwardIcon else ChevronForwardIcon,
+        contentDescription = toggleLabel,
+        onClick = chrome.onToggleRail,
+        position = TooltipPosition.End,
       )
     }
     AddAccountFab(onClick = onClick)
