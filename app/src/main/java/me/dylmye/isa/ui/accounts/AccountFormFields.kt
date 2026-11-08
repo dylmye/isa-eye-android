@@ -23,7 +23,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 
-/** A read-only dropdown over [options], showing the label of [selectedId]. */
+/**
+ * A read-only dropdown over [options], showing the label of [selectedId].
+ *
+ * [fieldModifier] is applied to the text field rather than the surrounding box, so focus modifiers
+ * such as `restoreFocusAfterConfigChange` can target the focusable node.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OptionDropdownField(
@@ -33,6 +38,7 @@ fun OptionDropdownField(
   onSelected: (String) -> Unit,
   modifier: Modifier = Modifier,
   testTag: String? = null,
+  fieldModifier: Modifier = Modifier,
 ) {
   var expanded by remember { mutableStateOf(false) }
   val selectedLabel = options.firstOrNull { it.id == selectedId }?.label
@@ -51,7 +57,8 @@ fun OptionDropdownField(
       modifier =
         Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
           .fillMaxWidth()
-          .then(testTag?.let { Modifier.testTag(it) } ?: Modifier),
+          .then(testTag?.let { Modifier.testTag(it) } ?: Modifier)
+          .then(fieldModifier),
     )
     ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
       options.forEach { option ->

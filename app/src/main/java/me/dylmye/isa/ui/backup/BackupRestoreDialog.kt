@@ -304,6 +304,7 @@ private fun ExportContent(
     value = state.passphrase,
     onValueChange = onPassphraseChange,
     label = "Passphrase (optional)",
+    focusOnOpen = true,
   )
   Text(
     "Leave empty for an unencrypted file. Anyone who has the file can read your accounts and " +
@@ -402,6 +403,7 @@ private fun ImportContent(
       value = state.importPassphrase,
       onValueChange = onImportPassphraseChange,
       label = "Passphrase",
+      focusOnOpen = true,
     )
     Text(
       "This backup is encrypted. Enter the passphrase used when it was exported.",
@@ -468,7 +470,12 @@ private fun BackupRowBody(backup: BackupFile) {
 }
 
 @Composable
-private fun PassphraseField(value: String, onValueChange: (String) -> Unit, label: String) {
+private fun PassphraseField(
+  value: String,
+  onValueChange: (String) -> Unit,
+  label: String,
+  focusOnOpen: Boolean = false,
+) {
   var visible by remember { mutableStateOf(false) }
   OutlinedTextField(
     value = value,
@@ -484,7 +491,7 @@ private fun PassphraseField(value: String, onValueChange: (String) -> Unit, labe
         Text(if (visible) "Hide" else "Show")
       }
     },
-    modifier = Modifier.fillMaxWidth().restoreFocusAfterConfigChange(),
+    modifier = Modifier.fillMaxWidth().restoreFocusAfterConfigChange(focusOnOpen = focusOnOpen),
   )
 }
 

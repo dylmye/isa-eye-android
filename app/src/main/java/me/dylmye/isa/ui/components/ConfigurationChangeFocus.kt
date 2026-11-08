@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 
@@ -26,17 +27,39 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
  * Losing focus while the old window is torn down is ignored: the hosting lifecycle has already
  * dropped below `RESUMED` by then, so the flag survives the change.
  *
+ * Set [focusOnOpen] on the first field of a form to give it focus as the screen or dialog appears,
+ * so the user can start typing without clicking. The initial request is remembered across
+ * configuration changes: a rebuilt composition takes the focus-restoration path instead of
+ * replaying the request, which would pull focus back from wherever the user has since moved.
+ *
  * Pair this with `KeyboardOptions(showKeyboardOnFocus = true)` so the keyboard comes back with the
  * focus.
+ *
+ * Previews and screenshot tests never request focus: opening a form there would show a cursor and
+ * scroll the field into view, which makes the rendered layout depend on focus rather than just the
+ * state being previewed.
  */
 @Composable
-fun Modifier.restoreFocusAfterConfigChange(): Modifier {
+fun Modifier.restoreFocusAfterConfigChange(focusOnOpen: Boolean = false): Modifier {
   val focusRequester = remember { FocusRequester() }
+  val inspectionMode = LocalInspectionMode.current
   val lifecycle = LocalLifecycleOwner.current.lifecycle
   var wasFocused by rememberSaveable { mutableStateOf(false) }
+  var didRequestFocusOnOpen by rememberSaveable { mutableStateOf(false) }
 
   LaunchedEffect(focusRequester) {
-    if (wasFocused) focusRequester.requestFocus()
+    if (inspectionMode) return@LaunchedEffect
+    when {
+      wasFocused -> {
+        focusRequester.requestFocus()
+      }
+
+      focusOnOpen && !didRequestFocusOnOpen -> {
+        // Mark first so a rebuild after teardown does not request focus a second time.
+        didRequestFocusOnOpen = true
+        focusRequester.requestFocus()
+      }
+    }
   }
 
   return this.focusRequester(focusRequester).onFocusChanged { focusState ->

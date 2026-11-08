@@ -145,7 +145,9 @@ private fun SetGoalDialog(
       isError = uiState.error != null,
       supportingText = { Text(uiState.error ?: allowanceHint(uiState)) },
       modifier =
-        Modifier.fillMaxWidth().restoreFocusAfterConfigChange().testTag("robo_goal_amount"),
+        Modifier.fillMaxWidth()
+          .restoreFocusAfterConfigChange(focusOnOpen = true)
+          .testTag("robo_goal_amount"),
     )
     // Low stakes and reversible, so removing needs no confirmation of its own.
     if (uiState.canRemove) {

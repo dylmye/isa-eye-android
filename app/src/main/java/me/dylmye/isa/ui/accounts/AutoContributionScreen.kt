@@ -159,7 +159,9 @@ private fun AutoContributionDialog(
         Text(uiState.error ?: "Recorded automatically on the 1st of each month.")
       },
       modifier =
-        Modifier.fillMaxWidth().restoreFocusAfterConfigChange().testTag("robo_auto_amount"),
+        Modifier.fillMaxWidth()
+          .restoreFocusAfterConfigChange(focusOnOpen = true)
+          .testTag("robo_auto_amount"),
     )
     ScheduleLines(uiState)
     LastCreditLine(uiState)
