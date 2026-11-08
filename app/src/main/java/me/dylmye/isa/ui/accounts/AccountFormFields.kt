@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -22,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import me.dylmye.isa.ui.components.rememberDisplayTextState
 
 /**
  * A read-only dropdown over [options], showing the label of [selectedId].
@@ -49,10 +51,10 @@ fun OptionDropdownField(
     modifier = modifier.fillMaxWidth(),
   ) {
     OutlinedTextField(
-      value = selectedLabel ?: "",
-      onValueChange = {},
+      state = rememberDisplayTextState(selectedLabel ?: ""),
       readOnly = true,
       label = { Text(label) },
+      lineLimits = TextFieldLineLimits.SingleLine,
       trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
       modifier =
         Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
@@ -89,10 +91,10 @@ fun OptionDropdownField(
 @Composable
 fun ReadOnlyField(label: String, value: String, modifier: Modifier = Modifier) {
   OutlinedTextField(
-    value = value,
-    onValueChange = {},
+    state = rememberDisplayTextState(value),
     enabled = false,
     label = { Text(label) },
+    lineLimits = TextFieldLineLimits.SingleLine,
     modifier = modifier.fillMaxWidth(),
   )
 }

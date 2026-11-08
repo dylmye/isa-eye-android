@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
@@ -18,6 +21,9 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -31,7 +37,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.window.core.layout.WindowSizeClass
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
+import me.dylmye.isa.ui.PoundsInputTransformation
 import me.dylmye.isa.ui.components.LoadingIndicator
+import me.dylmye.isa.ui.components.reportTextChanges
 import me.dylmye.isa.ui.components.restoreFocusAfterConfigChange
 import me.dylmye.isa.ui.formatGbp
 
@@ -120,6 +128,18 @@ private fun UpdateContributionsForm(
   modifier: Modifier = Modifier,
 ) {
   val warnings = warningMessages(uiState)
+  val amountState = rememberTextFieldState(uiState.amountInput)
+  // The amount follows the tax year until it is edited, so changing the year replaces the text.
+  // Seeding this from the year's recorded figure once keeps the field authoritative while typing.
+  var seededYear by rememberSaveable { mutableStateOf(uiState.selectedYearId) }
+  LaunchedEffect(uiState.selectedYearId) {
+    val year = uiState.selectedYearId
+    if (year != null && year != seededYear) {
+      amountState.setTextAndPlaceCursorAtEnd(uiState.amountInput)
+      seededYear = year
+    }
+  }
+  amountState.reportTextChanges(onAmountChange)
   Column(modifier = modifier.fillMaxSize().imePadding()) {
     Column(
       modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp),
@@ -130,15 +150,16 @@ private fun UpdateContributionsForm(
         label = "Tax year",
         options = uiState.yearOptions,
         selectedId = uiState.selectedYearId,
-        onSelected = onYearSelected,
+        // Re-picking the current year must not clear an amount the user has already entered.
+        onSelected = { id -> if (id != uiState.selectedYearId) onYearSelected(id) },
         testTag = "robo_contribution_year",
       )
       OutlinedTextField(
-        value = uiState.amountInput,
-        onValueChange = onAmountChange,
+        state = amountState,
         label = { Text("Contributions") },
         prefix = { Text("£") },
-        singleLine = true,
+        lineLimits = TextFieldLineLimits.SingleLine,
+        inputTransformation = PoundsInputTransformation,
         keyboardOptions =
           KeyboardOptions(keyboardType = KeyboardType.Decimal, showKeyboardOnFocus = true),
         isError = warnings.isNotEmpty(),
