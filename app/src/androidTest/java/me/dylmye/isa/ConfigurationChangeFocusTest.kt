@@ -89,4 +89,43 @@ class ConfigurationChangeFocusTest {
 
     composeTestRule.onNodeWithTag("robo_contribution_amount").assertIsNotFocused()
   }
+
+  @Test
+  fun fieldThatLostFocus_doesNotReclaimFocusAfterConfigurationChange() {
+    val restorationTester = StateRestorationTester(composeTestRule)
+    restorationTester.setContent {
+      ISAEyeTheme(dynamicColor = false) {
+        UpdateContributionsContent(
+          uiState =
+            UpdateContributionsUiState(
+              accountName = "Cash ISA",
+              yearOptions = listOf(PickerOption("2026/2027", "2026/2027")),
+              selectedYearId = "2026/2027",
+              amountInput = "1000",
+              isLoading = false,
+            ),
+          onYearSelected = {},
+          onAmountChange = {},
+          onSave = {},
+          onClose = {},
+          isCompact = true,
+        )
+      }
+    }
+
+    composeTestRule
+      .onNodeWithTag("robo_contribution_amount")
+      .requestFocus()
+      .assertIsFocused()
+
+    // Moving focus to another control, as a tap or keyboard navigation would, clears the flag.
+    composeTestRule.onNodeWithTag("robo_contribution_year").requestFocus().assertIsFocused()
+    composeTestRule.onNodeWithTag("robo_contribution_amount").assertIsNotFocused()
+
+    // Rebuilds the composition from saved state, as a rotation or window resize would.
+    restorationTester.emulateSavedInstanceStateRestore()
+
+    composeTestRule.onNodeWithTag("robo_contribution_amount").assertIsNotFocused()
+    composeTestRule.onNodeWithTag("robo_contribution_year").assertIsFocused()
+  }
 }
