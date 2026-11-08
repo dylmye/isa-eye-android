@@ -201,7 +201,9 @@ private fun AddAccountDetailsContent(
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next, showKeyboardOnFocus = true),
         modifier =
-          Modifier.fillMaxWidth().restoreFocusAfterConfigChange().testTag("robo_add_nickname"),
+          Modifier.fillMaxWidth()
+            .restoreFocusAfterConfigChange(focusOnOpen = true)
+            .testTag("robo_add_nickname"),
       )
       ProviderField(
         selected = uiState.selectedProvider,
@@ -288,6 +290,8 @@ private fun AddAccountFollowUpContent(
         selectedId = uiState.selectedProductTypeId,
         onSelected = onProductTypeSelected,
         testTag = "robo_add_type",
+        // The follow-up step has no text field, so its first control takes the opening focus.
+        fieldModifier = Modifier.restoreFocusAfterConfigChange(focusOnOpen = true),
       )
       FlexibleField(flexible = uiState.flexible, onFlexibleChange = onFlexibleChange)
     }

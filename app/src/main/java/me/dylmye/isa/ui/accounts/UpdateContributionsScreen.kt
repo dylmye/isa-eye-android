@@ -154,7 +154,7 @@ private fun UpdateContributionsForm(
           },
         modifier =
           Modifier.fillMaxWidth()
-            .restoreFocusAfterConfigChange()
+            .restoreFocusAfterConfigChange(focusOnOpen = true)
             .testTag("robo_contribution_amount"),
       )
     }

@@ -124,7 +124,7 @@ private fun EditAccountForm(
         label = { Text("Nickname (optional)") },
         singleLine = true,
         keyboardOptions = KeyboardOptions(showKeyboardOnFocus = true),
-        modifier = Modifier.fillMaxWidth().restoreFocusAfterConfigChange(),
+        modifier = Modifier.fillMaxWidth().restoreFocusAfterConfigChange(focusOnOpen = true),
       )
       ReadOnlyField(label = "Bank", value = uiState.providerName)
       ReadOnlyField(label = "Year of opening", value = uiState.startTaxYear)
