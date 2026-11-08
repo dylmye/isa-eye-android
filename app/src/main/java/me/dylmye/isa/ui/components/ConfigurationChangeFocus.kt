@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 
@@ -33,15 +34,21 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
  *
  * Pair this with `KeyboardOptions(showKeyboardOnFocus = true)` so the keyboard comes back with the
  * focus.
+ *
+ * Previews and screenshot tests never request focus: opening a form there would show a cursor and
+ * scroll the field into view, which makes the rendered layout depend on focus rather than just the
+ * state being previewed.
  */
 @Composable
 fun Modifier.restoreFocusAfterConfigChange(focusOnOpen: Boolean = false): Modifier {
   val focusRequester = remember { FocusRequester() }
+  val inspectionMode = LocalInspectionMode.current
   val lifecycle = LocalLifecycleOwner.current.lifecycle
   var wasFocused by rememberSaveable { mutableStateOf(false) }
   var didRequestFocusOnOpen by rememberSaveable { mutableStateOf(false) }
 
   LaunchedEffect(focusRequester) {
+    if (inspectionMode) return@LaunchedEffect
     when {
       wasFocused -> {
         focusRequester.requestFocus()
