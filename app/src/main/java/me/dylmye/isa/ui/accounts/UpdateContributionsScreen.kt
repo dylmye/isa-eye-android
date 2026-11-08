@@ -131,6 +131,7 @@ private fun UpdateContributionsForm(
         options = uiState.yearOptions,
         selectedId = uiState.selectedYearId,
         onSelected = onYearSelected,
+        testTag = "robo_contribution_year",
       )
       OutlinedTextField(
         value = uiState.amountInput,
