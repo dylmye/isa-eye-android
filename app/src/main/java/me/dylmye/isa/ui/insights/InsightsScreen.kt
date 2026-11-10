@@ -1,16 +1,15 @@
 package me.dylmye.isa.ui.insights
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.Scaffold
@@ -18,9 +17,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -61,21 +63,13 @@ fun InsightsContent(
       },
     contentWindowInsets = WindowInsets.statusBars,
   ) { innerPadding ->
-    BoxWithConstraints(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
-      val columns = (maxWidth / MIN_CARD_WIDTH).toInt().coerceIn(1, MAX_COLUMNS)
-      val gridWidth =
-        if (columns == 1) {
-          maxWidth
-        } else {
-          MIN_CARD_WIDTH * columns + CARD_GAP * (columns - 1) + PAGE_PADDING * 2
-        }
+    Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
       val gridState = rememberLazyGridState()
       LazyVerticalGrid(
-        columns = GridCells.Fixed(columns),
+        columns = WidgetGridCells,
         state = gridState,
         modifier =
-          Modifier.width(gridWidth)
-            .fillMaxHeight()
+          Modifier.cappedWidgetWidth()
             .align(Alignment.TopCenter)
             .testTag("robo_insights_grid")
             .verticalScrollbar(state = gridState.scrollIndicatorState),
@@ -89,28 +83,86 @@ fun InsightsContent(
         horizontalArrangement = Arrangement.spacedBy(CARD_GAP),
         verticalArrangement = Arrangement.spacedBy(CARD_GAP),
       ) {
-        item(key = "countdown", span = { GridItemSpan(maxLineSpan) }) { CountdownCard(uiState) }
-        if (uiState.ruleset != null) {
-          item(key = "goal", span = { GridItemSpan(maxLineSpan) }) {
-            GoalCard(uiState = uiState, onEdit = onEditGoal)
-          }
-        }
-        if (uiState.juniorAllowances.isNotEmpty()) {
-          item(key = "junior", span = { GridItemSpan(maxLineSpan) }) {
-            JuniorAllowanceCard(uiState)
-          }
-        }
-        if (uiState.accountShares.isNotEmpty()) {
-          item(key = "accounts", span = { GridItemSpan(1) }) { AccountDonutCard(uiState) }
-          item(key = "types", span = { GridItemSpan(1) }) { ProductTypeDonutCard(uiState) }
-        }
-        if (uiState.yearShares.isNotEmpty()) {
-          item(key = "years", span = { GridItemSpan(maxLineSpan) }) { YearBarCard(uiState) }
-        }
+        insightsCards(uiState = uiState, onEditGoal = onEditGoal)
       }
     }
   }
 }
+
+/**
+ * The cards, in the order they appear. Each names its type so the grid can reuse composition slots
+ * for cards of the same kind as they scroll into and out of view.
+ */
+private fun LazyGridScope.insightsCards(uiState: InsightsUiState, onEditGoal: () -> Unit) {
+  item(key = "countdown", contentType = "countdown", span = { GridItemSpan(maxLineSpan) }) {
+    CountdownCard(uiState)
+  }
+  if (uiState.ruleset != null) {
+    item(key = "goal", contentType = "goal", span = { GridItemSpan(maxLineSpan) }) {
+      GoalCard(uiState = uiState, onEdit = onEditGoal)
+    }
+  }
+  if (uiState.juniorAllowances.isNotEmpty()) {
+    item(key = "junior", contentType = "junior", span = { GridItemSpan(maxLineSpan) }) {
+      JuniorAllowanceCard(uiState)
+    }
+  }
+  if (uiState.accountShares.isNotEmpty()) {
+    item(key = "accounts", contentType = "accounts", span = { GridItemSpan(1) }) {
+      AccountDonutCard(uiState)
+    }
+    item(key = "types", contentType = "types", span = { GridItemSpan(1) }) {
+      ProductTypeDonutCard(uiState)
+    }
+  }
+  if (uiState.yearShares.isNotEmpty()) {
+    item(key = "years", contentType = "years", span = { GridItemSpan(maxLineSpan) }) {
+      YearBarCard(uiState)
+    }
+  }
+}
+
+/**
+ * The grid's columns. The cell sizes come from the width the grid is measured at, so the column
+ * count needs no measurement of its own, unlike the
+ * [BoxWithConstraints][androidx.compose.foundation.layout.BoxWithConstraints] this replaced.
+ */
+private object WidgetGridCells : GridCells {
+  override fun Density.calculateCrossAxisCellSizes(availableSize: Int, spacing: Int): List<Int> {
+    // availableSize excludes the page padding, but the padding forms part of the breakpoint.
+    val columns = columnCount(availableSize + (PAGE_PADDING * 2).roundToPx())
+    val cellsWidth = (availableSize - spacing * (columns - 1)).coerceAtLeast(0)
+    val cellWidth = cellsWidth / columns
+    val remainder = cellsWidth % columns
+    return List(columns) { index -> if (index < remainder) cellWidth + 1 else cellWidth }
+  }
+}
+
+/**
+ * Caps the grid at [MAX_COLUMNS] card widths, including their gaps and padding, so a wide window
+ * gets gutters rather than wider cards. The cap is applied in the layout pass, which keeps the
+ * grid out of the [SubcomposeLayout][androidx.compose.ui.layout.SubcomposeLayout] that
+ * [BoxWithConstraints][androidx.compose.foundation.layout.BoxWithConstraints] would introduce.
+ */
+private fun Modifier.cappedWidgetWidth(): Modifier = layout { measurable, constraints ->
+  val columns = columnCount(constraints.maxWidth)
+  val width =
+    if (columns == 1) {
+      constraints.maxWidth
+    } else {
+      gridWidth(columns).coerceAtMost(constraints.maxWidth)
+    }
+  val placeable = measurable.measure(Constraints.fixed(width, constraints.maxHeight))
+  layout(width = width, height = placeable.height) { placeable.place(0, 0) }
+}
+
+/** How many card columns fit in [widthPx], bounded so cards stay a widget width. */
+private fun Density.columnCount(widthPx: Int): Int =
+  (widthPx / MIN_CARD_WIDTH.roundToPx()).coerceIn(1, MAX_COLUMNS)
+
+/** The width in pixels of [columns] cards, with their gaps and the page padding. */
+private fun Density.gridWidth(columns: Int): Int =
+  (MIN_CARD_WIDTH * columns + CARD_GAP * (columns - 1) + PAGE_PADDING * 2).roundToPx()
 
 /** A card narrower than this would be cramped; wider, and the grid stops reading as widgets. */
 private val MIN_CARD_WIDTH = 320.dp

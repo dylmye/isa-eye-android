@@ -226,10 +226,14 @@ private fun AccountDetailGrid(
   ) {
     // Contributions take every column but one, leaving room for the actions card beside them; on a
     // single-column phone the span collapses and every card is full width.
-    item(key = "contributions", span = { GridItemSpan((maxLineSpan - 1).coerceAtLeast(1)) }) {
+    item(
+      key = "contributions",
+      contentType = "contributions",
+      span = { GridItemSpan((maxLineSpan - 1).coerceAtLeast(1)) },
+    ) {
       ContributionsCard(uiState = uiState, onClick = onUpdateContributions)
     }
-    item(key = "actions") {
+    item(key = "actions", contentType = "actions") {
       ActionsCard(
         autoContributionEnabled = uiState.isCurrentTaxYear,
         hasAutoContribution = uiState.hasAutoContribution,
@@ -240,7 +244,7 @@ private fun AccountDetailGrid(
     }
     val description = uiState.longDescription
     if (!description.isNullOrBlank()) {
-      item(key = "info", span = { GridItemSpan(maxLineSpan) }) {
+      item(key = "info", contentType = "info", span = { GridItemSpan(maxLineSpan) }) {
         InfoCalloutCard(
           text = AnnotatedString(description),
           title = infoTitle(uiState.typeName),
