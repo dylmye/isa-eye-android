@@ -1,5 +1,6 @@
 package me.dylmye.isa.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,6 +9,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -17,7 +20,8 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import coil3.compose.SubcomposeAsyncImage
+import coil3.compose.AsyncImagePainter
+import coil3.compose.rememberAsyncImagePainter
 
 /**
  * Circular avatar for an account provider: the provider's icon when a URL is available, otherwise
@@ -35,14 +39,21 @@ fun ProviderAvatar(
   if (iconUrl.isNullOrBlank()) {
     LetterAvatar(provider = provider, tint = tint, modifier = avatarModifier)
   } else {
-    SubcomposeAsyncImage(
-      model = iconUrl,
-      contentDescription = provider,
-      modifier = avatarModifier,
-      contentScale = ContentScale.Crop,
-      loading = { LetterAvatar(provider = provider, tint = tint) },
-      error = { LetterAvatar(provider = provider, tint = tint) },
-    )
+    // A painter rather than SubcomposeAsyncImage: the latter defers composition to the measurement
+    // pass, which every row in the accounts list would pay for while scrolling.
+    val painter = rememberAsyncImagePainter(iconUrl)
+    val state by painter.state.collectAsState()
+    if (state is AsyncImagePainter.State.Success) {
+      Image(
+        painter = painter,
+        contentDescription = provider,
+        modifier = avatarModifier,
+        contentScale = ContentScale.Crop,
+      )
+    } else {
+      // While the icon loads, or if it fails, the initial stands in for it.
+      LetterAvatar(provider = provider, tint = tint, modifier = avatarModifier)
+    }
   }
 }
 

@@ -273,7 +273,11 @@ private fun AccountsList(
     contentPadding = contentPadding,
     verticalArrangement = Arrangement.spacedBy(12.dp),
   ) {
-    itemsIndexed(reorder.items, key = { _, account -> account.productId }) { index, account ->
+    itemsIndexed(
+      reorder.items,
+      key = { _, account -> account.productId },
+      contentType = { _, _ -> "account" },
+    ) { index, account ->
       val dragging = reorder.isDragging(account.productId)
       // The lifted row is drawn at its real place through the offset, so animating its placement
       // as well would move it twice.

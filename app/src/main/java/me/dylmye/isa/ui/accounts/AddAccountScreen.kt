@@ -371,7 +371,7 @@ private fun ProviderPickerSheet(
           .testTag("robo_bank_list"),
       contentPadding = PaddingValues(bottom = 24.dp),
     ) {
-      item {
+      item(key = "header", contentType = "header") {
         Column(Modifier.padding(horizontal = 16.dp)) {
           Text(
             "Bank",
@@ -391,7 +391,7 @@ private fun ProviderPickerSheet(
           )
         }
       }
-      items(filtered, key = { it.id }) { option ->
+      items(filtered, key = { it.id }, contentType = { "provider" }) { option ->
         ListItem(
           headlineContent = { Text(option.label) },
           modifier =

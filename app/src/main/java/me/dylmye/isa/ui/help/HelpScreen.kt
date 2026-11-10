@@ -106,12 +106,12 @@ fun HelpScreen(
       contentPadding = contentPadding,
       verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-      item { HelpIntro() }
-      items(HelpTopics, key = { it.id }) { topic ->
+      item(key = "intro", contentType = "intro") { HelpIntro() }
+      items(HelpTopics, key = { it.id }, contentType = { "topic" }) { topic ->
         HelpTopicCard(topic = topic, onClick = { onTopicClick(topic.id) })
       }
-      item { HelpAttribution() }
-      item { HelpDisclaimer() }
+      item(key = "attribution", contentType = "attribution") { HelpAttribution() }
+      item(key = "disclaimer", contentType = "disclaimer") { HelpDisclaimer() }
     }
   }
 }
