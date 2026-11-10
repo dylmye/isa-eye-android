@@ -3,10 +3,8 @@ package me.dylmye.isa.widgets
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.os.Build
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.unit.TextUnit
@@ -25,6 +23,8 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
+import me.dylmye.isa.theme.ISAEyeDarkColorScheme
+import me.dylmye.isa.theme.ISAEyeLightColorScheme
 import me.dylmye.isa.ui.formatGbp
 
 /**
@@ -49,9 +49,9 @@ internal fun WidgetTheme(content: @Composable () -> Unit) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
       if (night) dynamicDarkColorScheme(themed) else dynamicLightColorScheme(themed)
     } else if (night) {
-      darkColorScheme()
+      ISAEyeDarkColorScheme
     } else {
-      lightColorScheme()
+      ISAEyeLightColorScheme
     }
   CompositionLocalProvider(LocalContext provides themed) {
     GlanceTheme(colors = ColorProviders(scheme)) { content() }
