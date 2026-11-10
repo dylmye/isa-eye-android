@@ -3,7 +3,9 @@ package me.dylmye.isa.ui.backup
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -61,8 +63,9 @@ data class BackupRestoreUiState(
 internal class BackupRestoreViewModel(
   application: Application,
   private val manager: BackupManager,
+  private val savedStateHandle: SavedStateHandle,
 ) : AndroidViewModel(application) {
-  private val _uiState = MutableStateFlow(BackupRestoreUiState())
+  private val _uiState = MutableStateFlow(savedStateHandle.backupRestoreState())
   val uiState: StateFlow<BackupRestoreUiState> = _uiState.asStateFlow()
 
   /** The last file opened from outside the app, so a recomposition does not restart its import. */
@@ -84,32 +87,32 @@ internal class BackupRestoreViewModel(
   }
 
   fun onTabChange(tab: BackupTab) {
-    _uiState.update { it.copy(tab = tab, error = null) }
+    updateState { it.copy(tab = tab, error = null) }
     if (tab == BackupTab.Import) refreshFolder()
   }
 
   fun onPassphraseChange(value: String) {
-    _uiState.update { it.copy(passphrase = value) }
+    updateState { it.copy(passphrase = value) }
   }
 
   fun onImportPassphraseChange(value: String) {
-    _uiState.update { it.copy(importPassphrase = value) }
+    updateState { it.copy(importPassphrase = value) }
   }
 
   fun onExportRequested() {
     if (_uiState.value.passphrase.isEmpty()) {
-      _uiState.update { it.copy(showExportWithoutPassphraseWarning = true) }
+      updateState { it.copy(showExportWithoutPassphraseWarning = true) }
     } else {
       export()
     }
   }
 
   fun dismissExportWarning() {
-    _uiState.update { it.copy(showExportWithoutPassphraseWarning = false) }
+    updateState { it.copy(showExportWithoutPassphraseWarning = false) }
   }
 
   fun confirmExportWithoutPassphrase() {
-    _uiState.update { it.copy(showExportWithoutPassphraseWarning = false) }
+    updateState { it.copy(showExportWithoutPassphraseWarning = false) }
     export()
   }
 
@@ -132,7 +135,7 @@ internal class BackupRestoreViewModel(
   }
 
   private fun select(file: BackupFile, external: Boolean, confirmWhenReady: Boolean) {
-    _uiState.update {
+    updateState {
       it.copy(
         tab = BackupTab.Import,
         selectedBackup = file,
@@ -147,7 +150,7 @@ internal class BackupRestoreViewModel(
     viewModelScope.launch {
       try {
         val encrypted = manager.isEncrypted(file.uri)
-        _uiState.update { state ->
+        updateState { state ->
           if (state.selectedBackup?.uri == file.uri) {
             state.copy(
               selectedIsEncrypted = encrypted,
@@ -168,25 +171,25 @@ internal class BackupRestoreViewModel(
     val state = _uiState.value
     if (state.selectedBackup == null) return
     if (state.selectedIsEncrypted && state.importPassphrase.isEmpty()) {
-      _uiState.update { it.copy(error = BackupError.EncryptedBackup) }
+      updateState { it.copy(error = BackupError.EncryptedBackup) }
       return
     }
-    _uiState.update { it.copy(showImportConfirmation = true, error = null) }
+    updateState { it.copy(showImportConfirmation = true, error = null) }
   }
 
   fun dismissImportConfirmation() {
-    _uiState.update { it.copy(showImportConfirmation = false) }
+    updateState { it.copy(showImportConfirmation = false) }
   }
 
   fun confirmImport() {
     val state = _uiState.value
     val backup = state.selectedBackup ?: return
-    _uiState.update { it.copy(showImportConfirmation = false) }
+    updateState { it.copy(showImportConfirmation = false) }
     import(backup, state.importPassphrase.ifEmpty { null })
   }
 
   fun clearError() {
-    _uiState.update { it.copy(error = null) }
+    updateState { it.copy(error = null) }
   }
 
   /**
@@ -195,19 +198,19 @@ internal class BackupRestoreViewModel(
    */
   fun resetForNextOpen() {
     externalUri = null
-    _uiState.update { BackupRestoreUiState(folderName = it.folderName) }
+    updateState { BackupRestoreUiState(folderName = it.folderName) }
     refreshFolder()
   }
 
   private fun export() {
     val state = _uiState.value
     if (state.isBusy) return
-    _uiState.update { it.copy(isBusy = true, error = null, exportedFileName = null) }
+    updateState { it.copy(isBusy = true, error = null, exportedFileName = null) }
     viewModelScope.launch {
       try {
         val file = manager.export(state.passphrase.ifEmpty { null })
         val backups = withContext(Dispatchers.IO) { manager.listBackups() }
-        _uiState.update {
+        updateState {
           it.copy(
             isBusy = false,
             passphrase = "",
@@ -218,7 +221,7 @@ internal class BackupRestoreViewModel(
       } catch (error: BackupException) {
         fail(error)
       } catch (_: Exception) {
-        _uiState.update {
+        updateState {
           it.copy(isBusy = false, error = BackupError.ExportFailed)
         }
       }
@@ -227,11 +230,11 @@ internal class BackupRestoreViewModel(
 
   private fun import(backup: BackupFile, passphrase: String?) {
     if (_uiState.value.isBusy) return
-    _uiState.update { it.copy(isBusy = true, error = null, imported = false) }
+    updateState { it.copy(isBusy = true, error = null, imported = false) }
     viewModelScope.launch {
       try {
         manager.import(backup.uri, passphrase)
-        _uiState.update {
+        updateState {
           it.copy(
             isBusy = false,
             imported = true,
@@ -242,10 +245,10 @@ internal class BackupRestoreViewModel(
       } catch (error: BackupException) {
         fail(error)
         if (error.reloadRequired) {
-          _uiState.update { it.copy(needsReload = true) }
+          updateState { it.copy(needsReload = true) }
         }
       } catch (_: Exception) {
-        _uiState.update {
+        updateState {
           it.copy(isBusy = false, error = BackupError.ImportFailed)
         }
       }
@@ -262,7 +265,7 @@ internal class BackupRestoreViewModel(
         } else {
           emptyList()
         }
-      _uiState.update {
+      updateState {
         it.copy(
           folderName = name.getOrNull(),
           backups = backups,
@@ -278,13 +281,20 @@ internal class BackupRestoreViewModel(
   }
 
   private fun fail(error: BackupException) {
-    _uiState.update {
+    updateState {
       it.copy(
         isBusy = false,
         isCheckingEncryption = false,
         error = error.error,
         needsReload = it.needsReload || error.reloadRequired,
       )
+    }
+  }
+
+  /** Applies a state change and keeps the fields a process death should restore in the handle. */
+  private fun updateState(transform: (BackupRestoreUiState) -> BackupRestoreUiState) {
+    _uiState.update { current ->
+      transform(current).also { savedStateHandle.writeBackupRestoreState(it) }
     }
   }
 
@@ -295,8 +305,30 @@ internal class BackupRestoreViewModel(
         BackupRestoreViewModel(
           application,
           BackupManager(application, application, application.userPreferences),
+          createSavedStateHandle(),
         )
       }
     }
   }
+}
+
+private const val STATE_TAB = "backupRestore.tab"
+private const val STATE_PASSPHRASE = "backupRestore.passphrase"
+private const val STATE_IMPORT_PASSPHRASE = "backupRestore.importPassphrase"
+
+/** The user's inputs, restored after a process death while the backup dialog was open. */
+private fun SavedStateHandle.backupRestoreState(): BackupRestoreUiState {
+  val tabName: String? = this[STATE_TAB]
+  val tab = tabName?.let { name -> BackupTab.entries.firstOrNull { it.name == name } }
+  return BackupRestoreUiState(
+    tab = tab ?: BackupTab.Export,
+    passphrase = this[STATE_PASSPHRASE] ?: "",
+    importPassphrase = this[STATE_IMPORT_PASSPHRASE] ?: "",
+  )
+}
+
+private fun SavedStateHandle.writeBackupRestoreState(state: BackupRestoreUiState) {
+  this[STATE_TAB] = state.tab.name
+  this[STATE_PASSPHRASE] = state.passphrase
+  this[STATE_IMPORT_PASSPHRASE] = state.importPassphrase
 }

@@ -1,7 +1,9 @@
 package me.dylmye.isa.ui.accounts
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -30,9 +32,10 @@ class AutoContributionViewModel(
   private val accountRepository: AccountRepository,
   private val autoContributionRepository: AutoContributionRepository,
   private val productId: String,
+  private val savedStateHandle: SavedStateHandle,
   private val onDataChanged: () -> Unit = {},
 ) : ViewModel() {
-  private val draft = MutableStateFlow(AutoContributionDraft())
+  private val draft = MutableStateFlow(savedStateHandle.autoContributionDraft())
   private val savedEvents = Channel<AutoContributionEvent>(Channel.BUFFERED)
 
   /** One-off events, e.g. the schedule was saved and the form should close. */
@@ -64,7 +67,7 @@ class AutoContributionViewModel(
         AutoContributionUiState(),
       )
 
-  fun onAmountChange(value: String) = draft.update { it.copy(input = sanitizePoundsInput(value)) }
+  fun onAmountChange(value: String) = updateDraft { it.copy(input = sanitizePoundsInput(value)) }
 
   fun save() {
     val state = uiState.value
@@ -73,7 +76,7 @@ class AutoContributionViewModel(
     val first = state.firstCreditDate
     if (rulesetId == null || monthly == null || first == null) return
     if (!state.canSave) return
-    draft.update { it.copy(isSaving = true) }
+    updateDraft { it.copy(isSaving = true) }
     viewModelScope.launch {
       autoContributionRepository.setSchedule(productId, rulesetId, monthly, first)
       // A schedule set up on the 1st is due straight away, and the start-up catch-up has already run
@@ -88,7 +91,7 @@ class AutoContributionViewModel(
     val state = uiState.value
     val rulesetId = state.ruleset ?: return
     if (!state.canRemove) return
-    draft.update { it.copy(isSaving = true) }
+    updateDraft { it.copy(isSaving = true) }
     viewModelScope.launch {
       autoContributionRepository.clear(productId, rulesetId)
       onDataChanged()
@@ -110,6 +113,12 @@ class AutoContributionViewModel(
     }
   }
 
+  private fun updateDraft(transform: (AutoContributionDraft) -> AutoContributionDraft) {
+    draft.update { current ->
+      transform(current).also { savedStateHandle.writeAutoContributionDraft(it) }
+    }
+  }
+
   companion object {
     private const val STOP_TIMEOUT_MILLIS = 5_000L
 
@@ -120,6 +129,7 @@ class AutoContributionViewModel(
           application.accountRepository,
           application.autoContributionRepository,
           productId,
+          createSavedStateHandle(),
           application::refreshWidgets,
         )
       }
@@ -131,6 +141,15 @@ private data class AutoContributionData(
   val rulesets: List<RulesetEntity>,
   val schedules: List<AutoContributionEntity>,
 )
+
+private const val DRAFT_INPUT = "autoContribution.input"
+
+private fun SavedStateHandle.autoContributionDraft(): AutoContributionDraft =
+  AutoContributionDraft(input = this[DRAFT_INPUT])
+
+private fun SavedStateHandle.writeAutoContributionDraft(draft: AutoContributionDraft) {
+  this[DRAFT_INPUT] = draft.input
+}
 
 sealed interface AutoContributionEvent {
   /** A schedule was saved, so the monthly reminder is now worth asking about. */

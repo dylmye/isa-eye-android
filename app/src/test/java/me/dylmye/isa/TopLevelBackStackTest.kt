@@ -42,6 +42,16 @@ class TopLevelBackStackTest {
   }
 
   @Test
+  fun removeLast_onASingleRoot_leavesTheStackAlone() {
+    val backStack = TopLevelBackStack<NavKey>(TabA)
+
+    backStack.removeLast()
+
+    assertEquals(TabA, backStack.topLevelKey)
+    assertEquals(listOf(TabA), backStack.backStack.toList())
+  }
+
+  @Test
   fun removeLast_popsCurrentTab_andReturnsToPreviousTab() {
     val backStack = TopLevelBackStack<NavKey>(TabA)
     backStack.addTopLevel(TabB)
@@ -167,5 +177,11 @@ class TopLevelBackStackTest {
   @Test
   fun restore_rejectsUnknownKeys() {
     assertNull(TopLevelBackStack.restore("accounts;unknown"))
+  }
+
+  @Test
+  fun restore_rejectsMalformedState() {
+    assertNull(TopLevelBackStack.restore("{\"topLevelKey\":{\"type\":\"missing\"},\"stacks\":[]}"))
+    assertNull(TopLevelBackStack.restore(""))
   }
 }

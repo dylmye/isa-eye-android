@@ -1,7 +1,9 @@
 package me.dylmye.isa.ui.accounts
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -31,9 +33,10 @@ class UpdateContributionsViewModel(
   private val repository: AccountRepository,
   userPreferences: UserPreferences,
   private val productId: String,
+  private val savedStateHandle: SavedStateHandle,
   private val onDataChanged: () -> Unit = {},
 ) : ViewModel() {
-  private val draft = MutableStateFlow(UpdateContributionsDraft())
+  private val draft = MutableStateFlow(savedStateHandle.updateContributionsDraft())
   private val savedEvents = Channel<UpdateContributionsEvent>(Channel.BUFFERED)
 
   /** Rulesets and their per-type exceptions, combined to keep the form's flow count down. */
@@ -72,16 +75,16 @@ class UpdateContributionsViewModel(
       )
 
   /** Choosing a year clears the amount so it follows that year's recorded figure. */
-  fun onYearSelected(id: String) = draft.update { it.copy(yearId = id, amountInput = null) }
+  fun onYearSelected(id: String) = updateDraft { it.copy(yearId = id, amountInput = null) }
 
   fun onAmountChange(value: String) =
-    draft.update { it.copy(amountInput = sanitizePoundsInput(value)) }
+    updateDraft { it.copy(amountInput = sanitizePoundsInput(value)) }
 
   fun save() {
     val state = uiState.value
     val year = state.selectedYearId ?: return
     val pence = state.amountPence ?: return
-    draft.update { it.copy(isSaving = true) }
+    updateDraft { it.copy(isSaving = true) }
     viewModelScope.launch {
       repository.upsertBalance(
         AnnualBalanceEntity(
@@ -96,6 +99,12 @@ class UpdateContributionsViewModel(
     }
   }
 
+  private fun updateDraft(transform: (UpdateContributionsDraft) -> UpdateContributionsDraft) {
+    draft.update { current ->
+      transform(current).also { savedStateHandle.writeUpdateContributionsDraft(it) }
+    }
+  }
+
   companion object {
     private const val STOP_TIMEOUT_MILLIS = 5_000L
 
@@ -106,6 +115,7 @@ class UpdateContributionsViewModel(
           application.accountRepository,
           application.userPreferences,
           productId,
+          createSavedStateHandle(),
           application::refreshWidgets,
         )
       }
@@ -117,6 +127,21 @@ private data class RulesetData(
   val rulesets: List<RulesetEntity>,
   val exceptions: List<RulesetExceptionEntity>,
 )
+
+private const val DRAFT_YEAR = "updateContributions.yearId"
+private const val DRAFT_AMOUNT = "updateContributions.amountInput"
+
+/** The draft saved before a process death, so the entered amount comes back with the form. */
+private fun SavedStateHandle.updateContributionsDraft(): UpdateContributionsDraft =
+  UpdateContributionsDraft(
+    yearId = this[DRAFT_YEAR],
+    amountInput = this[DRAFT_AMOUNT],
+  )
+
+private fun SavedStateHandle.writeUpdateContributionsDraft(draft: UpdateContributionsDraft) {
+  this[DRAFT_YEAR] = draft.yearId
+  this[DRAFT_AMOUNT] = draft.amountInput
+}
 
 sealed interface UpdateContributionsEvent {
   data object Saved : UpdateContributionsEvent
