@@ -8,6 +8,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.navigation3.runtime.NavKey
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 
 class TopLevelBackStack<T : NavKey>(startKey: T) {
   private var topLevelStacks: LinkedHashMap<T, SnapshotStateList<T>> =
@@ -65,10 +72,26 @@ class TopLevelBackStack<T : NavKey>(startKey: T) {
     updateBackStack()
   }
 
+  /**
+   * Pops the page over the current tab, or closes the tab when only its root is left. The last tab
+   * is never popped: with nowhere to go back to, a system back gesture would empty the navigation.
+   */
   fun removeLast() {
-    val removedKey = topLevelStacks[topLevelKey]?.removeLastOrNull()
-    removedKey?.let { topLevelStacks.remove(it) }
-    topLevelKey = topLevelStacks.keys.last()
+    val stack = topLevelStacks[topLevelKey] ?: return
+    when {
+      stack.size > 1 -> {
+        stack.removeAt(stack.lastIndex)
+      }
+
+      topLevelStacks.size > 1 -> {
+        topLevelStacks.remove(topLevelKey)
+        topLevelKey = topLevelStacks.keys.last()
+      }
+
+      else -> {
+        return
+      }
+    }
     updateBackStack()
   }
 
@@ -82,21 +105,18 @@ class TopLevelBackStack<T : NavKey>(startKey: T) {
   }
 
   /**
-   * A compact, saveable snapshot of the per-tab stacks and the selected tab. Used by
+   * A saveable snapshot of the per-tab stacks and the selected tab. Used by
    * [TopLevelBackStackSaver] so a configuration change or process death does not reset navigation.
    */
-  internal fun saveState(): String? {
-    val top = topLevelKey.encode()
-    val stacks = topLevelStacks.values.map { stack -> stack.map { it.encode() } }
-    if (top == null || stacks.any { stack -> stack.any { it == null } }) return null
-    return buildString {
-      append(top)
-      stacks.forEach { stack ->
-        append(STACK_SEPARATOR)
-        append(stack.joinToString(ITEM_SEPARATOR) { it.orEmpty() })
-      }
-    }
+  internal fun saveState(): String? = runCatching {
+    NavigationStateJson.encodeToString(
+      SavedNavigationState(
+        topLevelKey = topLevelKey,
+        stacks = topLevelStacks.values.map { it.toList() },
+      ),
+    )
   }
+    .getOrNull()
 
   private constructor(startKey: T, stacks: List<List<T>>) : this(startKey) {
     require(stacks.isNotEmpty() && stacks.all { it.isNotEmpty() })
@@ -109,76 +129,44 @@ class TopLevelBackStack<T : NavKey>(startKey: T) {
   }
 
   internal companion object {
-    private const val STACK_SEPARATOR = ";"
-    private const val ITEM_SEPARATOR = "|"
-
     /** Rebuilds a stack from [saveState], or null when the snapshot is malformed. */
-    fun restore(state: String): TopLevelBackStack<NavKey>? {
-      val parts = state.split(STACK_SEPARATOR)
-      val top = if (parts.size >= 2) decode(parts.first()) else null
-      val stacks = parts.drop(1).map { part -> part.split(ITEM_SEPARATOR).map(::decode) }
-      if (top == null ||
-        stacks.any { stack -> stack.any { it == null } } ||
-        stacks.none { it.firstOrNull() == top }
-      ) {
-        return null
-      }
-      return TopLevelBackStack(top, stacks.map { stack -> stack.filterNotNull() })
-    }
-
-    private fun NavKey.encode(): String? = when (this) {
-      Accounts -> "accounts"
-      is AccountDetail -> "account:$productId"
-      Insights -> "insights"
-      Help -> "help"
-      is HelpTopicPage -> "topic:$id"
-      AddAccount -> "add"
-      is EditAccount -> "edit:$productId"
-      is UpdateContributions -> "update:$productId"
-      is SetAutoContribution -> "auto:$productId"
-      SetGoal -> "goal"
-      is BackupRestore -> encodedBackup()
-      else -> null
-    }
-
-    private fun BackupRestore.encodedBackup(): String =
-      importUri?.let { "backup:${it.escapeState()}" } ?: "backup"
-
-    private fun decode(value: String): NavKey? = when (value) {
-      "accounts" -> Accounts
-      "insights" -> Insights
-      "help" -> Help
-      "add" -> AddAccount
-      "goal" -> SetGoal
-      "backup" -> BackupRestore()
-      else -> decodePrefixed(value)
-    }
-
-    private fun decodePrefixed(value: String): NavKey? {
-      val separator = value.indexOf(':')
-      if (separator <= 0 || separator == value.lastIndex) return null
-      val id = value.substring(separator + 1)
-      return when (value.substring(0, separator)) {
-        "account" -> AccountDetail(id)
-        "topic" -> HelpTopicPage(id)
-        "edit" -> EditAccount(id)
-        "update" -> UpdateContributions(id)
-        "auto" -> SetAutoContribution(id)
-        "backup" -> BackupRestore(id.unescapeState())
-        else -> null
-      }
-    }
-
-    /**
-     * A backup's URI rides along with its navigation key. The snapshot format uses `;` and `|` as
-     * separators, and a URI may contain either, so those characters (and `%` itself) are escaped.
-     */
-    private fun String.escapeState(): String =
-      replace("%", "%25").replace(";", "%3B").replace("|", "%7C")
-
-    private fun String.unescapeState(): String =
-      replace("%7C", "|").replace("%3B", ";").replace("%25", "%")
+    fun restore(state: String): TopLevelBackStack<NavKey>? =
+      runCatching { NavigationStateJson.decodeFromString<SavedNavigationState>(state) }
+        .getOrNull()
+        ?.takeIf { saved ->
+          saved.stacks.isNotEmpty() &&
+            saved.stacks.all { stack -> stack.isNotEmpty() } &&
+            saved.stacks.any { stack -> stack.first() == saved.topLevelKey }
+        }
+        ?.let { saved -> TopLevelBackStack(saved.topLevelKey, saved.stacks) }
   }
+}
+
+/**
+ * The navigation snapshot. Every key is already [Serializable], so kotlinx.serialization stores the
+ * polymorphic [NavKey] hierarchy rather than a hand-written route format that would need updating
+ * for each new destination.
+ */
+@Serializable
+private data class SavedNavigationState(val topLevelKey: NavKey, val stacks: List<List<NavKey>>)
+
+private val NavigationStateJson = Json {
+  serializersModule =
+    SerializersModule {
+      polymorphic(NavKey::class) {
+        subclass(Accounts::class, Accounts.serializer())
+        subclass(AccountDetail::class, AccountDetail.serializer())
+        subclass(Insights::class, Insights.serializer())
+        subclass(Help::class, Help.serializer())
+        subclass(HelpTopicPage::class, HelpTopicPage.serializer())
+        subclass(AddAccount::class, AddAccount.serializer())
+        subclass(EditAccount::class, EditAccount.serializer())
+        subclass(UpdateContributions::class, UpdateContributions.serializer())
+        subclass(SetAutoContribution::class, SetAutoContribution.serializer())
+        subclass(SetGoal::class, SetGoal.serializer())
+        subclass(BackupRestore::class, BackupRestore.serializer())
+      }
+    }
 }
 
 /** Saves [TopLevelBackStack] across configuration changes and process death. */

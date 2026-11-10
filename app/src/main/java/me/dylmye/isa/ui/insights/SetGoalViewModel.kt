@@ -1,7 +1,9 @@
 package me.dylmye.isa.ui.insights
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -27,9 +29,10 @@ import me.dylmye.isa.ui.sanitizePoundsInput
 class SetGoalViewModel(
   private val accountRepository: AccountRepository,
   private val goalRepository: GoalRepository,
+  private val savedStateHandle: SavedStateHandle,
   private val onDataChanged: () -> Unit = {},
 ) : ViewModel() {
-  private val draft = MutableStateFlow(SetGoalDraft())
+  private val draft = MutableStateFlow(savedStateHandle.setGoalDraft())
   private val savedEvents = Channel<SetGoalEvent>(Channel.BUFFERED)
 
   /** One-off events, e.g. the goal was saved and the form should close. */
@@ -49,14 +52,14 @@ class SetGoalViewModel(
         SetGoalUiState(),
       )
 
-  fun onAmountChange(value: String) = draft.update { it.copy(input = sanitizePoundsInput(value)) }
+  fun onAmountChange(value: String) = updateDraft { it.copy(input = sanitizePoundsInput(value)) }
 
   fun save() {
     val state = uiState.value
     val rulesetId = state.ruleset
     val target = state.enteredPence
     if (rulesetId == null || target == null || !state.canSave) return
-    draft.update { it.copy(isSaving = true) }
+    updateDraft { it.copy(isSaving = true) }
     viewModelScope.launch {
       goalRepository.setGoal(rulesetId, target)
       onDataChanged()
@@ -68,11 +71,17 @@ class SetGoalViewModel(
     val state = uiState.value
     val rulesetId = state.ruleset ?: return
     if (!state.canRemove) return
-    draft.update { it.copy(isSaving = true) }
+    updateDraft { it.copy(isSaving = true) }
     viewModelScope.launch {
       goalRepository.clearGoal(rulesetId)
       onDataChanged()
       savedEvents.send(SetGoalEvent.Removed)
+    }
+  }
+
+  private fun updateDraft(transform: (SetGoalDraft) -> SetGoalDraft) {
+    draft.update { current ->
+      transform(current).also { savedStateHandle.writeSetGoalDraft(it) }
     }
   }
 
@@ -85,11 +94,20 @@ class SetGoalViewModel(
         SetGoalViewModel(
           application.accountRepository,
           application.goalRepository,
+          createSavedStateHandle(),
           application::refreshWidgets,
         )
       }
     }
   }
+}
+
+private const val DRAFT_INPUT = "setGoal.input"
+
+private fun SavedStateHandle.setGoalDraft(): SetGoalDraft = SetGoalDraft(input = this[DRAFT_INPUT])
+
+private fun SavedStateHandle.writeSetGoalDraft(draft: SetGoalDraft) {
+  this[DRAFT_INPUT] = draft.input
 }
 
 sealed interface SetGoalEvent {

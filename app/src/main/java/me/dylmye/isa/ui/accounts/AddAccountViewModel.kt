@@ -1,7 +1,9 @@
 package me.dylmye.isa.ui.accounts
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -35,9 +37,10 @@ class AddAccountViewModel(
   private val repository: AccountRepository,
   private val accountLimitRepository: AccountLimitRepository,
   private val policy: AccountLimitPolicy,
+  private val savedStateHandle: SavedStateHandle,
   private val onDataChanged: () -> Unit = {},
 ) : ViewModel() {
-  private val draft = MutableStateFlow(AddAccountDraft())
+  private val draft = MutableStateFlow(savedStateHandle.addAccountDraft())
   private val savedEvents = Channel<AddAccountEvent>(Channel.BUFFERED)
 
   /** One-off events, e.g. the account was saved and the flow should close. */
@@ -97,19 +100,19 @@ class AddAccountViewModel(
         AddAccountUiState(isLoading = true),
       )
 
-  fun onNicknameChange(value: String) = draft.update { it.copy(nickname = value) }
+  fun onNicknameChange(value: String) = updateDraft { it.copy(nickname = value) }
 
-  fun onProviderSelected(id: String) = draft.update { it.copy(providerId = id) }
+  fun onProviderSelected(id: String) = updateDraft { it.copy(providerId = id) }
 
-  fun onRulesetSelected(id: String) = draft.update { it.copy(rulesetId = id) }
+  fun onRulesetSelected(id: String) = updateDraft { it.copy(rulesetId = id) }
 
-  fun onProductTypeSelected(id: String) = draft.update { it.copy(productTypeId = id) }
+  fun onProductTypeSelected(id: String) = updateDraft { it.copy(productTypeId = id) }
 
-  fun onFlexibleChange(value: Boolean) = draft.update { it.copy(flexible = value) }
+  fun onFlexibleChange(value: Boolean) = updateDraft { it.copy(flexible = value) }
 
-  fun onNext() = draft.update { it.copy(step = AddAccountStep.FollowUp) }
+  fun onNext() = updateDraft { it.copy(step = AddAccountStep.FollowUp) }
 
-  fun onBack() = draft.update { it.copy(step = AddAccountStep.Details) }
+  fun onBack() = updateDraft { it.copy(step = AddAccountStep.Details) }
 
   fun onRestorePurchases() {
     if (uiState.value.isRestoring) return
@@ -132,7 +135,7 @@ class AddAccountViewModel(
       return
     }
     val product = buildProduct(state) ?: return
-    draft.update { it.copy(isSaving = true) }
+    updateDraft { it.copy(isSaving = true) }
     viewModelScope.launch {
       repository.upsertProduct(product)
       onDataChanged()
@@ -160,6 +163,12 @@ class AddAccountViewModel(
     )
   }
 
+  private fun updateDraft(transform: (AddAccountDraft) -> AddAccountDraft) {
+    draft.update { current ->
+      transform(current).also { savedStateHandle.writeAddAccountDraft(it) }
+    }
+  }
+
   companion object {
     private const val STOP_TIMEOUT_MILLIS = 5_000L
 
@@ -170,6 +179,7 @@ class AddAccountViewModel(
           application.accountRepository,
           application.accountLimitRepository,
           application.accountLimitPolicy,
+          createSavedStateHandle(),
           application::refreshWidgets,
         )
       }
@@ -195,6 +205,32 @@ private data class AddAccountDraft(
   val flexible: Boolean = false,
   val isSaving: Boolean = false,
 )
+
+private const val DRAFT_STEP = "addAccount.step"
+private const val DRAFT_NICKNAME = "addAccount.nickname"
+private const val DRAFT_PROVIDER = "addAccount.providerId"
+private const val DRAFT_RULESET = "addAccount.rulesetId"
+private const val DRAFT_PRODUCT_TYPE = "addAccount.productTypeId"
+private const val DRAFT_FLEXIBLE = "addAccount.flexible"
+
+/** The draft saved before a process death, so the wizard reopens where the user left it. */
+private fun SavedStateHandle.addAccountDraft(): AddAccountDraft = AddAccountDraft(
+  step = this[DRAFT_STEP] ?: AddAccountStep.Details,
+  nickname = this[DRAFT_NICKNAME] ?: "",
+  providerId = this[DRAFT_PROVIDER],
+  rulesetId = this[DRAFT_RULESET],
+  productTypeId = this[DRAFT_PRODUCT_TYPE],
+  flexible = this[DRAFT_FLEXIBLE] ?: false,
+)
+
+private fun SavedStateHandle.writeAddAccountDraft(draft: AddAccountDraft) {
+  this[DRAFT_STEP] = draft.step
+  this[DRAFT_NICKNAME] = draft.nickname
+  this[DRAFT_PROVIDER] = draft.providerId
+  this[DRAFT_RULESET] = draft.rulesetId
+  this[DRAFT_PRODUCT_TYPE] = draft.productTypeId
+  this[DRAFT_FLEXIBLE] = draft.flexible
+}
 
 sealed interface AddAccountEvent {
   data object Saved : AddAccountEvent

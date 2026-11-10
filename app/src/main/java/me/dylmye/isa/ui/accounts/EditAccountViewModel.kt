@@ -1,7 +1,9 @@
 package me.dylmye.isa.ui.accounts
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -27,9 +29,10 @@ import me.dylmye.isa.data.db.entity.ProductEntity
 class EditAccountViewModel(
   private val repository: AccountRepository,
   private val productId: String,
+  private val savedStateHandle: SavedStateHandle,
   private val onDataChanged: () -> Unit = {},
 ) : ViewModel() {
-  private val draft = MutableStateFlow<EditAccountDraft?>(null)
+  private val draft = MutableStateFlow(savedStateHandle.editAccountDraft())
   private val savedEvents = Channel<EditAccountEvent>(Channel.BUFFERED)
 
   private var product: ProductEntity? = null
@@ -73,21 +76,24 @@ class EditAccountViewModel(
     viewModelScope.launch {
       val loaded = repository.observeProduct(productId).first() ?: return@launch
       product = loaded
-      // friendlyName stores the display name, so a nickname is only present when it differs from
-      // the product type name.
-      val typeName =
-        repository
-          .observeProductTypes()
-          .first()
-          .firstOrNull { it.id == loaded.productTypeId }
-          ?.name
-      draft.value =
-        EditAccountDraft(
-          nickname = loaded.friendlyName.takeIf { it != typeName }.orEmpty(),
-          productTypeId = loaded.productTypeId,
-          flexible = loaded.flexible,
-          closingYearId = loaded.endTaxYear ?: STILL_OPEN_ID,
-        )
+      // A restored draft already has the user's edits; only a fresh form needs the saved account.
+      if (draft.value == null) {
+        // friendlyName stores the display name, so a nickname is only present when it differs from
+        // the product type name.
+        val typeName =
+          repository
+            .observeProductTypes()
+            .first()
+            .firstOrNull { it.id == loaded.productTypeId }
+            ?.name
+        draft.value =
+          EditAccountDraft(
+            nickname = loaded.friendlyName.takeIf { it != typeName }.orEmpty(),
+            productTypeId = loaded.productTypeId,
+            flexible = loaded.flexible,
+            closingYearId = loaded.endTaxYear ?: STILL_OPEN_ID,
+          )
+      }
     }
   }
 
@@ -120,7 +126,9 @@ class EditAccountViewModel(
   }
 
   private fun updateDraft(transform: (EditAccountDraft) -> EditAccountDraft) {
-    draft.update { it?.let(transform) }
+    draft.update { current ->
+      current?.let(transform)?.also(savedStateHandle::writeEditAccountDraft)
+    }
   }
 
   companion object {
@@ -129,7 +137,12 @@ class EditAccountViewModel(
     fun factory(productId: String) = viewModelFactory {
       initializer {
         val application = this[APPLICATION_KEY] as IsaEyeApplication
-        EditAccountViewModel(application.accountRepository, productId, application::refreshWidgets)
+        EditAccountViewModel(
+          application.accountRepository,
+          productId,
+          createSavedStateHandle(),
+          application::refreshWidgets,
+        )
       }
     }
   }
@@ -142,6 +155,29 @@ private data class EditAccountDraft(
   val closingYearId: String,
   val isSaving: Boolean = false,
 )
+
+private const val DRAFT_NICKNAME = "editAccount.nickname"
+private const val DRAFT_PRODUCT_TYPE = "editAccount.productTypeId"
+private const val DRAFT_FLEXIBLE = "editAccount.flexible"
+private const val DRAFT_CLOSING_YEAR = "editAccount.closingYearId"
+
+/** The draft saved before a process death, or null while the account is still loading. */
+private fun SavedStateHandle.editAccountDraft(): EditAccountDraft? {
+  if (!contains(DRAFT_CLOSING_YEAR)) return null
+  return EditAccountDraft(
+    nickname = this[DRAFT_NICKNAME] ?: "",
+    productTypeId = this[DRAFT_PRODUCT_TYPE],
+    flexible = this[DRAFT_FLEXIBLE] ?: false,
+    closingYearId = this[DRAFT_CLOSING_YEAR] ?: STILL_OPEN_ID,
+  )
+}
+
+private fun SavedStateHandle.writeEditAccountDraft(draft: EditAccountDraft) {
+  this[DRAFT_NICKNAME] = draft.nickname
+  this[DRAFT_PRODUCT_TYPE] = draft.productTypeId
+  this[DRAFT_FLEXIBLE] = draft.flexible
+  this[DRAFT_CLOSING_YEAR] = draft.closingYearId
+}
 
 sealed interface EditAccountEvent {
   data object Saved : EditAccountEvent
