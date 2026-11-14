@@ -81,9 +81,23 @@ class UpdateContributionsViewModel(
     updateDraft { it.copy(amountInput = sanitizePoundsInput(value)) }
 
   fun save() {
-    val state = uiState.value
-    val year = state.selectedYearId ?: return
-    val pence = state.amountPence ?: return
+    // Read both the year and the amount from the draft. The form reports text asynchronously and
+    // Done forwards the field's current text into the draft first, so uiState can hold a year from
+    // before the latest selection. Taking the year from uiState would write the new amount to it.
+    val form = draft.value
+    val resolved = uiState.value
+    val year =
+      (form.yearId ?: resolved.selectedYearId)
+        ?.takeIf { id -> resolved.yearOptions.any { option -> option.id == id } }
+        ?: resolved.yearOptions.lastOrNull()?.id
+    val state =
+      resolved.copy(
+        amountInput = form.amountInput ?: resolved.amountInput,
+        selectedYearId = year,
+        isSaving = form.isSaving,
+      )
+    val pence = state.amountPence
+    if (form.isSaving || year == null || pence == null) return
     updateDraft { it.copy(isSaving = true) }
     viewModelScope.launch {
       repository.upsertBalance(

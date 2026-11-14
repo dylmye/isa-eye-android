@@ -34,6 +34,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -165,6 +166,7 @@ private fun rememberPaneScaffoldDirective(windowAdaptiveInfo: WindowAdaptiveInfo
 fun MainNavigation(
   startTab: NavKey = Accounts,
   addAccountShortcut: Flow<Unit> = emptyFlow(),
+  tabShortcuts: Flow<NavKey> = emptyFlow(),
   screenRequests: Flow<NavKey> = emptyFlow(),
   backupImportRequests: Flow<Uri> = emptyFlow(),
 ) {
@@ -194,6 +196,11 @@ fun MainNavigation(
   // A narrow window shows only the detail page, so re-tapping the tab is the way back to the list.
   // A wider one already shows the list beside the detail, where popping it would be a surprise.
   val singlePane = directive.maxHorizontalPartitions == 1
+  // A shortcut switches tabs exactly as tapping the navigation item does, so both share this.
+  val selectTab: (NavKey) -> Unit = { key ->
+    if (singlePane) backStack.selectTopLevel(key) else backStack.addTopLevel(key)
+  }
+  TabShortcutRequests(tabShortcuts, selectTab)
   val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>(directive = directive)
   val dialogStrategy = remember { DialogSceneStrategy<NavKey>() }
   val navigationChrome = rememberNavigationChrome(windowAdaptiveInfo)
@@ -207,13 +214,7 @@ fun MainNavigation(
       AppNavigationItems(
         selectedKey = backStack.topLevelKey,
         navigationSuiteType = navigationChrome.suiteType,
-        onSelect = { key ->
-          if (singlePane) {
-            backStack.selectTopLevel(key)
-          } else {
-            backStack.addTopLevel(key)
-          }
-        },
+        onSelect = selectTab,
       )
     },
     navigationSuiteType = navigationChrome.suiteType,
@@ -235,6 +236,19 @@ fun MainNavigation(
         modifier = Modifier.padding(innerPadding),
       )
     }
+  }
+}
+
+/**
+ * Switches tabs when a keyboard shortcut asks for one. The current selection callback is read
+ * through [rememberUpdatedState] so a pane-width change does not restart the collector and lose a
+ * request.
+ */
+@Composable
+private fun TabShortcutRequests(requests: Flow<NavKey>, onSelect: (NavKey) -> Unit) {
+  val currentOnSelect by rememberUpdatedState(onSelect)
+  LaunchedEffect(requests) {
+    requests.collect { key -> currentOnSelect(key) }
   }
 }
 

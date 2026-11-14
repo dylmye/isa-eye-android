@@ -22,6 +22,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -118,6 +119,12 @@ private fun EditAccountForm(
 ) {
   val nicknameState = rememberTextFieldState(uiState.nickname)
   nicknameState.reportTextChanges(onNicknameChange)
+  // The field owns the text and reports it asynchronously, so Done and Save both forward the text
+  // showing now before asking the ViewModel to validate and save it.
+  val submit: () -> Unit = {
+    onNicknameChange(nicknameState.text.toString())
+    onSave()
+  }
   Column(modifier = modifier.fillMaxSize().imePadding()) {
     Column(
       modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp),
@@ -127,7 +134,9 @@ private fun EditAccountForm(
         state = nicknameState,
         label = { Text("Nickname (optional)") },
         lineLimits = TextFieldLineLimits.SingleLine,
-        keyboardOptions = KeyboardOptions(showKeyboardOnFocus = true),
+        keyboardOptions =
+          KeyboardOptions(imeAction = ImeAction.Done, showKeyboardOnFocus = true),
+        onKeyboardAction = { submit() },
         modifier = Modifier.fillMaxWidth().restoreFocusAfterConfigChange(focusOnOpen = true),
       )
       ReadOnlyField(label = "Bank", value = uiState.providerName)
@@ -147,7 +156,7 @@ private fun EditAccountForm(
       )
     }
     Button(
-      onClick = onSave,
+      onClick = submit,
       enabled = uiState.canSave && !uiState.isSaving,
       modifier = Modifier.fillMaxWidth().padding(16.dp),
     ) {

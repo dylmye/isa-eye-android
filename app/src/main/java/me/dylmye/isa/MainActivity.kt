@@ -36,13 +36,22 @@ import me.dylmye.isa.widgets.WidgetUpdater
 @Suppress("TooManyFunctions")
 class MainActivity : ComponentActivity() {
   /**
-   * Requests to open the add-account flow, raised by the Meta+N shortcut. Navigation belongs to the
-   * Compose tree, so the shortcut is forwarded there rather than acted on here.
+   * Requests to open the add-account flow, raised by the Ctrl+N and Meta+N shortcuts. Navigation
+   * belongs to the Compose tree, so the shortcut is forwarded there rather than acted on here.
    */
   private val addAccountRequests = Channel<Unit>(Channel.CONFLATED)
 
   /** The add-account shortcut's requests, for the Compose tree to collect. */
   val addAccountShortcut: Flow<Unit> = addAccountRequests.receiveAsFlow()
+
+  /**
+   * Top-level destinations requested by the Ctrl+1..Ctrl+3 shortcuts. Like the add-account shortcut,
+   * the request is forwarded to the Compose tree, which owns navigation.
+   */
+  private val tabRequests = Channel<NavKey>(Channel.CONFLATED)
+
+  /** The top-level tab shortcuts' destinations, for the Compose tree to collect. */
+  val tabShortcuts: Flow<NavKey> = tabRequests.receiveAsFlow()
 
   /**
    * Screens asked for by a notification tap. Navigation belongs to the Compose tree, so the tap is
@@ -102,6 +111,7 @@ class MainActivity : ComponentActivity() {
           MainNavigation(
             startTab = startTab,
             addAccountShortcut = addAccountShortcut,
+            tabShortcuts = tabShortcuts,
             screenRequests = requestedScreens,
             backupImportRequests = requestedBackups,
           )
@@ -189,52 +199,91 @@ class MainActivity : ComponentActivity() {
   }
 
   /**
-   * Consumes the shortcut's key-down so nothing else acts on it. The action fires on key-up, because
-   * a key held down repeats key-down and would otherwise open the flow over and over.
+   * Acts on a shortcut's initial key-down and consumes every repeat, so holding a chord fires once.
+   * The action cannot wait for key-up: releasing Ctrl before the letter or digit would leave key-up
+   * unable to recognise the chord that key-down already consumed.
    */
-  override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean =
-    if (isAddAccountShortcut(keyCode, event)) {
-      true
-    } else {
-      super.onKeyDown(keyCode, event)
-    }
+  override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+    val tab = tabShortcut(keyCode, event)
+    return when {
+      isAddAccountShortcut(keyCode, event) -> {
+        if (event.repeatCount == 0) addAccountRequests.trySend(Unit)
+        true
+      }
 
-  override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
-    if (isAddAccountShortcut(keyCode, event)) {
-      addAccountRequests.trySend(Unit)
-      return true
+      tab != null -> {
+        if (event.repeatCount == 0) tabRequests.trySend(tab)
+        true
+      }
+
+      else -> {
+        super.onKeyDown(keyCode, event)
+      }
     }
-    return super.onKeyUp(keyCode, event)
   }
 
+  override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean =
+    if (isAddAccountShortcut(keyCode, event) || tabShortcut(keyCode, event) != null) {
+      true
+    } else {
+      super.onKeyUp(keyCode, event)
+    }
+
   /**
-   * Publishes the shortcut to the system's Keyboard Shortcuts Helper, which Meta+/ opens. Without
-   * this the shortcut works but is undiscoverable.
+   * Publishes the shortcuts to the system's Keyboard Shortcuts Helper, which Meta+/ opens. Without
+   * this they work but are undiscoverable.
    */
   override fun onProvideKeyboardShortcuts(
     data: MutableList<KeyboardShortcutGroup>?,
     menu: Menu?,
     deviceId: Int,
   ) {
-    data?.add(
-      KeyboardShortcutGroup(
-        getString(R.string.app_name),
-        listOf(
+    val shortcuts =
+      buildList {
+        add(
+          KeyboardShortcutInfo(
+            getString(R.string.shortcut_add_account),
+            KeyEvent.KEYCODE_N,
+            KeyEvent.META_CTRL_ON,
+          ),
+        )
+        add(
           KeyboardShortcutInfo(
             getString(R.string.shortcut_add_account),
             KeyEvent.KEYCODE_N,
             KeyEvent.META_META_ON,
           ),
-        ),
-      ),
-    )
+        )
+        add(
+          KeyboardShortcutInfo(
+            getString(R.string.shortcut_accounts),
+            KeyEvent.KEYCODE_1,
+            KeyEvent.META_CTRL_ON,
+          ),
+        )
+        add(
+          KeyboardShortcutInfo(
+            getString(R.string.shortcut_insights),
+            KeyEvent.KEYCODE_2,
+            KeyEvent.META_CTRL_ON,
+          ),
+        )
+        add(
+          KeyboardShortcutInfo(
+            getString(R.string.shortcut_help),
+            KeyEvent.KEYCODE_3,
+            KeyEvent.META_CTRL_ON,
+          ),
+        )
+      }
+    data?.add(KeyboardShortcutGroup(getString(R.string.app_name), shortcuts))
     super.onProvideKeyboardShortcuts(data, menu, deviceId)
   }
 
-  /**
-   * Meta is the Command key on macOS keyboards, the Windows key on Windows ones and the Search key
-   * on ChromeOS ones, so this is the desktop-native chord on each.
-   */
   private fun isAddAccountShortcut(keyCode: Int, event: KeyEvent): Boolean =
-    keyCode == KeyEvent.KEYCODE_N && event.isMetaPressed
+    isAddAccountChord(keyCode, event.isCtrlPressed, event.isMetaPressed)
+
+  /** Maps Ctrl+1..Ctrl+3 to the top-level tabs; null for any other chord. */
+  private fun tabShortcut(keyCode: Int, event: KeyEvent): NavKey? =
+    if (event.isCtrlPressed) tabShortcutTarget(keyCode) else null
 }
