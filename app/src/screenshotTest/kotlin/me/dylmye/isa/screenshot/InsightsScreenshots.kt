@@ -48,6 +48,19 @@ fun InsightsEmptyScreenshot() {
   }
 }
 
+/**
+ * The first frame, before the encrypted database has answered: placeholders for the cards a
+ * returning user with contributions this year is about to see.
+ */
+@PreviewTest
+@ScreenPreviews
+@Composable
+fun InsightsLoadingScreenshot() {
+  ISAEyeTheme(dynamicColor = false) {
+    InsightsContent(uiState = InsightsUiState(isLoading = true), onEditGoal = {})
+  }
+}
+
 /** A goal reached, where the card trades the monthly arithmetic for the news that it is done. */
 @PreviewTest
 @ScreenPreviews

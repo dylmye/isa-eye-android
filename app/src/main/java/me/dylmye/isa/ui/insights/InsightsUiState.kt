@@ -90,6 +90,11 @@ data class InsightsUiState(
   val goal: GoalProgress? = null,
   /** Junior ISA accounts open this year, each measured against its own allowance. */
   val juniorAllowances: List<JuniorAllowanceUiState> = emptyList(),
+  /**
+   * True only before the database has delivered its first snapshot, so the screen can draw skeleton
+   * cards instead of an empty grid. Every resolved state is final.
+   */
+  val isLoading: Boolean = false,
 )
 
 /**

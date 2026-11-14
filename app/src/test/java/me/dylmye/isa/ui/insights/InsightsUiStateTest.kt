@@ -132,6 +132,13 @@ class InsightsUiStateTest {
   }
 
   @Test
+  fun resolveInsights_isNotLoadingOnceTheDatabaseHasAnswered() {
+    val state = resolve(emptyList())
+
+    assertFalse(state.isLoading)
+  }
+
+  @Test
   fun resolveInsights_reportsNoGoalUntilOneIsSet() {
     val state = resolve(listOf(balance("2026/2027", "a1", 165_000)))
 
