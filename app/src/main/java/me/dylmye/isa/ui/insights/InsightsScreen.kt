@@ -2,6 +2,7 @@ package me.dylmye.isa.ui.insights
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
+import me.dylmye.isa.ui.components.SkeletonGroup
 import me.dylmye.isa.ui.components.verticalScrollbar
 
 /** Stateful entry point: owns the insights ViewModel and hoists its state into [InsightsContent]. */
@@ -63,30 +65,42 @@ fun InsightsContent(
       },
     contentWindowInsets = WindowInsets.statusBars,
   ) { innerPadding ->
-    Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
-      val gridState = rememberLazyGridState()
-      LazyVerticalGrid(
-        columns = WidgetGridCells,
-        state = gridState,
-        modifier =
-          Modifier.cappedWidgetWidth()
-            .align(Alignment.TopCenter)
-            .testTag("robo_insights_grid")
-            .verticalScrollbar(state = gridState.scrollIndicatorState),
-        contentPadding =
-          PaddingValues(
-            start = PAGE_PADDING,
-            top = PAGE_PADDING,
-            end = PAGE_PADDING,
-            bottom = FAB_CLEARANCE,
-          ),
-        horizontalArrangement = Arrangement.spacedBy(CARD_GAP),
-        verticalArrangement = Arrangement.spacedBy(CARD_GAP),
-      ) {
-        insightsCards(uiState = uiState, onEditGoal = onEditGoal)
+    if (uiState.isLoading) {
+      InsightsLoading(modifier = Modifier.padding(innerPadding).fillMaxSize())
+    } else {
+      Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+        InsightsGrid { insightsCards(uiState = uiState, onEditGoal = onEditGoal) }
       }
     }
   }
+}
+
+/**
+ * The cards' scrolling grid, shared by the loaded screen and its skeleton so the loading and loaded
+ * layouts keep exactly the same width cap and scrollbar.
+ */
+@Composable
+private fun BoxScope.InsightsGrid(content: LazyGridScope.() -> Unit) {
+  val gridState = rememberLazyGridState()
+  LazyVerticalGrid(
+    columns = WidgetGridCells,
+    state = gridState,
+    modifier =
+      Modifier.cappedWidgetWidth()
+        .align(Alignment.TopCenter)
+        .testTag("robo_insights_grid")
+        .verticalScrollbar(state = gridState.scrollIndicatorState),
+    contentPadding =
+      PaddingValues(
+        start = PAGE_PADDING,
+        top = PAGE_PADDING,
+        end = PAGE_PADDING,
+        bottom = FAB_CLEARANCE,
+      ),
+    horizontalArrangement = Arrangement.spacedBy(CARD_GAP),
+    verticalArrangement = Arrangement.spacedBy(CARD_GAP),
+    content = content,
+  )
 }
 
 /**
@@ -119,6 +133,20 @@ private fun LazyGridScope.insightsCards(uiState: InsightsUiState, onEditGoal: ()
     item(key = "years", contentType = "years", span = { GridItemSpan(maxLineSpan) }) {
       YearBarCard(uiState)
     }
+  }
+}
+
+/**
+ * The loading state: a labelled placeholder grid. The label is the only thing a screen reader
+ * announces, so the empty boxes never become a list of unlabelled elements.
+ */
+@Composable
+private fun InsightsLoading(modifier: Modifier = Modifier) {
+  SkeletonGroup(
+    label = "Loading insights",
+    modifier = modifier.testTag("robo_insights_loading"),
+  ) {
+    InsightsGrid { insightsSkeletonCards() }
   }
 }
 
@@ -177,6 +205,12 @@ private const val MAX_COLUMNS = 3
 @Composable
 private fun InsightsContentPreview() {
   ISAEyeTheme { InsightsContent(uiState = PreviewInsights, onEditGoal = {}) }
+}
+
+@FormFactorPreviews
+@Composable
+private fun InsightsLoadingPreview() {
+  ISAEyeTheme { InsightsContent(uiState = InsightsUiState(isLoading = true), onEditGoal = {}) }
 }
 
 private val PreviewInsights =

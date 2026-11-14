@@ -181,4 +181,20 @@ class AccessibilityTest {
       )
       .assertIsDisplayed()
   }
+
+  @Test
+  fun insightsLoading_isOneLabelledStateWithNoEmptyCards() {
+    composeTestRule.setContent {
+      ISAEyeTheme(dynamicColor = false) {
+        InsightsContent(uiState = InsightsUiState(isLoading = true), onEditGoal = {})
+      }
+    }
+
+    composeTestRule
+      .onNodeWithContentDescription("Loading insights")
+      .assertIsDisplayed()
+    // The placeholders are decorative, so none of the loaded card titles leak into the tree.
+    composeTestRule.onNodeWithText("This year's goal").assertDoesNotExist()
+    composeTestRule.onNodeWithText("until tax year ends").assertDoesNotExist()
+  }
 }

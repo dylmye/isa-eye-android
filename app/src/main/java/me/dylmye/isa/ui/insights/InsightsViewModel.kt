@@ -52,7 +52,7 @@ class InsightsViewModel(accountRepository: AccountRepository, goalRepository: Go
       .stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
-        InsightsUiState(),
+        InsightsUiState(isLoading = true),
       )
 
   companion object {
