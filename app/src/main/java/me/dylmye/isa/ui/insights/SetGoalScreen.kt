@@ -131,6 +131,12 @@ private fun SetGoalDialog(
 ) {
   val amountState = rememberTextFieldState(uiState.input)
   amountState.reportTextChanges(onAmountChange)
+  // The field owns the text and reports it asynchronously, so Done and Save both forward the text
+  // showing now before asking the ViewModel to validate and save it.
+  val save: () -> Unit = {
+    onAmountChange(amountState.text.toString())
+    onSave()
+  }
   Column(
     modifier = Modifier.verticalScroll(rememberScrollState()).padding(DIALOG_PADDING),
     verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -155,9 +161,7 @@ private fun SetGoalDialog(
           imeAction = ImeAction.Done,
           showKeyboardOnFocus = true,
         ),
-      onKeyboardAction = {
-        if (uiState.canSave) onSave()
-      },
+      onKeyboardAction = { save() },
       isError = uiState.error != null,
       supportingText = { Text(uiState.error ?: allowanceHint(uiState)) },
       modifier =
@@ -175,7 +179,7 @@ private fun SetGoalDialog(
     ) {
       TextButton(onClick = onClose) { Text("Cancel") }
       Button(
-        onClick = onSave,
+        onClick = save,
         enabled = uiState.canSave,
         modifier = Modifier.testTag("robo_goal_save"),
       ) {

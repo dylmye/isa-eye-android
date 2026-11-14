@@ -106,8 +106,19 @@ class EditAccountViewModel(
   fun onClosingYearSelected(id: String) = updateDraft { it.copy(closingYearId = id) }
 
   fun save() {
-    val loaded = product ?: return
-    val state = uiState.value
+    val loaded = product
+    // Read the editable fields from the draft, which the form updates synchronously when Save or
+    // IME Done is pressed. uiState is derived asynchronously and can still hold the previous text.
+    val form = draft.value
+    if (loaded == null || form == null) return
+    val state =
+      uiState.value.copy(
+        nickname = form.nickname,
+        selectedProductTypeId = form.productTypeId,
+        flexible = form.flexible,
+        selectedClosingYearId = form.closingYearId,
+        isSaving = form.isSaving,
+      )
     val typeId = state.selectedProductTypeId ?: return
     val typeName = state.productTypeOptions.firstOrNull { it.id == typeId }?.label ?: typeId
     updateDraft { it.copy(isSaving = true) }

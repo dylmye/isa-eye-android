@@ -199,34 +199,35 @@ class MainActivity : ComponentActivity() {
   }
 
   /**
-   * Consumes a shortcut's key-down so nothing else acts on it. The action fires on key-up, because a
-   * key held down repeats key-down and would otherwise fire the action over and over.
+   * Acts on a shortcut's initial key-down and consumes every repeat, so holding a chord fires once.
+   * The action cannot wait for key-up: releasing Ctrl before the letter or digit would leave key-up
+   * unable to recognise the chord that key-down already consumed.
    */
-  override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean =
-    if (isAddAccountShortcut(keyCode, event) || tabShortcut(keyCode, event) != null) {
-      true
-    } else {
-      super.onKeyDown(keyCode, event)
-    }
-
-  override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
+  override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
     val tab = tabShortcut(keyCode, event)
     return when {
       isAddAccountShortcut(keyCode, event) -> {
-        addAccountRequests.trySend(Unit)
+        if (event.repeatCount == 0) addAccountRequests.trySend(Unit)
         true
       }
 
       tab != null -> {
-        tabRequests.trySend(tab)
+        if (event.repeatCount == 0) tabRequests.trySend(tab)
         true
       }
 
       else -> {
-        super.onKeyUp(keyCode, event)
+        super.onKeyDown(keyCode, event)
       }
     }
   }
+
+  override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean =
+    if (isAddAccountShortcut(keyCode, event) || tabShortcut(keyCode, event) != null) {
+      true
+    } else {
+      super.onKeyUp(keyCode, event)
+    }
 
   /**
    * Publishes the shortcuts to the system's Keyboard Shortcuts Helper, which Meta+/ opens. Without

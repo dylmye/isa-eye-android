@@ -141,6 +141,12 @@ private fun UpdateContributionsForm(
     }
   }
   amountState.reportTextChanges(onAmountChange)
+  // The field owns the text and reports it asynchronously, so Done and Save both forward the text
+  // showing now before asking the ViewModel to validate and save it.
+  val save: () -> Unit = {
+    onAmountChange(amountState.text.toString())
+    onSave()
+  }
   Column(modifier = modifier.fillMaxSize().imePadding()) {
     Column(
       modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp),
@@ -155,10 +161,10 @@ private fun UpdateContributionsForm(
         onSelected = { id -> if (id != uiState.selectedYearId) onYearSelected(id) },
         testTag = "robo_contribution_year",
       )
-      ContributionAmountField(state = amountState, uiState = uiState, onSave = onSave)
+      ContributionAmountField(state = amountState, uiState = uiState, onSave = save)
     }
     Button(
-      onClick = onSave,
+      onClick = save,
       enabled = uiState.canSave && !uiState.isSaving,
       modifier = Modifier.fillMaxWidth().padding(16.dp).testTag("robo_contribution_save"),
     ) {
@@ -187,9 +193,7 @@ private fun ContributionAmountField(
         imeAction = ImeAction.Done,
         showKeyboardOnFocus = true,
       ),
-    onKeyboardAction = {
-      if (uiState.canSave && !uiState.isSaving) onSave()
-    },
+    onKeyboardAction = { onSave() },
     isError = warnings.isNotEmpty(),
     supportingText =
       if (warnings.isEmpty()) {

@@ -146,6 +146,12 @@ private fun AutoContributionDialog(
   val isNew = uiState.savedMonthlyPence == null
   val amountState = rememberTextFieldState(uiState.input)
   amountState.reportTextChanges(onAmountChange)
+  // The field owns the text and reports it asynchronously, so Done and Save both forward the text
+  // showing now before asking the ViewModel to validate and save it.
+  val save: () -> Unit = {
+    onAmountChange(amountState.text.toString())
+    onSave()
+  }
   Column(
     modifier = Modifier.verticalScroll(rememberScrollState()).padding(DIALOG_PADDING),
     verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -157,7 +163,7 @@ private fun AutoContributionDialog(
     )
     // The amount is the whole point of the dialog, so it is set as a headline figure rather than the
     // body size a form field would use.
-    AutoContributionAmountField(state = amountState, uiState = uiState, onSave = onSave)
+    AutoContributionAmountField(state = amountState, uiState = uiState, onSave = save)
     ScheduleLines(uiState)
     LastCreditLine(uiState)
     if (uiState.canUndoLastCredit || uiState.canRemove) {
@@ -177,7 +183,7 @@ private fun AutoContributionDialog(
     ) {
       TextButton(onClick = onClose) { Text("Cancel") }
       Button(
-        onClick = onSave,
+        onClick = save,
         enabled = uiState.canSave,
         modifier = Modifier.testTag("robo_auto_save"),
       ) {
@@ -207,9 +213,7 @@ private fun AutoContributionAmountField(
         imeAction = ImeAction.Done,
         showKeyboardOnFocus = true,
       ),
-    onKeyboardAction = {
-      if (uiState.canSave) onSave()
-    },
+    onKeyboardAction = { onSave() },
     isError = uiState.error != null,
     supportingText = {
       Text(uiState.error ?: "Recorded automatically on the 1st of each month.")
