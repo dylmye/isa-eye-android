@@ -9,6 +9,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Rebuilds the widgets when the night-mode or Material You setting changes. */
 class WidgetThemeJobService : JobService() {
@@ -23,11 +24,15 @@ class WidgetThemeJobService : JobService() {
         try {
           WidgetUpdater.updateAll(this@WidgetThemeJobService)
         } finally {
-          // A cancelled run is rescheduled by the system, so only a completed one arms the next
-          // theme change and reports back.
-          if (isActive) {
-            WidgetThemeScheduler.ensureScheduled(this@WidgetThemeJobService)
-            jobFinished(params, false)
+          // Finish on the main thread: the job callbacks run there, so a stop cannot interleave
+          // between the liveness check and the calls below. A cancelled run skips the block and is
+          // rescheduled by the system, so only a completed one arms the next theme change and
+          // reports back.
+          withContext(Dispatchers.Main.immediate) {
+            if (isActive) {
+              WidgetThemeScheduler.ensureScheduled(this@WidgetThemeJobService)
+              jobFinished(params, false)
+            }
           }
         }
       }
