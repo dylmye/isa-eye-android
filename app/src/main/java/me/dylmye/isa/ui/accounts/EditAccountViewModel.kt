@@ -110,7 +110,7 @@ class EditAccountViewModel(
     // Read the editable fields from the draft, which the form updates synchronously when Save or
     // IME Done is pressed. uiState is derived asynchronously and can still hold the previous text.
     val form = draft.value
-    if (loaded == null || form == null) return
+    if (loaded == null || form == null || form.isSaving) return
     val state =
       uiState.value.copy(
         nickname = form.nickname,

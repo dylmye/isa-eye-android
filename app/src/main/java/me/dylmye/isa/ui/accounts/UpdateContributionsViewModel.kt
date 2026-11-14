@@ -89,8 +89,9 @@ class UpdateContributionsViewModel(
         amountInput = form.amountInput ?: uiState.value.amountInput,
         isSaving = form.isSaving,
       )
-    val year = state.selectedYearId ?: return
-    val pence = state.amountPence ?: return
+    val year = state.selectedYearId
+    val pence = state.amountPence
+    if (form.isSaving || year == null || pence == null) return
     updateDraft { it.copy(isSaving = true) }
     viewModelScope.launch {
       repository.upsertBalance(
