@@ -92,6 +92,24 @@ fun AccountsEmptyScreenshot() {
   }
 }
 
+/** The first frame, while the encrypted database is still answering: placeholder account rows. */
+@PreviewTest
+@ScreenPreviews
+@Composable
+fun AccountsLoadingScreenshot() {
+  ISAEyeTheme(dynamicColor = false) {
+    AccountsContent(
+      uiState = AccountsUiState(isLoading = true),
+      onAccountClick = {},
+      onReorderAccounts = {},
+      onPreviousRuleset = {},
+      onNextRuleset = {},
+      onResetRuleset = {},
+      onShowNotes = {},
+    )
+  }
+}
+
 /** An account in the tax year being viewed, so the trend against the year before is shown. */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @PreviewTest

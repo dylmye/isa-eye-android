@@ -71,6 +71,26 @@ class AccessibilityTest {
   }
 
   @Test
+  fun accountsLoading_isOneLabelledStateWithNoEmptyMessage() {
+    composeTestRule.setContent {
+      ISAEyeTheme(dynamicColor = false) {
+        AccountsContent(
+          uiState = AccountsUiState(isLoading = true),
+          onAccountClick = {},
+          onReorderAccounts = {},
+          onPreviousRuleset = {},
+          onNextRuleset = {},
+          onResetRuleset = {},
+          onShowNotes = {},
+        )
+      }
+    }
+
+    composeTestRule.onNodeWithContentDescription("Loading accounts").assertIsDisplayed()
+    composeTestRule.onNodeWithText("Nothing to see here").assertDoesNotExist()
+  }
+
+  @Test
   fun rulesetControls_haveSpokenLabels() {
     composeTestRule.setContent {
       ISAEyeTheme(dynamicColor = false) {

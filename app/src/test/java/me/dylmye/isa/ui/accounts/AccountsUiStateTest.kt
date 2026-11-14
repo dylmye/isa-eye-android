@@ -42,6 +42,19 @@ class AccountsUiStateTest {
   }
 
   @Test
+  fun resolveAccountsUiState_isNotLoadingOnceTheDatabaseHasAnswered() {
+    val state =
+      resolveAccountsUiState(
+        accounts = listOf(summary("p1")),
+        balances = emptyList(),
+        rulesets = rulesets(),
+        selectedId = "2026/2027",
+      )
+
+    assertFalse(state.isLoading)
+  }
+
+  @Test
   fun resolveAccountsUiState_reportsTheSharedAllowanceMinusRecordedContributions() {
     val state =
       resolveAccountsUiState(
