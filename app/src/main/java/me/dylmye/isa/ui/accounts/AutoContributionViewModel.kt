@@ -70,7 +70,14 @@ class AutoContributionViewModel(
   fun onAmountChange(value: String) = updateDraft { it.copy(input = sanitizePoundsInput(value)) }
 
   fun save() {
-    val state = uiState.value
+    // The amount is read from the draft because the form reports text asynchronously; pressing Done
+    // forwards the field's current text into the draft first, so uiState can still lag behind it.
+    val form = draft.value
+    val state =
+      uiState.value.copy(
+        input = form.input ?: uiState.value.input,
+        isSaving = form.isSaving,
+      )
     val rulesetId = state.ruleset
     val monthly = state.enteredPence
     val first = state.firstCreditDate

@@ -81,7 +81,14 @@ class UpdateContributionsViewModel(
     updateDraft { it.copy(amountInput = sanitizePoundsInput(value)) }
 
   fun save() {
-    val state = uiState.value
+    // The amount is read from the draft because the form reports text asynchronously; pressing Done
+    // forwards the field's current text into the draft first, so uiState can still lag behind it.
+    val form = draft.value
+    val state =
+      uiState.value.copy(
+        amountInput = form.amountInput ?: uiState.value.amountInput,
+        isSaving = form.isSaving,
+      )
     val year = state.selectedYearId ?: return
     val pence = state.amountPence ?: return
     updateDraft { it.copy(isSaving = true) }
