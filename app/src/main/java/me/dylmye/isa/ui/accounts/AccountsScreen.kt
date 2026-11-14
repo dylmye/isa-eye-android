@@ -58,7 +58,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.window.core.layout.WindowSizeClass
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
-import me.dylmye.isa.ui.components.LoadingIndicator
 import me.dylmye.isa.ui.components.ProviderAvatar
 import me.dylmye.isa.ui.components.containerTint
 import me.dylmye.isa.ui.components.opaqueContainerTint
@@ -330,16 +329,6 @@ private fun moveActions(
 }
 
 @Composable
-private fun AccountsLoading(contentPadding: PaddingValues, modifier: Modifier = Modifier) {
-  Box(
-    modifier = modifier.fillMaxSize().padding(contentPadding),
-    contentAlignment = Alignment.Center,
-  ) {
-    LoadingIndicator(label = "Loading accounts")
-  }
-}
-
-@Composable
 private fun AccountRow(
   account: AccountListItemUiState,
   dragging: Boolean,
@@ -441,6 +430,22 @@ private fun AccountsEmptyPreview() {
   ISAEyeTheme {
     AccountsContent(
       uiState = AccountsUiState(ruleset = RulesetState(current = "2026/2027", canGoBack = true)),
+      onAccountClick = {},
+      onReorderAccounts = {},
+      onPreviousRuleset = {},
+      onNextRuleset = {},
+      onResetRuleset = {},
+      onShowNotes = {},
+    )
+  }
+}
+
+@FormFactorPreviews
+@Composable
+private fun AccountsLoadingPreview() {
+  ISAEyeTheme {
+    AccountsContent(
+      uiState = AccountsUiState(isLoading = true),
       onAccountClick = {},
       onReorderAccounts = {},
       onPreviousRuleset = {},
