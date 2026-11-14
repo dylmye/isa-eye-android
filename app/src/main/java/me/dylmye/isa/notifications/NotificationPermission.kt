@@ -14,6 +14,9 @@ import androidx.core.content.ContextCompat
  * its own, so it asks at the two moments notifications start to be useful: saving a goal or an
  * auto-contribution. It is a no-op once granted, and on versions before Android 13, where posting
  * needs no permission.
+ *
+ * Call this from a composable that outlives the screens that trigger it: the launcher unregisters
+ * when its composable leaves composition, and the dialogs close as soon as they request permission.
  */
 @Composable
 internal fun rememberNotificationPermissionRequest(): () -> Unit {

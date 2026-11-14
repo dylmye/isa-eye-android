@@ -59,6 +59,7 @@ import androidx.window.core.layout.WindowSizeClass
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.emptyFlow
+import me.dylmye.isa.notifications.rememberNotificationPermissionRequest
 import me.dylmye.isa.ui.accounts.AccountDetailPlaceholder
 import me.dylmye.isa.ui.accounts.AccountDetailScreen
 import me.dylmye.isa.ui.accounts.AccountsScreen
@@ -148,6 +149,17 @@ private fun rememberNavigationChrome(windowAdaptiveInfo: WindowAdaptiveInfo): Na
   )
 }
 
+/**
+ * Chooses the pane layout for the current window. The accounts scaffold draws its own dividers, so
+ * the stock partition spacer is removed.
+ */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@Composable
+private fun rememberPaneScaffoldDirective(windowAdaptiveInfo: WindowAdaptiveInfo) =
+  remember(windowAdaptiveInfo) {
+    calculatePaneScaffoldDirective(windowAdaptiveInfo).copy(horizontalPartitionSpacerSize = 0.dp)
+  }
+
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun MainNavigation(
@@ -178,9 +190,7 @@ fun MainNavigation(
   OpenBackupImports(backupImportRequests, backStack)
 
   val windowAdaptiveInfo = currentWindowAdaptiveInfoV2()
-  val directive = remember(windowAdaptiveInfo) {
-    calculatePaneScaffoldDirective(windowAdaptiveInfo).copy(horizontalPartitionSpacerSize = 0.dp)
-  }
+  val directive = rememberPaneScaffoldDirective(windowAdaptiveInfo)
   // A narrow window shows only the detail page, so re-tapping the tab is the way back to the list.
   // A wider one already shows the list beside the detail, where popping it would be a surprise.
   val singlePane = directive.maxHorizontalPartitions == 1
@@ -188,6 +198,9 @@ fun MainNavigation(
   val dialogStrategy = remember { DialogSceneStrategy<NavKey>() }
   val navigationChrome = rememberNavigationChrome(windowAdaptiveInfo)
   val wideRail = navigationChrome.suiteType.usesWideRail
+  // Hoisted above the nav display: a dialog closes as soon as it saves, but the launcher must stay
+  // registered until the system's permission prompt is answered.
+  val requestNotifications = rememberNotificationPermissionRequest()
 
   NavigationSuiteScaffold(
     navigationItems = {
@@ -218,6 +231,7 @@ fun MainNavigation(
         backStack = backStack,
         listDetailStrategy = listDetailStrategy,
         dialogStrategy = dialogStrategy,
+        requestNotifications = requestNotifications,
         modifier = Modifier.padding(innerPadding),
       )
     }
@@ -350,6 +364,7 @@ private fun AppNavDisplay(
   backStack: TopLevelBackStack<NavKey>,
   listDetailStrategy: ListDetailSceneStrategy<NavKey>,
   dialogStrategy: DialogSceneStrategy<NavKey>,
+  requestNotifications: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   NavDisplay(
@@ -401,13 +416,16 @@ private fun AppNavDisplay(
       ) { page ->
         HelpTopicScreen(topicId = page.id, onBack = { backStack.removeLast() })
       }
-      dialogEntries(backStack)
+      dialogEntries(backStack, requestNotifications)
     },
   )
 }
 
 /** The account flows, each shown as a dialog over whatever is behind it rather than as a page. */
-private fun EntryProviderScope<NavKey>.dialogEntries(backStack: TopLevelBackStack<NavKey>) {
+private fun EntryProviderScope<NavKey>.dialogEntries(
+  backStack: TopLevelBackStack<NavKey>,
+  requestNotifications: () -> Unit,
+) {
   entry<AddAccount>(
     metadata = DialogSceneStrategy.dialog(FormDialogProperties),
   ) {
@@ -429,12 +447,19 @@ private fun EntryProviderScope<NavKey>.dialogEntries(backStack: TopLevelBackStac
   entry<SetAutoContribution>(
     metadata = DialogSceneStrategy.dialog(FormDialogProperties),
   ) { auto ->
-    AutoContributionScreen(productId = auto.productId, onClose = { backStack.removeLast() })
+    AutoContributionScreen(
+      productId = auto.productId,
+      onClose = { backStack.removeLast() },
+      requestNotifications = requestNotifications,
+    )
   }
   entry<SetGoal>(
     metadata = DialogSceneStrategy.dialog(FormDialogProperties),
   ) {
-    SetGoalScreen(onClose = { backStack.removeLast() })
+    SetGoalScreen(
+      onClose = { backStack.removeLast() },
+      requestNotifications = requestNotifications,
+    )
   }
   entry<BackupRestore>(
     metadata = DialogSceneStrategy.dialog(FormDialogProperties),

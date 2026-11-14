@@ -34,7 +34,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import me.dylmye.isa.notifications.rememberNotificationPermissionRequest
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.time.formatLongDate
 import me.dylmye.isa.ui.FormFactorPreviews
@@ -46,16 +45,21 @@ import me.dylmye.isa.ui.formatGbp
 
 /** Stateful entry point: owns the auto-contribution ViewModel and hoists its state down. */
 @Composable
-fun AutoContributionScreen(productId: String, onClose: () -> Unit, modifier: Modifier = Modifier) {
+fun AutoContributionScreen(
+  productId: String,
+  onClose: () -> Unit,
+  requestNotifications: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
   val viewModel: AutoContributionViewModel =
     viewModel(factory = AutoContributionViewModel.factory(productId))
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-  val requestNotifications = rememberNotificationPermissionRequest()
 
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
       // Turning a schedule off is not a moment to ask; saving one is, because it is what the
-      // monthly reminder is for.
+      // monthly reminder is for. The dialog closes straight after, so the launcher is owned
+      // upstream.
       if (event == AutoContributionEvent.Saved) requestNotifications()
       onClose()
     }

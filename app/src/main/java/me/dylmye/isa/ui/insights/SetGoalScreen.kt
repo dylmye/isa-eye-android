@@ -34,7 +34,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import me.dylmye.isa.notifications.rememberNotificationPermissionRequest
 import me.dylmye.isa.theme.ISAEyeTheme
 import me.dylmye.isa.ui.FormFactorPreviews
 import me.dylmye.isa.ui.PoundsInputTransformation
@@ -45,15 +44,18 @@ import me.dylmye.isa.ui.formatGbp
 
 /** Stateful entry point: owns the goal ViewModel and hoists its state into [SetGoalContent]. */
 @Composable
-fun SetGoalScreen(onClose: () -> Unit, modifier: Modifier = Modifier) {
+fun SetGoalScreen(
+  onClose: () -> Unit,
+  requestNotifications: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
   val viewModel: SetGoalViewModel = viewModel(factory = SetGoalViewModel.factory())
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-  val requestNotifications = rememberNotificationPermissionRequest()
 
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
       // Clearing a goal is not a moment to ask; saving one is, because it is what the monthly
-      // reminder is for.
+      // reminder is for. The dialog closes straight after, so the launcher is owned upstream.
       if (event == SetGoalEvent.Saved) requestNotifications()
       onClose()
     }
