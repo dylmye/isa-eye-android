@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.foundation.verticalScroll
@@ -30,6 +31,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -127,7 +129,6 @@ private fun UpdateContributionsForm(
   onSave: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  val warnings = warningMessages(uiState)
   val amountState = rememberTextFieldState(uiState.amountInput)
   // The amount follows the tax year until it is edited, so changing the year replaces the text.
   // Seeding this from the year's recorded figure once keeps the field authoritative while typing.
@@ -154,30 +155,7 @@ private fun UpdateContributionsForm(
         onSelected = { id -> if (id != uiState.selectedYearId) onYearSelected(id) },
         testTag = "robo_contribution_year",
       )
-      OutlinedTextField(
-        state = amountState,
-        label = { Text("Contributions") },
-        prefix = { Text("£") },
-        lineLimits = TextFieldLineLimits.SingleLine,
-        inputTransformation = PoundsInputTransformation,
-        keyboardOptions =
-          KeyboardOptions(keyboardType = KeyboardType.Decimal, showKeyboardOnFocus = true),
-        isError = warnings.isNotEmpty(),
-        supportingText =
-          if (warnings.isEmpty()) {
-            null
-          } else {
-            {
-              Column(Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
-                warnings.forEach { message -> Text(message) }
-              }
-            }
-          },
-        modifier =
-          Modifier.fillMaxWidth()
-            .restoreFocusAfterConfigChange(focusOnOpen = true)
-            .testTag("robo_contribution_amount"),
-      )
+      ContributionAmountField(state = amountState, uiState = uiState, onSave = onSave)
     }
     Button(
       onClick = onSave,
@@ -187,6 +165,47 @@ private fun UpdateContributionsForm(
       Text("Save")
     }
   }
+}
+
+/** The amount field, with its warnings and Enter-to-save action. */
+@Composable
+private fun ContributionAmountField(
+  state: TextFieldState,
+  uiState: UpdateContributionsUiState,
+  onSave: () -> Unit,
+) {
+  val warnings = warningMessages(uiState)
+  OutlinedTextField(
+    state = state,
+    label = { Text("Contributions") },
+    prefix = { Text("£") },
+    lineLimits = TextFieldLineLimits.SingleLine,
+    inputTransformation = PoundsInputTransformation,
+    keyboardOptions =
+      KeyboardOptions(
+        keyboardType = KeyboardType.Decimal,
+        imeAction = ImeAction.Done,
+        showKeyboardOnFocus = true,
+      ),
+    onKeyboardAction = {
+      if (uiState.canSave && !uiState.isSaving) onSave()
+    },
+    isError = warnings.isNotEmpty(),
+    supportingText =
+      if (warnings.isEmpty()) {
+        null
+      } else {
+        {
+          Column(Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
+            warnings.forEach { message -> Text(message) }
+          }
+        }
+      },
+    modifier =
+      Modifier.fillMaxWidth()
+        .restoreFocusAfterConfigChange(focusOnOpen = true)
+        .testTag("robo_contribution_amount"),
+  )
 }
 
 /** Field cautions for [uiState]; none block saving, they only explain the entered figure. */

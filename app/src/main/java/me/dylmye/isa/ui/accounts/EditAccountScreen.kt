@@ -22,6 +22,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -127,7 +128,11 @@ private fun EditAccountForm(
         state = nicknameState,
         label = { Text("Nickname (optional)") },
         lineLimits = TextFieldLineLimits.SingleLine,
-        keyboardOptions = KeyboardOptions(showKeyboardOnFocus = true),
+        keyboardOptions =
+          KeyboardOptions(imeAction = ImeAction.Done, showKeyboardOnFocus = true),
+        onKeyboardAction = {
+          if (uiState.canSave && !uiState.isSaving) onSave()
+        },
         modifier = Modifier.fillMaxWidth().restoreFocusAfterConfigChange(focusOnOpen = true),
       )
       ReadOnlyField(label = "Bank", value = uiState.providerName)

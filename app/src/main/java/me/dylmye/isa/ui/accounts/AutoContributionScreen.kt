@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -30,6 +31,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -155,24 +157,7 @@ private fun AutoContributionDialog(
     )
     // The amount is the whole point of the dialog, so it is set as a headline figure rather than the
     // body size a form field would use.
-    OutlinedTextField(
-      state = amountState,
-      label = { Text("Monthly amount") },
-      prefix = { Text("£", style = MaterialTheme.typography.headlineMedium) },
-      textStyle = MaterialTheme.typography.headlineMedium,
-      lineLimits = TextFieldLineLimits.SingleLine,
-      inputTransformation = PoundsInputTransformation,
-      keyboardOptions =
-        KeyboardOptions(keyboardType = KeyboardType.Decimal, showKeyboardOnFocus = true),
-      isError = uiState.error != null,
-      supportingText = {
-        Text(uiState.error ?: "Recorded automatically on the 1st of each month.")
-      },
-      modifier =
-        Modifier.fillMaxWidth()
-          .restoreFocusAfterConfigChange(focusOnOpen = true)
-          .testTag("robo_auto_amount"),
-    )
+    AutoContributionAmountField(state = amountState, uiState = uiState, onSave = onSave)
     ScheduleLines(uiState)
     LastCreditLine(uiState)
     if (uiState.canUndoLastCredit || uiState.canRemove) {
@@ -200,6 +185,40 @@ private fun AutoContributionDialog(
       }
     }
   }
+}
+
+/** The monthly amount field, with its schedule summary and Enter-to-save action. */
+@Composable
+private fun AutoContributionAmountField(
+  state: TextFieldState,
+  uiState: AutoContributionUiState,
+  onSave: () -> Unit,
+) {
+  OutlinedTextField(
+    state = state,
+    label = { Text("Monthly amount") },
+    prefix = { Text("£", style = MaterialTheme.typography.headlineMedium) },
+    textStyle = MaterialTheme.typography.headlineMedium,
+    lineLimits = TextFieldLineLimits.SingleLine,
+    inputTransformation = PoundsInputTransformation,
+    keyboardOptions =
+      KeyboardOptions(
+        keyboardType = KeyboardType.Decimal,
+        imeAction = ImeAction.Done,
+        showKeyboardOnFocus = true,
+      ),
+    onKeyboardAction = {
+      if (uiState.canSave) onSave()
+    },
+    isError = uiState.error != null,
+    supportingText = {
+      Text(uiState.error ?: "Recorded automatically on the 1st of each month.")
+    },
+    modifier =
+      Modifier.fillMaxWidth()
+        .restoreFocusAfterConfigChange(focusOnOpen = true)
+        .testTag("robo_auto_amount"),
+  )
 }
 
 /** The last credit that landed, so the undo action next to it has something to point at. */

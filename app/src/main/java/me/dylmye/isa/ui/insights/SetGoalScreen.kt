@@ -30,6 +30,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -149,7 +150,14 @@ private fun SetGoalDialog(
       lineLimits = TextFieldLineLimits.SingleLine,
       inputTransformation = PoundsInputTransformation,
       keyboardOptions =
-        KeyboardOptions(keyboardType = KeyboardType.Decimal, showKeyboardOnFocus = true),
+        KeyboardOptions(
+          keyboardType = KeyboardType.Decimal,
+          imeAction = ImeAction.Done,
+          showKeyboardOnFocus = true,
+        ),
+      onKeyboardAction = {
+        if (uiState.canSave) onSave()
+      },
       isError = uiState.error != null,
       supportingText = { Text(uiState.error ?: allowanceHint(uiState)) },
       modifier =
