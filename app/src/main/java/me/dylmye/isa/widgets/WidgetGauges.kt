@@ -7,35 +7,40 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
-import androidx.glance.LocalSize
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.ContentScale
 import androidx.glance.layout.fillMaxSize
-import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.size
+import androidx.glance.layout.width
 import androidx.glance.unit.ColorProvider
 import me.dylmye.isa.ui.insights.TaxYearStage
 import kotlin.math.roundToInt
 
 /**
  * A thick progress bar for [fraction] of the allowance still being available. The body is plain:
- * the Junior widget has no need for the battery cap the allowance card replaced.
+ * the Junior widget has no need for the battery cap the allowance card replaced. [width] defaults
+ * to the widget's full content width; a grid cell passes its own width so the bitmap is drawn at
+ * the cell's size rather than stretched from the full widget width.
  */
 @Composable
-internal fun WidgetBar(fraction: Float, fill: ColorProvider, height: Dp, description: String?) {
+internal fun WidgetBar(
+  fraction: Float,
+  fill: ColorProvider,
+  height: Dp,
+  description: String?,
+  width: Dp = widgetContentWidth,
+) {
   val context = LocalContext.current
   val density = context.resources.displayMetrics.density
-  val contentWidth = LocalSize.current.width - if (isCompact) 24.dp else 32.dp
-  val widthPx = (contentWidth.value * density).roundToInt().coerceAtLeast(4)
+  val widthPx = (width.value * density).roundToInt().coerceAtLeast(4)
   val heightPx = (height.value * density).roundToInt().coerceAtLeast(4)
   val track = GlanceTheme.colors.surfaceVariant.getColor(context).toArgb()
   val fillArgb = fill.getColor(context).toArgb()
@@ -52,7 +57,7 @@ internal fun WidgetBar(fraction: Float, fill: ColorProvider, height: Dp, descrip
   Image(
     provider = ImageProvider(bitmap),
     contentDescription = description,
-    modifier = GlanceModifier.fillMaxWidth().height(height),
+    modifier = GlanceModifier.width(width).height(height),
     contentScale = ContentScale.FillBounds,
   )
 }

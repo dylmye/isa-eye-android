@@ -13,4 +13,9 @@
     <color name="widget_preview_on_card">#EADDFF</color>
     <color name="widget_preview_fill">#D0BCFF</color>
     <color name="widget_preview_on_fill">#381E72</color>
+
+    <!-- The text-only fallback a widget shows when it fails to compose. -->
+    <color name="widget_error_background">#1C1B1F</color>
+    <color name="widget_error_primary">#E6E1E5</color>
+    <color name="widget_error_secondary">#CAC4D0</color>
 </resources>

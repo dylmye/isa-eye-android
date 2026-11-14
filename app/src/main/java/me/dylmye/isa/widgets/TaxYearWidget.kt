@@ -35,6 +35,7 @@ import androidx.glance.semantics.semantics
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
+import me.dylmye.isa.R
 import kotlin.math.roundToInt
 
 /**
@@ -56,6 +57,21 @@ class TaxYearWidget : GlanceAppWidget() {
   override suspend fun providePreview(context: Context, widgetCategory: Int) {
     val state = loadWidgetState(context)
     provideContent { WidgetTheme { TaxYearContent(state) } }
+  }
+
+  override fun onCompositionError(
+    context: Context,
+    glanceId: GlanceId,
+    appWidgetId: Int,
+    throwable: Throwable,
+  ) {
+    showCompositionError(
+      context = context,
+      appWidgetId = appWidgetId,
+      tab = WidgetTab.Insights,
+      title = R.string.widget_tax_year_label,
+      throwable = throwable,
+    )
   }
 }
 

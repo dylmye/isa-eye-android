@@ -48,6 +48,13 @@ internal val isLarge: Boolean
   @Composable get() = LocalSize.current.height > 200.dp && LocalSize.current.width >= 200.dp
 
 /**
+ * The width inside [WidgetFrame] once its horizontal padding is removed. Bitmaps that fill the
+ * content area are drawn at this width so they are not scaled to it.
+ */
+internal val widgetContentWidth: Dp
+  @Composable get() = LocalSize.current.width - if (isCompact) 24.dp else 32.dp
+
+/**
  * The surface every widget sits on. Marks the view as the widget background for smooth launcher
  * transitions, paints it with the theme's widget colour, rounds it on Android 12+, and makes the
  * whole widget open [tab]. The click target is the full widget, which is well above the 48dp

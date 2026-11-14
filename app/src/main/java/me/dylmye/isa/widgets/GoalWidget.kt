@@ -34,6 +34,21 @@ class GoalWidget : GlanceAppWidget() {
     val state = loadWidgetState(context)
     provideContent { WidgetTheme { GoalContent(state) } }
   }
+
+  override fun onCompositionError(
+    context: Context,
+    glanceId: GlanceId,
+    appWidgetId: Int,
+    throwable: Throwable,
+  ) {
+    showCompositionError(
+      context = context,
+      appWidgetId = appWidgetId,
+      tab = WidgetTab.Insights,
+      title = R.string.widget_goal_label,
+      throwable = throwable,
+    )
+  }
 }
 
 class GoalWidgetReceiver : GlanceAppWidgetReceiver() {
