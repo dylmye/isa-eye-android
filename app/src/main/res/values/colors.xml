@@ -22,4 +22,10 @@
     <color name="widget_preview_on_card">#21005D</color>
     <color name="widget_preview_fill">#6750A4</color>
     <color name="widget_preview_on_fill">#FFFFFF</color>
+
+    <!-- The text-only fallback a widget shows when it fails to compose, with night variants in
+         values-night. -->
+    <color name="widget_error_background">#FFFBFE</color>
+    <color name="widget_error_primary">#1C1B1F</color>
+    <color name="widget_error_secondary">#49454F</color>
 </resources>

@@ -35,6 +35,21 @@ class AllowanceWidget : GlanceAppWidget() {
     val state = loadWidgetState(context)
     provideContent { WidgetTheme { AllowanceContent(state) } }
   }
+
+  override fun onCompositionError(
+    context: Context,
+    glanceId: GlanceId,
+    appWidgetId: Int,
+    throwable: Throwable,
+  ) {
+    showCompositionError(
+      context = context,
+      appWidgetId = appWidgetId,
+      tab = WidgetTab.Accounts,
+      title = R.string.widget_allowance_label,
+      throwable = throwable,
+    )
+  }
 }
 
 class AllowanceWidgetReceiver : GlanceAppWidgetReceiver() {

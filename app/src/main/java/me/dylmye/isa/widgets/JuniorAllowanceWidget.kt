@@ -2,6 +2,7 @@ package me.dylmye.isa.widgets
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
@@ -21,6 +22,7 @@ import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
+import me.dylmye.isa.R
 import me.dylmye.isa.ui.accounts.JuniorAllowanceUiState
 import kotlin.math.roundToInt
 
@@ -41,6 +43,21 @@ class JuniorAllowanceWidget : GlanceAppWidget() {
   override suspend fun providePreview(context: Context, widgetCategory: Int) {
     val state = loadWidgetState(context)
     provideContent { WidgetTheme { JuniorAllowanceContent(state) } }
+  }
+
+  override fun onCompositionError(
+    context: Context,
+    glanceId: GlanceId,
+    appWidgetId: Int,
+    throwable: Throwable,
+  ) {
+    showCompositionError(
+      context = context,
+      appWidgetId = appWidgetId,
+      tab = WidgetTab.Accounts,
+      title = R.string.widget_junior_label,
+      throwable = throwable,
+    )
   }
 }
 
@@ -151,6 +168,7 @@ private fun JuniorAccounts(juniors: List<JuniorAllowanceUiState>) {
   val size = LocalSize.current
   val wide = size.width >= 200.dp
   val columns = if (wide) 2 else 1
+  val cellWidth = widgetCellWidth(widgetContentWidth, columns)
   // A wide 4x2 widget fits one row of two; the 4x4 fits a small grid. Anything beyond that is
   // counted in the title row rather than squeezed into an unreadable cell.
   val rows = if (size.height >= 200.dp) 3 else 1
@@ -171,8 +189,12 @@ private fun JuniorAccounts(juniors: List<JuniorAllowanceUiState>) {
     if (index > 0) Spacer(GlanceModifier.height(10.dp))
     Row(modifier = GlanceModifier.fillMaxWidth()) {
       row.forEachIndexed { cell, junior ->
-        if (cell > 0) Spacer(GlanceModifier.width(12.dp))
-        JuniorCell(junior, modifier = GlanceModifier.defaultWeight())
+        if (cell > 0) Spacer(GlanceModifier.width(JUNIOR_CELL_GAP))
+        JuniorCell(
+          junior = junior,
+          width = cellWidth,
+          modifier = GlanceModifier.defaultWeight(),
+        )
       }
       repeat(columns - row.size) {
         Spacer(GlanceModifier.defaultWeight())
@@ -181,9 +203,17 @@ private fun JuniorAccounts(juniors: List<JuniorAllowanceUiState>) {
   }
 }
 
+/**
+ * The width one cell gets in a row: the content width minus the gaps between cells, split evenly.
+ * Drawing each bar at its own cell width keeps the rounded caps circular instead of squashing a
+ * full-width bitmap into half the row.
+ */
+internal fun widgetCellWidth(contentWidth: Dp, columns: Int): Dp =
+  (contentWidth - JUNIOR_CELL_GAP * (columns - 1)) / columns
+
 /** One child's cell in the multi-account widget: name, what is left, and a slim battery. */
 @Composable
-private fun JuniorCell(junior: JuniorAllowanceUiState, modifier: GlanceModifier) {
+private fun JuniorCell(junior: JuniorAllowanceUiState, width: Dp, modifier: GlanceModifier) {
   Column(modifier = modifier) {
     WidgetLabel(junior.accountName.ifBlank { junior.typeName.ifBlank { "Junior ISA" } })
     Spacer(GlanceModifier.height(2.dp))
@@ -203,6 +233,7 @@ private fun JuniorCell(junior: JuniorAllowanceUiState, modifier: GlanceModifier)
       fill = GlanceTheme.colors.primary,
       height = 8.dp,
       description = juniorMeterDescription(junior),
+      width = width,
     )
   }
 }
@@ -215,3 +246,6 @@ private fun juniorMeterDescription(junior: JuniorAllowanceUiState): String = if 
   "${junior.accountName} has ${formatWidgetGbp(junior.remainingPence)} of the " +
     "${formatWidgetGbp(junior.allowancePence)} Junior ISA allowance left."
 }
+
+/** The gap between cells in a multi-column row. */
+private val JUNIOR_CELL_GAP = 12.dp

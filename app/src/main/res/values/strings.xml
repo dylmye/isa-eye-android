@@ -12,4 +12,7 @@
     <string name="widget_tax_year_description">How much of the tax year is left.</string>
     <string name="widget_goal_label">Savings goal</string>
     <string name="widget_goal_description">Progress towards this year\'s savings goal.</string>
+
+    <!-- Text-only fallback shown when a widget cannot be composed. -->
+    <string name="widget_error_message">Tap to open ISA Eye and refresh this widget.</string>
 </resources>

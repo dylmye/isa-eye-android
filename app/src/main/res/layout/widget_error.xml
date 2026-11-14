@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The zero-bitmap fallback for a widget whose Glance composition failed. It uses only views on
+     the app widget inflater allowlist and draws no bitmaps of its own. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_error_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/widget_error_background"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/widget_error_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="2"
+            android:textColor="@color/widget_error_primary"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:maxLines="3"
+            android:text="@string/widget_error_message"
+            android:textColor="@color/widget_error_secondary"
+            android:textSize="12sp" />
+    </LinearLayout>
+</FrameLayout>

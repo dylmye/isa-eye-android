@@ -74,7 +74,8 @@ internal fun progressRing(
 /**
  * The card that is itself the progress bar: a [fraction] of the card is tinted from the bottom up,
  * with a crisp edge so the fill reads as a fill rather than a gradient. The card colour stays behind
- * it so the percentage on top keeps its contrast in either theme.
+ * it so the percentage on top keeps its contrast in either theme. The card is opaque, so it uses
+ * [Bitmap.Config.RGB_565] and halves the bitmap memory a RemoteViews update has to carry.
  */
 internal fun progressCard(
   widthPx: Int,
@@ -85,7 +86,7 @@ internal fun progressCard(
 ): Bitmap {
   val width = widthPx.coerceAtLeast(1)
   val height = heightPx.coerceAtLeast(1)
-  val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+  val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
   val canvas = Canvas(bitmap)
   canvas.drawColor(card)
   val filled = fraction.coerceIn(0f, 1f)
