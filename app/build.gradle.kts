@@ -173,6 +173,14 @@ kotlin {
     }
 }
 
+composeCompiler {
+    // R8 derives extra synthetic methods from the Compose source-info mapping, and the mapping's
+    // ordering depends on how the plugin and R8 processed their inputs. Two machines therefore
+    // produce different dex bytes for the same commit, which breaks F-Droid's binary comparison.
+    // The mapping only sharpens Compose frames in deobfuscated stack traces, so drop it.
+    includeComposeMappingFile = false
+}
+
 // The screenshot suite renders every preview in one JVM and keeps the images alive until they are
 // written, so the 512 MB a test worker gets by default runs out long before the suite does. At a
 // couple of hundred previews 2 GB is already marginal, so this leaves room for the suite to grow.
