@@ -23,10 +23,6 @@ Builds:
     gradle:
       - fdroid
     output: app/build/outputs/apk/fdroid/release/app-fdroid-release-unsigned.apk
-    prebuild:
-      - sed -i '/org.gradle.toolchains.foojay-resolver/d' settings.gradle.kts
-      - sed -i 's/jvmToolchain(17)/compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-        }/' app/build.gradle.kts
 
 AllowedAPKSigningKeys: 6d5d72f7974201629ebf6edb93b22887683c0918a52688caaf2247e2a3300343
 
