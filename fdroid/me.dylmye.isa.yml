@@ -3,16 +3,18 @@ Categories:
 License: ISC
 AuthorName: Dylan Myers
 AuthorWebSite: https://dylmye.me
-Liberapay: dyl
 WebSite: https://isaeye.uk
 SourceCode: https://github.com/dylmye/isa-eye-android
 IssueTracker: https://github.com/dylmye/isa-eye-android/issues
 Changelog: https://github.com/dylmye/isa-eye-android/releases
+Liberapay: dyl
 
 AutoName: ISA Eye
 
 RepoType: git
 Repo: https://github.com/dylmye/isa-eye-android
+Binaries:
+  https://github.com/dylmye/isa-eye-android/releases/download/v%v/me.dylmye.isa-%v.apk
 
 Builds:
   - versionName: 2.4.0
@@ -21,10 +23,12 @@ Builds:
     gradle:
       - fdroid
     output: app/build/outputs/apk/fdroid/release/app-fdroid-release-unsigned.apk
+    prebuild:
+      - sed -i '/org.gradle.toolchains.foojay-resolver/d' settings.gradle.kts
+      - sed -i 's/jvmToolchain(17)/compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }/' app/build.gradle.kts
 
 AllowedAPKSigningKeys: 6d5d72f7974201629ebf6edb93b22887683c0918a52688caaf2247e2a3300343
-
-Binaries: https://github.com/dylmye/isa-eye-android/releases/download/v%v/me.dylmye.isa-%v.apk
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
