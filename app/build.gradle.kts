@@ -56,8 +56,8 @@ android {
         applicationId = "me.dylmye.isa"
         minSdk = 24
         targetSdk = 37
-        versionCode = 19
-        versionName = "2.4.0"
+        versionCode = 20
+        versionName = "2.4.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         manifestPlaceholders["applicationName"] = ".IsaEyeApplication"
     }
