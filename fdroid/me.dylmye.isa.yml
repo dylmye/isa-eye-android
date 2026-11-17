@@ -21,6 +21,12 @@ Builds:
     gradle:
       - fdroid
     output: app/build/outputs/apk/fdroid/release/app-fdroid-release-unsigned.apk
+    prebuild:
+      # foojay downloads a JDK at build time, which F-Droid's scanner forbids.
+      - sed -i '/org.gradle.toolchains.foojay-resolver/d' settings.gradle.kts
+      # The F-Droid builder ships only JDK 21, so compile on that JDK while keeping the 17
+      # bytecode target that the released binary was built with.
+      - sed -i 's/jvmToolchain(17)/compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) }/' app/build.gradle.kts
 
 AllowedAPKSigningKeys: 6d5d72f7974201629ebf6edb93b22887683c0918a52688caaf2247e2a3300343
 

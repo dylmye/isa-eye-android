@@ -11,7 +11,7 @@ Keep an eye on Indiviual Saving Account balances across your bank accounts, inve
 
 Ensure you have:
 
-- **OpenJDK 17**
+- **OpenJDK 17 or newer** (CI uses 21)
 - The **Android SDK** installed, with `local.properties` pointing at it (`sdk.dir=...`) or `ANDROID_HOME` set
 - **GraphicsMagick** for icon generation
 
@@ -208,9 +208,10 @@ Things that keep it that way, and are easy to break by accident:
 
 - **Build from a clean tree at the tag.** `META-INF/version-control-info.textproto` records the
   commit, so an APK built from uncommitted changes cannot match the tagged source.
-- **Keep the toolchain pinned.** The Gradle wrapper, the Android Gradle Plugin, R8 and the Kotlin
-  toolchain (17) are all fixed in `gradle/libs.versions.toml` and `gradle/wrapper`. F-Droid builds
-  with OpenJDK 17, so a build on a different JDK can produce different bytecode.
+- **Keep the Java/Kotlin target pinned.** The Gradle wrapper, the Android Gradle Plugin, R8 and the
+  Java/Kotlin bytecode target (17) are fixed in `gradle/libs.versions.toml`, `gradle/wrapper` and
+  `app/build.gradle.kts`. The build requests no JDK toolchain (F-Droid's scanner rejects the foojay
+  resolver), so CI runs Gradle on JDK 21 to match F-Droid's builder.
 - **Keep prebuilt native libraries untouched.** `packaging.jniLibs.keepDebugSymbols` stops AGP
   stripping the SQLCipher libraries when the build host happens to have an NDK installed.
 - **Keep generated data committed.** `assets/seed.sql`, `assets/help` and the launcher icons are

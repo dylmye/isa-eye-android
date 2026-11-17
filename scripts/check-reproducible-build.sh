@@ -11,8 +11,8 @@
 #   - no keystore.properties, which leaves the APK unsigned: signature bytes are not reproducible in
 #     the way F-Droid compares, and the unsigned APK is the artifact it rebuilds against
 #
-# Requires OpenJDK 17 and an Android SDK, located the same way Gradle finds it (local.properties, or
-# ANDROID_HOME/ANDROID_SDK_ROOT).
+# Requires OpenJDK 17 or newer (CI uses 21) and an Android SDK, located the same way Gradle finds
+# it (local.properties, or ANDROID_HOME/ANDROID_SDK_ROOT).
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

@@ -1,5 +1,6 @@
 import com.android.build.api.variant.HasUnitTestBuilder
 import java.util.Properties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
   alias(libs.plugins.android.application)
@@ -164,7 +165,12 @@ androidComponents {
 }
 
 kotlin {
-    jvmToolchain(17)
+    // Compile with whatever JDK runs Gradle instead of requesting a JDK 17 toolchain: F-Droid's
+    // scanner rejects the foojay resolver, and its builder only ships the current JDK. The bytecode
+    // target stays at 17 to match compileOptions above and the released binary.
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
+    }
 }
 
 // The screenshot suite renders every preview in one JVM and keeps the images alive until they are
