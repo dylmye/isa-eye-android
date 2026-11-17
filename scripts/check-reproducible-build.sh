@@ -41,7 +41,10 @@ build() {
   printf 'Building in %s (TZ=%s, LANG=%s)\n' "$dir" "$tz" "$locale" >&2
   (
     cd "$dir"
-    TZ="$tz" LANG="$locale" LC_ALL="$locale" ./gradlew :app:assembleFdroidRelease --no-daemon --quiet
+    # --no-build-cache is essential: a cache hit would copy the first build's outputs into the
+    # second and make the comparison pass without testing anything.
+    TZ="$tz" LANG="$locale" LC_ALL="$locale" \
+      ./gradlew :app:assembleFdroidRelease --no-daemon --no-build-cache --quiet
   )
   printf '%s\n' "$dir/app/build/outputs/apk/fdroid/release/app-fdroid-release-unsigned.apk"
 }
