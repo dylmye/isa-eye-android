@@ -1,3 +1,4 @@
+import com.android.build.api.variant.ApplicationVariantBuilder
 import com.android.build.api.variant.HasUnitTestBuilder
 import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -161,6 +162,16 @@ android {
 androidComponents {
   beforeVariants(selector().withBuildType("release")) { variant ->
     (variant as HasUnitTestBuilder).enableUnitTest = true
+  }
+
+  // AGP adds a "Dependency metadata" block to the APK signing block. Its payload is encrypted, so
+  // F-Droid cannot audit it and rejects any APK that carries it. The data is only used by Play, so
+  // the GPE flavor keeps AGP's default and only the F-Droid APK is stripped.
+  beforeVariants(selector().withFlavor("distribution" to "fdroid").withBuildType("release")) { variant ->
+    (variant as ApplicationVariantBuilder).dependenciesInfo.apply {
+      includeInApk = false
+      includeInBundle = false
+    }
   }
 }
 
